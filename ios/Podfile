@@ -1,0 +1,77 @@
+#source 'https://github.com/CocoaPods/Specs.git'
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '16.6'
+
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks! :linkage => :static
+
+  # ✅ 이 위치로 이동했습니다.
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  pod 'KakaoSDKCommon'
+  pod 'KakaoSDKAuth'
+
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+target 'RundventureWatch Watch App' do
+  inherit! :none
+  platform :watchos, '10.6'
+  use_frameworks!
+
+  # ✅ 지금은 내부에 추가할 Pod이 없음 (비어있는 것이 정상)
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+
+    target.build_configurations.each do |config|
+      
+      # ⬇️⬇️⬇️ gRPC-Core (C++) 디버그 빌드 에러 해결을 위해 이 줄을 추가했습니다. ⬇️⬇️⬇️
+      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+
+      if target.platform_name == :ios
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.6'
+        if config.name == 'Debug' || config.name == 'Profile' || config.name == 'Release'
+          config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+        end
+      end
+
+      config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      if target.name == 'permission_handler_apple'
+        config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = '*/PermissionHandler/ios/Classes/strategies/PhonePermissionStrategy.*'
+      end
+    end
+  end
+end

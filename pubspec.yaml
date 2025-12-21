@@ -1,0 +1,176 @@
+name: rundventure
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.1.0+7
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  firebase_storage: ^12.4.5
+  firebase_messaging: ^15.2.4
+  flutter_local_notifications: ^19.2.1
+  geolocator_apple: ^2.3.13
+  shared_preferences: ^2.3.2
+  cloud_firestore: ^5.5.0
+  google_sign_in: ^6.2.1
+  kakao_flutter_sdk: ^1.9.6
+  ulid: ^2.0.1
+  http: ^1.2.2
+  intl: ^0.20.2
+  timeago: ^3.7.0
+  google_maps_flutter: ^2.9.0
+  apple_maps_flutter: ^1.4.0
+  geolocator: ^14.0.1
+  permission_handler: ^12.0.0+1
+  location: ^8.0.0
+  table_calendar: ^3.0.9
+  percent_indicator: ^4.2.5
+  auto_size_text: ^3.0.0
+  image_picker: ^1.1.2
+  share_plus: ^11.0.0
+  url_launcher: ^6.3.1
+  webview_flutter: ^4.13.0
+  provider: ^6.1.5
+  lottie: ^3.3.1
+  cloud_functions: ^5.5.1
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
+  package_info_plus: ^8.3.0
+  flutter_tts: ^4.2.3
+  firebase_database: ^11.3.7
+  path_provider: ^2.1.5
+  video_player: ^2.10.0
+  watch_connectivity: ^0.2.2
+  pedometer: ^4.1.1
+  flutter_quill: ^11.5.0
+  upgrader: ^12.3.0
+  app_badge_plus: ^1.2.3
+
+
+
+  flutter_localizations:
+    sdk: flutter
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.7 # 👈 [수정] 패키지 추가
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+
+# 👈 [수정] 런치스크린 설정 블록 추가
+flutter_native_splash:
+  color: "#FFE67B"
+  image: assets/images/splash.png
+  android: false
+  ios: true
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/rundventure.png
+    - assets/images/rundventure2.png
+    - assets/images/Open Door.png
+    - assets/images/Login-Social-Media.png
+    - assets/images/Lock.png
+    - assets/images/Hide-Password.png
+    - assets/images/googlelogo.png
+    - assets/images/kakao.png
+    - assets/images/Email.png
+    - assets/images/Back-Navs.png
+    - assets/images/Account.png
+    - assets/images/BackButton.png
+    - assets/images/banner.png
+    - assets/images/rundventuretext.png
+    - assets/images/weight.png
+    - assets/images/Height.png
+    - assets/images/mainrundventure.png
+    - assets/images/mainrundventure2.png
+    - assets/images/user.png
+    - assets/images/basicuser.png
+    - assets/images/alarm.png
+    - assets/images/underbar.png
+    - assets/images/centerbutton.png
+    - assets/images/buttonurrow.png
+    - assets/images/underbarhome.png
+    - assets/images/underbarchart.png
+    - assets/images/buttoncover.png
+    - assets/images/runningimage.png
+    - assets/images/runningimage2.png
+    - assets/images/runningimage3.png
+    - assets/images/set.png
+    - assets/images/challenge.png
+    - assets/images/image 17.png
+    - assets/images/image 18.png
+    - assets/images/menu.png
+    - assets/images/talk.png
+    - assets/badges/
+    - assets/images/nextbutton.png
+    - assets/images/flame.png
+    - assets/images/graph.png
+    - assets/images/trophy.png
+    - assets/images/game2.png
+    - assets/images/game3.png
+    - assets/images/ghostlogo.png
+    - assets/images/soonlogo.png
+    - assets/images/Back-Navs-Black.png
+    - assets/images/ghostrunpage1.png
+    - assets/images/ghostrunpage1-2.png
+    - assets/images/ghostrunpage2.png
+    - assets/images/ghostrunpage2-1.png
+    - assets/images/ghostrunpage3.png
+    - assets/images/ghostrunpage3-1.png
+    - assets/images/ghostrunconfirmation.png
+    - assets/images/ghostrunconfirmation2.png
+    - assets/images/runner.png
+    - assets/images/ghostrunner.png
+    - assets/maps/map_dark.json
+    - assets/images/man.png
+    - assets/images/signupcom.png
+    - assets/images/stretching.png
+    - assets/lottie/armsjump.json
+    - assets/lottie/legexercise.json
+    - assets/images/gmail_icon.png
+    - assets/images/naver_icon.png
+    - assets/images/man2.png
+    - assets/images/battlelogo.png
+    - assets/images/friendbattle.png
+    - assets/videos/

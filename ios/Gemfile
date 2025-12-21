@@ -1,0 +1,6 @@
+# Gemfile
+
+source 'https://rubygems.org'
+
+# RubyGems 대신 CocoaPods의 GitHub 저장소에서 직접 최신 버전을 가져옵니다.
+gem 'cocoapods', git: 'https://github.com/CocoaPods/CocoaPods.git', branch: 'master'
