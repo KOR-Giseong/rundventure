@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'exercise_data.dart';
 import 'exercise_service.dart';
-// ▼▼▼▼▼ [ ✨ 추가된 import ✨ ] ▼▼▼▼▼
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// ▲▲▲▲▲ [ ✨ 추가된 import ✨ ] ▲▲▲▲▲
 
 class DistanceAchievementsTab extends StatefulWidget {
   final List<ExerciseRecord> allRecords;
@@ -20,10 +18,8 @@ class DistanceAchievementsTab extends StatefulWidget {
 class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
     with AutomaticKeepAliveClientMixin {
   final ExerciseService _exerciseService = ExerciseService();
-  // ▼▼▼▼▼ [ ✨ 추가된 인스턴스 ✨ ] ▼▼▼▼▼
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // ▲▲▲▲▲ [ ✨ 추가된 인스턴스 ✨ ] ▲▲▲▲▲
   double _totalDistance = 0.0;
   List<AchievementInfo> _achievements = [];
   bool _isCalculating = true;
@@ -48,8 +44,6 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
     }
   }
 
-  // ▼▼▼▼▼ [ ✨ 추가된 함수 ✨ ] ▼▼▼▼▼
-  // 도전과제 완료 알림을 생성하는 함수
   Future<void> _sendAchievementNotification(String achievementId, String title, String message) async {
     final userEmail = _auth.currentUser?.email;
     if (userEmail == null) return;
@@ -71,15 +65,14 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
 
       await notiRef.set({
         'id': notiRef.id,
-        'type': 'achievement_completed', // 👈 알림 타입: 도전과제 완료
+        'type': 'achievement_completed',
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
         'isRead': false,
-        'achievementId': achievementId, // (선택 사항)
+        'achievementId': achievementId,
       });
 
-      // 알림 전송 성공 시 SharedPreferences에 기록
       await prefs.setBool(notificationKey, true);
       print("Achievement notification sent: $achievementId");
 
@@ -87,9 +80,8 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
       print("Error sending achievement notification: $e");
     }
   }
-  // ▲▲▲▲▲ [ ✨ 추가된 함수 ✨ ] ▲▲▲▲▲
 
-  void _calculateAchievements() async { // 👈 async로 변경
+  void _calculateAchievements() async {
     if (mounted) setState(() => _isCalculating = true);
 
     // 총 거리 계산
@@ -101,27 +93,22 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
       final achievementInfo = _exerciseService.getAchievementInfo(
         targetValue: target,
         allRecords: widget.allRecords,
-        getValueFromRecord: (record) => record.kilometers, // 거리 값 사용
+        getValueFromRecord: (record) => record.kilometers,
       );
 
-      // ▼▼▼▼▼ [ ✨ 추가된 로직 ✨ ] ▼▼▼▼▼
-      // 1. 도전과제가 '완료'되었는지 확인
       if (achievementInfo.isCompleted) {
-        // 2. 이 도전과제에 대한 알림을 보낸 적이 있는지 확인 (send 함수 내부에서 처리)
         final details = _getChallengeDetails(target);
         final String title = "도전과제 달성: ${details['title']}";
         final String message = "누적 ${target.toStringAsFixed(0)}KM 달성을 축하합니다!";
-        final String achievementId = 'distance_${target.toInt()}'; // 고유 ID
+        final String achievementId = 'distance_${target.toInt()}';
 
-        // (비동기) 알림 전송 시도
         _sendAchievementNotification(achievementId, title, message);
       }
-      // ▲▲▲▲▲ [ ✨ 추가된 로직 ✨ ] ▲▲▲▲▲
 
       achievements.add(achievementInfo);
     }
 
-    if (mounted) { // 👈 mounted 확인 추가
+    if (mounted) {
       setState(() {
         _achievements = achievements;
         _isCalculating = false;
@@ -129,8 +116,6 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
     }
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 부분 (칭호/이미지 경로) ✨✨✨ ] ▼▼▼▼▼
-  // ✅✅✅ [이미지/타이틀 수정] 아이콘 대신 이미지 경로 반환 ✅✅✅
   Map<String, dynamic> _getChallengeDetails(double targetDistance) {
     String title;
     // 9개 레벨: 10, 30, 50, 100, 150, 200, 300, 400, 500
@@ -141,27 +126,20 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
     else if (targetDistance <= 150) title = '프로'; // 150
     else if (targetDistance <= 200) title = '엘리트'; // 200
     else if (targetDistance <= 300) title = '마스터'; // 300
-    else if (targetDistance <= 400) title = '레전드'; // 400
-    else title = '히어로'; // 500KM (또는 그 이상)
+    else if (targetDistance <= 400) title = '레전드';
+    else title = '히어로';
 
-    // [수정] 'icon' 대신 'imagePath'를 반환
-    // (경로는 'assets/badges/'로, 파일명은 '10km.png' 형식으로 가정)
     final String imagePath = 'assets/badges/${targetDistance.toInt()}km.png';
 
     return {'title': title, 'imagePath': imagePath};
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 부분 (칭호/이미지 경로) ✨✨✨ ] ▲▲▲▲▲
 
   // 팝업 (Icon -> Image.asset으로 수정)
   void showChallengeCompletionPopup(BuildContext context, AchievementInfo achievement) {
     final details = _getChallengeDetails(achievement.targetValue);
     final String badgeTitle = details['title'];
-    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-    final String badgeImagePath = details['imagePath']; // 👈 'icon' 대신 'imagePath' 사용
-    // final IconData badgeIcon = details['icon']; // 👈 삭제
-    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
+    final String badgeImagePath = details['imagePath'];
     final DateTime completionDate = achievement.completionDate ?? DateTime.now();
-    // final Color completedColor = Colors.green[600]!; // 👈 팝업 이미지는 원본 색상 사용 (삭제 안 함)
 
     showModalBottomSheet(
       context: context,
@@ -192,10 +170,7 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
                 builder: (context, scale, child) {
                   return Transform.scale(scale: scale, child: child);
                 },
-                // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-                child: Image.asset(badgeImagePath, width: 100, height: 100), // 👈 Icon을 Image.asset으로 변경
-                // child: Icon(badgeIcon, size: 100, color: completedColor), // 👈 삭제
-                // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
+                child: Image.asset(badgeImagePath, width: 100, height: 100),
               ),
               SizedBox(height: 40),
               Text(badgeTitle, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -232,15 +207,9 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
   // 카드 UI (Icon -> Image.asset으로 수정)
   Widget _buildChallengeCard(AchievementInfo achievement) {
     final details = _getChallengeDetails(achievement.targetValue);
-    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-    final String badgeImagePath = details['imagePath']; // 👈 'icon' 대신 'imagePath' 사용
-    // final IconData badgeIcon = details['icon']; // 👈 삭제
-    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
+    final String badgeImagePath = details['imagePath'];
     double progress = (_totalDistance / achievement.targetValue).clamp(0.0, 1.0);
     final Color progressColor = achievement.isCompleted ? Colors.amber[400]! : Colors.grey;
-    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-    // final Color iconColor = achievement.isCompleted ? Colors.green[600]! : Colors.grey[600]!; // 👈 삭제
-    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
 
     return Padding(
       padding: const EdgeInsets.all(6.0),
@@ -272,14 +241,10 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
                         backgroundColor: Colors.grey[200],
                       ),
                     ),
-                    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼K▼▼
-                    // 👈 Icon을 Opacity와 Image.asset으로 변경
                     Opacity(
-                      opacity: achievement.isCompleted ? 1.0 : 0.4, // 👈 미완료 시 40% 투명도
+                      opacity: achievement.isCompleted ? 1.0 : 0.4,
                       child: Image.asset(badgeImagePath, width: 90, height: 90),
                     ),
-                    // Icon(badgeIcon, size: 60, color: iconColor), // 👈 삭제
-                    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
                   ],
                 ),
                 SizedBox(height: 10),
@@ -316,7 +281,6 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
               child: Column(
                 children: [
-                  // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: RichText(
@@ -329,7 +293,6 @@ class _DistanceAchievementsTabState extends State<DistanceAchievementsTab>
                       ),
                     ),
                   ),
-                  // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
                   const SizedBox(height: 10),
                   Text('누적 거리', style: TextStyle(color: Colors.black, fontSize: 16)),
                 ],

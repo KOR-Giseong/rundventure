@@ -3,14 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-// ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-// 1. Cloud Functions를 사용하기 위해 임포트
 import 'package:cloud_functions/cloud_functions.dart';
-// ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
-import '../../profile/other_user_profile.dart'; // OtherUserProfileScreen 임포트
-// ▼▼▼▼▼ [ ⭐️ 신규 추가 ⭐️ ] ▼▼▼▼▼
-import 'event_challenge_info_screen.dart'; // 👈 이벤트 상세 안내 페이지 임포트
-// ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
+import '../../profile/other_user_profile.dart';
+import 'event_challenge_info_screen.dart';
 
 class EventChallengeDetailScreen extends StatefulWidget {
   final String eventChallengeId;
@@ -112,8 +107,6 @@ class _EventChallengeDetailScreenState
     );
   }
 
-  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-  // 이벤트 참여/취소 로직 ('calculating' 상태 확인 추가)
   Future<void> _toggleParticipation(
       DocumentSnapshot eventDoc, bool hasJoined) async {
     if (_isProcessingParticipation) return;
@@ -128,7 +121,7 @@ class _EventChallengeDetailScreenState
     final String userEmail = user.email!;
     final eventData = eventDoc.data() as Map<String, dynamic>;
     final DocumentReference eventRef = eventDoc.reference;
-    final String status = eventData['status'] ?? 'active'; // 👈 상태 확인
+    final String status = eventData['status'] ?? 'active';
 
     // 1. 참여자용 하위 컬렉션 참조
     final DocumentReference participantRef =
@@ -143,7 +136,7 @@ class _EventChallengeDetailScreenState
         return;
       }
       if (status == 'calculating') {
-        _showCustomSnackBar('현재 순위 집계 중으로 참여할 수 없습니다.', isError: true); // 👈 문구 수정
+        _showCustomSnackBar('현재 순위 집계 중으로 참여할 수 없습니다.', isError: true);
         setState(() => _isProcessingParticipation = false);
         return;
       }
@@ -212,11 +205,10 @@ class _EventChallengeDetailScreenState
     }
     // --- 참여 취소 (Leave) 로직 ---
     else {
-      // ❗️ [신규] 참여 취소도 'active'일 때만 가능
       if (status != 'active') {
         _showCustomSnackBar(
             status == 'calculating'
-                ? '순위 집계 중에는 참여를 취소할 수 없습니다.' // 👈 문구 수정
+                ? '순위 집계 중에는 참여를 취소할 수 없습니다.'
                 : '종료된 이벤트는 참여를 취소할 수 없습니다.',
             isError: true);
         setState(() => _isProcessingParticipation = false);
@@ -251,7 +243,6 @@ class _EventChallengeDetailScreenState
       // 7. 트랜잭션으로 참여 취소 처리
       try {
         await _firestore.runTransaction((transaction) async {
-          // ❗️ [신규] 트랜잭션 내에서 상태 재확인
           final freshEventSnap = await transaction.get(eventRef);
           final String freshStatus = (freshEventSnap.data() as Map<String, dynamic>)['status'] ?? 'active';
           if (freshStatus != 'active') {
@@ -273,7 +264,6 @@ class _EventChallengeDetailScreenState
 
     if (mounted) setState(() => _isProcessingParticipation = false);
   }
-  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
   // (수정 없음) 관리자용 컨트롤 함수 (토글)
   // 공개/비공개 토글
@@ -315,7 +305,7 @@ class _EventChallengeDetailScreenState
     try {
       // 'endDate'만 '지금'으로 당겨서 백엔드 스케줄러(Part 1)가 집계하도록 합니다.
       await eventDoc.reference.update({
-        'endDate': Timestamp.now(), // 👈 종료 시간만 지금으로 설정
+        'endDate': Timestamp.now(),
       });
       _showCustomSnackBar('이벤트가 종료되었습니다. 10분 내로 집계가 시작됩니다.');
     } catch (e) {
@@ -354,7 +344,7 @@ class _EventChallengeDetailScreenState
       final HttpsCallable callable =
       _functions.httpsCallable('deleteEventChallenge');
       final result = await callable.call<Map<String, dynamic>>(
-        {'eventId': eventDoc.id}, // 👈 eventId를 파라미터로 전달
+        {'eventId': eventDoc.id},
       );
 
       if (mounted) {
@@ -403,9 +393,7 @@ class _EventChallengeDetailScreenState
                 final eventDoc = eventSnapshot.data!;
                 final data = eventDoc.data() as Map<String, dynamic>;
                 final bool isPublic = data['isRankingPublic'] ?? true;
-                // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
                 final String status = data['status'] ?? 'active';
-                // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
                 return _isDeleting
                     ? Padding(
@@ -434,27 +422,25 @@ class _EventChallengeDetailScreenState
                       _deleteEvent(eventDoc);
                     }
                   },
-                  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
                   itemBuilder: (BuildContext context) => [
                     PopupMenuItem(
                       value: 'togglePublic',
                       child: Text(
                           isPublic ? '랭킹 비공개로' : '랭킹 공개로'),
                     ),
-                    if (status == 'active') // 👈 'active'일 때만 조기 종료 표시
+                    if (status == 'active')
                       PopupMenuItem(
                         value: 'endEvent',
                         child: Text('이벤트 조기 종료',
                             style: TextStyle(color: Colors.red)),
                       ),
-                    if (status != 'calculating') // 👈 'calculating'이 아닐 때만 삭제 표시
+                    if (status != 'calculating')
                       PopupMenuItem(
                         value: 'deleteEvent',
                         child: Text('이벤트 삭제',
                             style: TextStyle(color: Colors.red)),
                       ),
                   ],
-                  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
                 );
               }
           ),
@@ -485,17 +471,15 @@ class _EventChallengeDetailScreenState
               data['participationDeadlineDate'] ?? Timestamp.now();
           final String rewardInfo = data['rewardInfo'] ?? '보상 정보 없음';
           final bool isPublic = data['isRankingPublic'] ?? true;
-          // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
           final String status = data['status'] ?? 'active';
           final bool isEnded = status == 'ended';
           final bool isCalculating = status == 'calculating';
-          // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
           final int daysLeft =
               endDate.toDate().difference(DateTime.now()).inDays;
           final bool canJoin =
               DateTime.now().isBefore(deadlineDate.toDate()) &&
-                  status == 'active'; // 👈 'active' 상태일 때만 참여 가능
+                  status == 'active';
 
           return SingleChildScrollView(
             child: Padding(
@@ -541,16 +525,11 @@ class _EventChallengeDetailScreenState
 
                   SizedBox(height: 24),
 
-                  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-                  // 정보 카드 (isCalculating 전달)
                   _buildInfoCard(data, isEnded, isCalculating, daysLeft, canJoin),
-                  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
                   // 참여 버튼
                   SizedBox(height: 24),
-                  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-                  _buildParticipationButton(eventDoc, canJoin, status), // 👈 status 전달
-                  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
+                  _buildParticipationButton(eventDoc, canJoin, status),
 
                   // 보상 안내
                   SizedBox(height: 24),
@@ -562,15 +541,12 @@ class _EventChallengeDetailScreenState
                     ),
                   ),
 
-                  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-                  // 당첨자 안내 (종료된 경우)
-                  if (isEnded) // 👈 'ended'일 때만 표시 ('calculating'일 땐 숨김)
+                  if (isEnded)
                     _buildWinnersCard(data),
-                  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
                   // 랭킹 (공개 설정된 경우)
                   if (isPublic || _isAdmin)
-                    _buildRankingSection(eventDoc.reference, isPublic, isCalculating), // 👈 isCalculating 전달
+                    _buildRankingSection(eventDoc.reference, isPublic, isCalculating),
 
                   SizedBox(height: 20), // 하단 여백
 
@@ -583,11 +559,8 @@ class _EventChallengeDetailScreenState
     );
   }
 
-  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-  // 정보 카드 위젯 (isCalculating 추가)
   Widget _buildInfoCard(Map<String, dynamic> data, bool isEnded,
       bool isCalculating, int daysLeft, bool canJoin) {
-    // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
     final int limit = data['participantLimit'] ?? 0;
     final int count = data['participantCount'] ?? 0;
     final int duration = data['duration'] ?? 0;
@@ -606,59 +579,53 @@ class _EventChallengeDetailScreenState
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EventChallengeInfoScreen(), // 👈 새 페이지로 이동
+              builder: (context) => EventChallengeInfoScreen(),
             ),
           );
         },
       ),
       child: Column(
         children: [
-          // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-          // 1. 이벤트 상태 행 추가
           _infoRow(
             isCalculating
-                ? Icons.sync // 집계 중 아이콘
+                ? Icons.sync
                 : (isEnded
-                ? Icons.check_circle_outline // 종료 아이콘
-                : Icons.run_circle_outlined), // 진행 중 아이콘
+                ? Icons.check_circle_outline
+                : Icons.run_circle_outlined),
             '이벤트 상태',
             isCalculating
-                ? '순위 집계 중' // 👈 [수정] (약 1시간 소요) 삭제
-                : (isEnded ? '종료됨' : '진행 중'), // 종료/진행 텍스트
-            highlight: isCalculating, // '집계 중'일 때 강조
+                ? '순위 집계 중'
+                : (isEnded ? '종료됨' : '진행 중'),
+            highlight: isCalculating,
           ),
-          // 2. 기존 행들 (폰트 사이즈 수정 가능하도록 valueFontSize 추가)
           _infoRow(Icons.calendar_today_outlined, '이벤트 기간',
               '${formatter.format(startDate.toDate())} ~ ${formatter.format(endDate.toDate())} ($duration일)',
-              valueFontSize: 13.0), // 👈 여기서 크기 조절 (기본값은 15.0)
+              valueFontSize: 13.0),
           _infoRow(
               Icons.people_alt_outlined,
               '참여 인원',
               limit > 0
                   ? '$count / $limit 명'
                   : '$count 명'),
-          // 3. 남은 기간 (집계 중 반영)
           _infoRow(
               Icons.hourglass_bottom_outlined,
               '남은 기간',
               isEnded
                   ? '종료됨'
                   : (isCalculating
-                  ? '순위 집계 중' // 👈 [수정]
+                  ? '순위 집계 중'
                   : (daysLeft >= 0 ? 'D-$daysLeft' : '종료됨'))),
-          // 4. 참여 마감 (집계 중 반영)
           _infoRow(
               Icons.timer_off_outlined,
               '참여 마감',
               isEnded
                   ? '마감됨'
                   : (isCalculating
-                  ? '순위 집계 중' // 👈 [수정]
+                  ? '순위 집계 중'
                   : (canJoin
                   ? '종료 $deadlineDays일 전 (${formatter.format(data['participationDeadlineDate'].toDate())})'
                   : '마감됨')),
               highlight: !canJoin && !isEnded && !isCalculating),
-          // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
         ],
       ),
     );
@@ -781,8 +748,6 @@ class _EventChallengeDetailScreenState
     );
   }
 
-  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-  // 랭킹 섹션 위젯 (isCalculating 추가)
   Widget _buildRankingSection(DocumentReference eventRef, bool isPublic, bool isCalculating) {
     return _buildSectionCard(
       title: '📊 참여도 랭킹',
@@ -799,7 +764,7 @@ class _EventChallengeDetailScreenState
                         color: Colors.grey[600], size: 30),
                     SizedBox(height: 8),
                     Text(
-                      '이벤트가 종료되어 순위 집계 중입니다.\n잠시 후 순위 및 당첨자가 공개됩니다.', // 👈 [수정] (약 1시간 후) 삭제
+                      '이벤트가 종료되어 순위 집계 중입니다.\n잠시 후 순위 및 당첨자가 공개됩니다.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey[700]),
                     ),
@@ -836,13 +801,13 @@ class _EventChallengeDetailScreenState
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return Padding( // 👈 [디자인 수정] 로딩 시 패딩 추가
+                  return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
                 if (snapshot.data!.docs.isEmpty) {
-                  return Padding( // 👈 [디자인 수정] 비어있을 때 패딩 추가
+                  return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Center(child: Text('아직 참여자가 없습니다.', style: TextStyle(color: Colors.grey[600]))),
                   );
@@ -850,7 +815,6 @@ class _EventChallengeDetailScreenState
 
                 final participants = snapshot.data!.docs;
 
-                // 👈 [디자인 수정] ListView 대신 Column + ListTile 사용 (스크롤 충돌 없음)
                 return Column(
                   children: List.generate(participants.length, (index) {
                     final data =
@@ -861,7 +825,7 @@ class _EventChallengeDetailScreenState
                     (data['totalDistance'] as num? ?? 0.0).toDouble();
 
                     return ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 4.0), // 👈 [디자인 수정]
+                      contentPadding: EdgeInsets.symmetric(horizontal: 4.0),
                       leading: Text(
                         '${index + 1}',
                         style: TextStyle(
@@ -908,22 +872,21 @@ class _EventChallengeDetailScreenState
       ),
     );
   }
-  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
   // (수정 없음) 공통 섹션 카드 UI (titleTrailingWidget 추가)
   Widget _buildSectionCard({
     required String title,
-    Widget? titleTrailingWidget, // 👈 [신규] 타이틀 옆에 붙을 위젯
+    Widget? titleTrailingWidget,
     required Widget child,
   }) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 8.0), // 👈 상단 마진 줄임
+      margin: const EdgeInsets.only(top: 8.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-          color: Colors.white, // 👈 흰색 배경
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!) // 👈 옅은 테두리
+          border: Border.all(color: Colors.grey[200]!)
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -937,12 +900,12 @@ class _EventChallengeDetailScreenState
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black), // 👈 검은색
+                    color: Colors.black),
               ),
-              if (titleTrailingWidget != null) titleTrailingWidget, // 👈 [신규]
+              if (titleTrailingWidget != null) titleTrailingWidget,
             ],
           ),
-          Divider(height: 24, thickness: 0.5, color: Colors.grey[300]), // 👈 옅은 구분선
+          Divider(height: 24, thickness: 0.5, color: Colors.grey[300]),
           child,
         ],
       ),
@@ -951,11 +914,11 @@ class _EventChallengeDetailScreenState
 
   // (수정됨) 공통 정보 행 UI
   Widget _infoRow(IconData icon, String title, String value,
-      {bool highlight = false, double valueFontSize = 15.0}) { // 👈 valueFontSize 추가 (기본 15)
+      {bool highlight = false, double valueFontSize = 15.0}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // 👈 Center로 변경
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.grey[600], size: 20),
           SizedBox(width: 12),
@@ -969,9 +932,9 @@ class _EventChallengeDetailScreenState
               value,
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontSize: valueFontSize, // 👈 여기서 크기 조절
-                fontWeight: FontWeight.w600, // 👈 Semi-bold
-                color: highlight ? Colors.red.shade600 : Colors.black87, // 👈 색상 변경
+                fontSize: valueFontSize,
+                fontWeight: FontWeight.w600,
+                color: highlight ? Colors.red.shade600 : Colors.black87,
               ),
             ),
           ),

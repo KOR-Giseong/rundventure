@@ -1,7 +1,4 @@
-// [전체 코드] callable.js
-
 // =================================================================================================
-// [ callable.js ] - 앱에서 직접 호출하는 함수 (onCall) 모음
 // =================================================================================================
 
 // --- 1. 필요한 모듈 임포트 ---
@@ -13,7 +10,7 @@ const functions = require("firebase-functions");
 const {
   sendNotificationToUsers,
   deleteDocumentsInBatch,
-  deleteCollection, // ⭐️ eventChallenges 삭제 시 사용
+  deleteCollection,
 } = require("./helpers.js");
 
 // --- 3. 전역 인스턴스 및 상수 ---
@@ -53,12 +50,12 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       functions.logger.warn(`Firestore users 문서 없음: ${email}`);
     }
 
-    // --- 0. [신규] 채팅방 삭제를 위해 친구 목록 미리 조회 ---
+    // --- 0. 채팅방 삭제를 위해 친구 목록 미리 조회 ---
     functions.logger.info(`[진행] ${email} 사용자의 친구 목록 조회 (채팅방 삭제용)`);
     const friendsSnapshot = await firestore.collection(`users/${email}/friends`).get();
     const friendEmails = friendsSnapshot.docs.map(doc => doc.id);
     functions.logger.info(` - ${friendEmails.length}명의 친구 확인.`);
-    // --- [신규] 조회 완료 ---
+    // --- 조회 완료 ---
 
 
     // --- 1. Delete Firestore Subcollections FIRST ---
@@ -66,10 +63,8 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
     const subCollectionsPaths = [
       `users/${email}/activeQuests`,
       `users/${email}/completedQuestsLog`,
-      // ▼▼▼▼▼ [친구 기능] 1. 계정 삭제 시 친구 관련 데이터 삭제 ▼▼▼▼▼
       `users/${email}/friends`, // 내 친구 목록
       `users/${email}/friendRequests`, // 내가 받은 친구 요청
-      // ▲▲▲▲▲ [친구 기능] 1. 계정 삭제 시 친구 관련 데이터 삭제 ▲▲▲▲▲
       `notifications/${email}/items`,
       `ghostRunRecords/${email}/records`,
       `userRunningGoals/${email}/dailyGoals`,
@@ -159,7 +154,6 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       }
     }));
 
-    // 🔥🔥🔥 [신규 추가] 사용자가 '참여'한 챌린지 목록에서 해당 사용자 제거 🔥🔥🔥
     const participationQuery = firestore.collection("challenges").where("participants", "array-contains", email);
     contentDeletionPromises.push(participationQuery.get().then(async (snapshot) => {
       if (snapshot.empty) {
@@ -175,8 +169,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
         const data = doc.data();
         const newParticipantMap = data.participantMap || {};
 
-        // participantMap에서 사용자 이메일 키(예: "ghdrltjd0423@naver.com") 제거
-        // 이 방식은 이메일에 '.'이 있어도 안전합니다.
+
         delete newParticipantMap[email];
 
         batch.update(doc.ref, {
@@ -199,9 +192,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       functions.logger.info(` - ${count}개의 챌린지에서 참여자 정보(participants, participantMap) 삭제 완료.`);
       return count;
     }).catch(err => functions.logger.error("챌린지 참여 목록 삭제 중 오류:", err)));
-    // 🔥🔥🔥 [신규 추가 끝] 🔥🔥🔥
 
-    // ▼▼▼▼▼ [친구 기능] 2. 친구 목록 및 요청에서 나를 삭제 (Collection Group) ▼▼▼▼▼
 
     // 2-1. 다른 사용자의 'friends' 목록에서 나를 삭제
     const friendsQuery = firestore.collectionGroup("friends").where("email", "==", email);
@@ -219,10 +210,8 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       );
     }).catch(err => functions.logger.error("친구 요청(CollectionGroup) 삭제 중 오류:", err)));
 
-    // ▲▲▲▲▲ [친구 기능] 2. 친구 목록 및 요청에서 나를 삭제 (Collection Group) ▲▲▲▲▲
 
 
-    // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 (채팅방 삭제 로직 추가) ✨✨✨ ] ▼▼▼▼▼
     // 3. 이 사용자와 연결된 모든 채팅방 및 메시지 삭제 (0번에서 조회한 friendEmails 사용)
     contentDeletionPromises.push((async () => {
       if (friendEmails.length === 0) {
@@ -236,7 +225,7 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       for (const friendEmail of friendEmails) {
         // chatRoomId 계산
         let chatRoomId;
-        // ❗️[수정] Javascript에서는 compareTo 대신 문자열 비교(>) 사용
+        // Javascript에서는 compareTo 대신 문자열 비교(>) 사용
         if (email > friendEmail) { // email이 탈퇴하는 본인 이메일
           chatRoomId = `${friendEmail}_${email}`;
         } else {
@@ -266,7 +255,6 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, m
       functions.logger.info(` - 총 ${deletedChatCount}개의 채팅방 및 하위 메시지 삭제 완료.`);
       return deletedChatCount;
     })());
-    // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 (채팅방 삭제 로직 추가) ✨✨✨ ] ▲▲▲▲▲
 
 
     await Promise.all(contentDeletionPromises); // 모든 콘텐츠 삭제가 끝날 때까지 기다림
@@ -323,7 +311,6 @@ const sendNotificationToAllUsers = onCall({ region: "asia-northeast3" }, async (
   }
 });
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 (신규 함수 1/2) ⭐️⭐️⭐️ ] ▼▼▼▼▼
 /**
  * (신규) 특정 사용자 1명에게 알림을 전송합니다. (관리자용)
  */
@@ -361,7 +348,7 @@ const sendNotificationToUser = onCall({ region: "asia-northeast3" }, async (requ
       .doc(); // 자동 ID
 
     await notificationRef.set({
-      type: "admin_personal", // 👈 [신규] 관리자 개별 알림 타입
+      type: "admin_personal",
       title: title, // 관리자가 입력한 제목
       message: message, // 관리자가 입력한 내용
       timestamp: timestamp,
@@ -397,14 +384,13 @@ const sendNotificationToUser = onCall({ region: "asia-northeast3" }, async (requ
     throw new HttpsError("internal", "알림 전송 중 오류가 발생했습니다.");
   }
 });
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 (신규 함수 1/2) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 
 // (3)
 const setAdminRole = onCall({ region: "asia-northeast3" }, async (request) => {
   const callerEmail = request.auth?.token?.email;
   const callerClaims = request.auth?.token;
-  // ✅ 슈퍼 관리자도 권한 부여 가능하도록 수정
+ 
   const isSuperAdmin = callerEmail === SUPER_ADMIN_EMAIL || callerClaims?.role === "super_admin";
   const isGeneralAdmin = callerClaims?.role === "general_admin";
 
@@ -431,7 +417,7 @@ const setAdminRole = onCall({ region: "asia-northeast3" }, async (request) => {
     throw new HttpsError("invalid-argument", "이메일과 역할 데이터는 필수입니다.");
   }
 
-  // ✅ 'super_admin' 역할 추가
+ 
   const validRoles = ['general_admin', 'admin', 'super_admin'];
   if (!validRoles.includes(newRole)) {
     throw new HttpsError("invalid-argument", `잘못된 역할입니다. 유효한 역할: ${validRoles.join(", ")}`);
@@ -479,7 +465,7 @@ const setAdminRole = onCall({ region: "asia-northeast3" }, async (request) => {
 const removeAdminRole = onCall({ region: "asia-northeast3" }, async (request) => {
   const callerEmail = request.auth?.token?.email;
   const callerClaims = request.auth?.token;
-  // ✅ 슈퍼 관리자도 권한 해제 가능하도록 수정
+ 
   const isSuperAdmin = callerEmail === SUPER_ADMIN_EMAIL || callerClaims?.role === "super_admin";
   const isGeneralAdmin = callerClaims?.role === "general_admin";
 
@@ -553,7 +539,7 @@ const removeAdminRole = onCall({ region: "asia-northeast3" }, async (request) =>
 // (5)
 const setSuperAdminRole = onCall({ region: "asia-northeast3" }, async (request) => {
   const userEmail = request.auth?.token?.email;
-  // ✅ 함수 호출자의 역할도 확인 (슈퍼 관리자만 실행 가능)
+ 
   const callerClaims = request.auth?.token;
   const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL || callerClaims?.role === "super_admin";
 
@@ -600,7 +586,7 @@ const clearAdminChat = onCall({ region: "us-central1", timeoutSeconds: 540, memo
     throw new HttpsError("unauthenticated", "인증이 필요합니다.");
   }
   const claims = request.auth.token;
-  // ✅ 슈퍼 관리자 또는 일반 관리자 권한 확인
+ 
   const isSuperAdmin = claims.email === SUPER_ADMIN_EMAIL || claims.role === "super_admin";
   const isGeneralAdmin = claims.role === "general_admin";
 
@@ -628,7 +614,7 @@ const clearAdminChat = onCall({ region: "us-central1", timeoutSeconds: 540, memo
 // (7)
 const designateAsMainAnnouncement = onCall({ region: "asia-northeast3" }, async (request) => {
   const claims = request.auth?.token;
-  // ✅ isAdmin 클레임 존재 여부 확인
+ 
   if (!claims || !claims.isAdmin) {
     throw new HttpsError('permission-denied', '관리자만 이 기능을 사용할 수 있습니다.');
   }
@@ -659,7 +645,7 @@ const designateAsMainAnnouncement = onCall({ region: "asia-northeast3" }, async 
 // (8)
 const removeMainAnnouncement = onCall({ region: "asia-northeast3" }, async (request) => {
   const claims = request.auth?.token;
-  // ✅ isAdmin 클레임 존재 여부 확인
+ 
   if (!claims || !claims.isAdmin) {
     throw new HttpsError('permission-denied', '관리자만 이 기능을 사용할 수 있습니다.');
   }
@@ -691,7 +677,7 @@ const removeMainAnnouncement = onCall({ region: "asia-northeast3" }, async (requ
 });
 
 // (9)
-const sendFriendRequest = onCall({ region: "asia-northeast3" }, async (request) => { // ⭐️ [수정] enforceAppCheck 제거됨
+const sendFriendRequest = onCall({ region: "asia-northeast3" }, async (request) => {
   // 1. 인증된 사용자인지 확인
   if (!request.auth) {
     throw new HttpsError(
@@ -717,7 +703,6 @@ const sendFriendRequest = onCall({ region: "asia-northeast3" }, async (request) 
     );
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 수정: 친구 수 제한 (30명) 로직 추가 ✨✨✨ ] ▼▼▼▼▼
   // 관리자 여부 확인 (슈퍼 관리자 또는 일반 관리자)
   const isAdmin = request.auth.token.email === SUPER_ADMIN_EMAIL ||
                   request.auth.token.role === "super_admin" ||
@@ -735,7 +720,6 @@ const sendFriendRequest = onCall({ region: "asia-northeast3" }, async (request) 
       );
     }
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 수정: 친구 수 제한 (30명) 로직 추가 ✨✨✨ ] ▲▲▲▲▲
 
   // 2. 내 닉네임 가져오기
   const myProfileSnap = await db.collection("users").doc(myEmail).get();
@@ -769,7 +753,7 @@ const sendFriendRequest = onCall({ region: "asia-northeast3" }, async (request) 
     .doc(recipientEmail)
     .collection("items")
     .add({
-      type: "friend_request", // ✅ 새로운 알림 타입
+      type: "friend_request",
       title: "새로운 친구 요청",
       message: notificationMessage,
       senderEmail: myEmail,
@@ -800,7 +784,6 @@ const acceptFriendRequest = onCall({ region: "asia-northeast3" }, async (request
     );
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 수정: 친구 수 제한 (30명) 로직 추가 ✨✨✨ ] ▼▼▼▼▼
   // 관리자 여부 확인 (슈퍼 관리자 또는 일반 관리자)
   const isAdmin = request.auth.token.email === SUPER_ADMIN_EMAIL ||
                   request.auth.token.role === "super_admin" ||
@@ -818,7 +801,6 @@ const acceptFriendRequest = onCall({ region: "asia-northeast3" }, async (request
       );
     }
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 수정: 친구 수 제한 (30명) 로직 추가 ✨✨✨ ] ▲▲▲▲▲
 
   // 1. 내 닉네임 및 상대방 닉네임/프로필 이미지 가져오기
   const myProfileSnap = await db.collection("users").doc(myEmail).get();
@@ -950,7 +932,7 @@ const rejectOrRemoveFriend = onCall({ region: "asia-northeast3", timeoutSeconds:
     .doc(myEmail);
   batch.delete(sentRequestRef);
 
-  // ❗️[수정]
+ 
   // 5. 친구/요청 삭제 배치를 먼저 커밋합니다.
   try {
     await batch.commit();
@@ -961,7 +943,6 @@ const rejectOrRemoveFriend = onCall({ region: "asia-northeast3", timeoutSeconds:
   }
 
 
-  // ▼▼▼▼▼ [ ✨ 채팅방 완전 삭제 로직 (수정됨) ✨ ] ▼▼▼▼▼
   // 6. userChats 문서 ID 계산
   let chatRoomId;
   if (myEmail > friendEmail) {
@@ -973,7 +954,7 @@ const rejectOrRemoveFriend = onCall({ region: "asia-northeast3", timeoutSeconds:
   const chatRoomRef = db.collection("userChats").doc(chatRoomId);
   const messagesPath = `userChats/${chatRoomId}/messages`;
 
-  // ❗️[수정]
+ 
   // 7. 하위 'messages' 컬렉션을 재귀적으로 삭제합니다. (deleteCollection 헬퍼 사용)
   // 8. 하위 컬렉션 삭제 후, 상위 채팅방 문서를 삭제합니다.
   try {
@@ -987,7 +968,6 @@ const rejectOrRemoveFriend = onCall({ region: "asia-northeast3", timeoutSeconds:
     // 친구 삭제는 이미 완료되었으므로 오류를 로깅만 하고 무시합니다.
     functions.logger.warn(`채팅방(${chatRoomId}) 삭제 중 경고(무시됨):`, error.message);
   }
-  // ▲▲▲▲▲ [ ✨ 채팅방 완전 삭제 로직 (수정됨) ✨ ] ▲▲▲▲▲
 
 
   functions.logger.info(`친구 삭제/거절 및 채팅방 완전 정리 성공: ${myEmail} - ${friendEmail}`);
@@ -1087,7 +1067,7 @@ const searchUsersWithStatus = onCall({ region: "asia-northeast3", memory: "512Mi
     // (기존 Dart 코드와 동일하게 'isEqualTo' 사용)
     const querySnapshot = await db.collection("users")
         .where("nickname", "==", trimmedSearchTerm)
-        .limit(20) // 👈 한 번에 20명만 반환 (악의적 동명 닉네임 검색 방지)
+        .limit(20)
         .get();
 
     if (querySnapshot.empty) {
@@ -1129,7 +1109,7 @@ const searchUsersWithStatus = onCall({ region: "asia-northeast3", memory: "512Mi
         email: foundUserEmail,
         nickname: userData.nickname || "알 수 없음",
         profileImageUrl: userData.profileImageUrl || null,
-        friendshipStatus: status // 👈 서버가 모든 상태를 결정해서 전달
+        friendshipStatus: status
       });
     }
 
@@ -1189,7 +1169,6 @@ const deleteEventChallenge = onCall({ region: "asia-northeast3", timeoutSeconds:
 });
 
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ (15) 닉네임 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 /**
  * (15) [신규] 친구에게 러닝 대결을 신청합니다. (실시간)
  * (호출: FriendBattleListScreen)
@@ -1219,16 +1198,14 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
   const opponentNickname = opponentData.nickname || "상대방";
   const opponentProfileUrl = opponentData.profileImageUrl || null;
 
-  // ▼▼▼▼▼ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▼▼▼▼▼
-  const opponentFcmToken = opponentData.fcmToken; // 👈 토큰 가져오기
-  // ▲▲▲▲▲ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▲▲▲▲▲
+  const opponentFcmToken = opponentData.fcmToken;
 
   // 3. 내 프로필 정보 조회 (닉네임, 프로필 사진 등)
   const myUserDoc = await db.collection("users").doc(myEmail).get();
   if (!myUserDoc.exists) {
     throw new HttpsError("not-found", "내 프로필이 없습니다. (users doc)");
   }
-  // ⭐️ [수정] Auth 토큰 대신 Firestore 'users' 문서에서 닉네임 조회
+ 
   const myNickname = myUserDoc.data().nickname || "알 수 없음";
   const myProfileUrl = myUserDoc.data().profileImageUrl || null;
 
@@ -1242,7 +1219,7 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
     await battleRef.set({
       status: "pending", // 'pending', 'accepted', 'rejected', 'running', 'finished', 'cancelled'
       challengerEmail: myEmail,
-      challengerNickname: myNickname, // 👈 수정된 닉네임 사용
+      challengerNickname: myNickname,
       challengerProfileUrl: myProfileUrl,
       challengerStatus: "ready", // 'ready', 'running', 'finished'
 
@@ -1253,9 +1230,7 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
 
       targetDistanceKm: targetDistanceKm,
       createdAt: timestamp,
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 핵심 수정: participants 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-      participants: [myEmail, opponentEmail], // 👈 리스트 조회를 위해 필수
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 핵심 수정: participants 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
+      participants: [myEmail, opponentEmail],
     });
 
     // 5. 상대방에게 알림 전송
@@ -1264,16 +1239,15 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
       .doc(opponentEmail)
       .collection("items")
       .add({
-        type: "battle_request", // 👈 [신규] 알림 타입
-        title: `${myNickname} 님이 대결을 신청했습니다!`, // 👈 수정된 닉네임 사용
+        type: "battle_request",
+        title: `${myNickname} 님이 대결을 신청했습니다!`,
         message: `[${targetDistanceKm}km] 러닝 대결을 수락하시겠습니까?`,
-        battleId: battleId, // 👈 [신규] 알림 탭 시 이동할 battleId
+        battleId: battleId,
         senderEmail: myEmail,
         isRead: false,
         timestamp: timestamp,
       });
 
-    // ▼▼▼▼▼ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▼▼▼▼▼
     if (opponentFcmToken) {
         try {
             await admin.messaging().send({
@@ -1289,7 +1263,6 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
             functions.logger.error(`FCM 전송 실패 (${opponentEmail}):`, e);
         }
     }
-    // ▲▲▲▲▲ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▲▲▲▲▲
 
     functions.logger.info(`친구 대결 신청 성공: ${myEmail} -> ${opponentEmail} (BattleID: ${battleId})`);
     return { success: true, battleId: battleId };
@@ -1299,7 +1272,6 @@ const sendFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (req
     throw new HttpsError("internal", "대결 신청 중 오류가 발생했습니다.");
   }
 });
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ (15) 닉네임 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 // (16)
 const respondToFriendBattleRequest = onCall({ region: "asia-northeast3" }, async (request) => {
@@ -1337,8 +1309,8 @@ const respondToFriendBattleRequest = onCall({ region: "asia-northeast3" }, async
     // 4. 응답에 따라 상태 업데이트
     if (response === "accepted") {
       await battleRef.update({
-        status: "accepted", // 👈 'accepted' (양쪽 다 로비에 있음)
-        opponentStatus: "ready", // 👈 상대방(나)도 준비 완료
+        status: "accepted",
+        opponentStatus: "ready",
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       // (TODO: 도전자에게 '수락됨' 알림을 보낼 수 있음)
@@ -1347,7 +1319,7 @@ const respondToFriendBattleRequest = onCall({ region: "asia-northeast3" }, async
 
     } else if (response === "rejected") {
       await battleRef.update({
-        status: "rejected", // 👈 'rejected' (거절됨)
+        status: "rejected",
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       // (TODO: 도전자에게 '거절됨' 알림을 보낼 수 있음)
@@ -1402,7 +1374,7 @@ const cancelFriendBattle = onCall({ region: "asia-northeast3" }, async (request)
     // (이미 'rejected'나 'cancelled'여도 덮어쓰기)
     await battleRef.update({
       status: "cancelled",
-      cancellerEmail: myEmail, // 👈 [신규] 누가 취소했는지 기록
+      cancellerEmail: myEmail,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -1417,7 +1389,6 @@ const cancelFriendBattle = onCall({ region: "asia-northeast3" }, async (request)
 });
 
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ (18) 닉네임 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 /**
  * (18) [신규] 친구에게 '오프라인(비동기)' 대결을 신청합니다.
  * (호출: (신규) AsyncBattleCreateScreen)
@@ -1429,11 +1400,9 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
   }
   const myEmail = request.auth.token.email;
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (1/3) ⭐️⭐️⭐️ ] ▼▼▼▼▼
   // const { opponentEmail, targetDistanceKm } = request.data;
   // 클라이언트가 보낸 'challengerNickname'도 받음
   const { opponentEmail, targetDistanceKm, challengerNickname } = request.data;
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (1/3) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   if (!opponentEmail || !targetDistanceKm) {
     throw new HttpsError("invalid-argument", "상대방 이메일과 목표 거리가 필요합니다.");
@@ -1452,9 +1421,7 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
   const opponentNickname = opponentData.nickname || "상대방";
   const opponentProfileUrl = opponentData.profileImageUrl || null;
 
-  // ▼▼▼▼▼ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▼▼▼▼▼
-  const opponentFcmToken = opponentData.fcmToken; // 👈 토큰 가져오기
-  // ▲▲▲▲▲ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▲▲▲▲▲
+  const opponentFcmToken = opponentData.fcmToken;
 
   // 3. 내 프로필 정보 조회
   const myUserDoc = await db.collection("users").doc(myEmail).get();
@@ -1462,10 +1429,8 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
     throw new HttpsError("not-found", "내 프로필이 없습니다. (users doc)");
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (2/3) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // ⭐️ [수정] 클라이언트가 보낸 'challengerNickname'을 우선 사용, 없으면 DB 조회, 그것도 없으면 "알 수 없음"
+ 
   const myNickname = challengerNickname || myUserDoc.data().nickname || "알 수 없음";
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (2/3) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   const myProfileUrl = myUserDoc.data().profileImageUrl || null;
 
@@ -1479,7 +1444,7 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
     await battleRef.set({
       status: "pending", // 'pending' (도전자 뛸 차례), 'running' (상대방 뛸 차례), 'finished', 'cancelled'
       challengerEmail: myEmail,
-      challengerNickname: myNickname, // 👈 수정된 닉네임 사용
+      challengerNickname: myNickname,
       challengerProfileUrl: myProfileUrl,
       challengerRunData: null, // 도전자가 뛰면 여기에 기록 저장
 
@@ -1499,10 +1464,8 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
       .doc(opponentEmail)
       .collection("items")
       .add({
-        type: "async_battle_request", // 👈 [신규] 알림 타입
-        // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (3/3) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-        title: `${myNickname} 님이 오프라인 대결을 신청했습니다!`, // 👈 수정된 닉네임 사용
-        // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (3/3) ⭐️⭐️⭐️ ] ▲▲▲▲▲
+        type: "async_battle_request",
+        title: `${myNickname} 님이 오프라인 대결을 신청했습니다!`,
         message: `[${targetDistanceKm}km] 러닝 대결을 수락하시겠습니까?`,
         battleId: battleId,
         senderEmail: myEmail,
@@ -1510,7 +1473,6 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
         timestamp: timestamp,
       });
 
-    // ▼▼▼▼▼ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▼▼▼▼▼
     if (opponentFcmToken) {
         try {
             await admin.messaging().send({
@@ -1526,10 +1488,9 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
             functions.logger.error(`FCM 전송 실패 (${opponentEmail}):`, e);
         }
     }
-    // ▲▲▲▲▲ [ ⭐️ 수정: FCM 푸시 알림 추가 ⭐️ ] ▲▲▲▲▲
 
     functions.logger.info(`오프라인 대결 신청 성공: ${myEmail} -> ${opponentEmail} (AsyncBattleID: ${battleId})`);
-    // [수정] 도전자(나)가 바로 러닝 페이지로 이동할 수 있도록 battleId를 반환
+    // 도전자(나)가 바로 러닝 페이지로 이동할 수 있도록 battleId를 반환
     return { success: true, battleId: battleId };
 
   } catch (error) {
@@ -1537,9 +1498,7 @@ const sendAsyncBattleRequest = onCall({ region: "asia-northeast3" }, async (requ
     throw new HttpsError("internal", "대결 신청 중 오류가 발생했습니다.");
   }
 });
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ (18) 닉네임 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ (19) 닉네임 및 무승부 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB" }, async (request) => {
   // 1. 인증 확인
   if (!request.auth) {
@@ -1547,16 +1506,14 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
   }
   const myEmail = request.auth.token.email;
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (1/3) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // const myNickname = request.auth.token.name || "알 수 없음"; // 👈 (기존)
-  const { battleId, runData, completerNickname } = request.data; // 👈 [수정] completerNickname 받기
+  // const myNickname = request.auth.token.name || "알 수 없음";
+  const { battleId, runData, completerNickname } = request.data;
 
-  // [수정] 클라이언트가 보낸 'completerNickname'을 우선 사용
+  // 클라이언트가 보낸 'completerNickname'을 우선 사용
   const myNickname = completerNickname || request.auth.token.name || "알 수 없음";
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (1/3) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 
-  if (!battleId || !runData || runData.seconds === undefined) { // 👈 undefined 체크 (0초일수도 있으므로)
+  if (!battleId || !runData || runData.seconds === undefined) {
     throw new HttpsError("invalid-argument", "Battle ID와 러닝 기록 데이터가 필요합니다.");
   }
 
@@ -1604,9 +1561,7 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
       };
       otherUserData = battleData.opponentRunData; // (이 시점엔 null이어야 함)
       otherUserEmail = battleData.opponentEmail;
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (2/3) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-      notificationTitle = `${myNickname} 님이 오프라인 대결을 완료했습니다!`; // 👈 수정된 닉네임 사용
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 (2/3) ⭐️⭐️⭐️ ] ▲▲▲▲▲
+      notificationTitle = `${myNickname} 님이 오프라인 대결을 완료했습니다!`;
       notificationMessage = `이제 ${battleData.opponentNickname} 님이 뛸 차례입니다. [${battleData.targetDistanceKm}km]`;
 
     } else {
@@ -1626,12 +1581,11 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
       // (후공일 경우, 승패 판정 후 알림 내용을 덮어쓸 것임)
     }
 
-    // 6. [중요] 상대방 기록(otherUserData)이 있는지 확인 (승패 판정)
+    // 6. 상대방 기록(otherUserData)이 있는지 확인 (승패 판정)
     if (otherUserData != null) {
       // 6-A. 상대방 기록이 있다 = 내가 '후공'이다 = 승패 판정
       functions.logger.info(`[AsyncBattle] ${battleId} 대결의 후공 기록 제출. 승패 판정 시작...`);
 
-      // ▼▼▼▼▼ [ ✨✨✨ 소수점 비교 로직 수정 ✨✨✨ ] ▼▼▼▼▼
       // 소수점(double) 비교를 위해 Number()로 확실하게 변환
       const myTime = Number(myRunData.seconds);
       const otherTime = Number(otherUserData.seconds);
@@ -1641,7 +1595,7 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
       const otherTimeStr = otherTime.toFixed(2);
 
       let winnerEmail, loserEmail, winnerTime, loserTime;
-      let isDraw = false; // 👈 [신규] 무승부 플래그
+      let isDraw = false;
 
       if (myTime < otherTime) { // 내가 이김 (시간이 더 짧음)
         winnerEmail = myEmail;
@@ -1668,7 +1622,6 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
         notificationTitle = `[${battleData.targetDistanceKm}km] 대결 결과: 무승부!`;
         notificationMessage = `두 분 모두 ${myTimeStr}초로 기록이 동일합니다. 무승부입니다!`;
       }
-      // ▲▲▲▲▲ [ ✨✨✨ 소수점 비교 로직 수정 ✨✨✨ ] ▲▲▲▲▲
 
       // 6-B. 승패 판정 결과를 Firestore Batch에 추가
       const batch = db.batch();
@@ -1679,7 +1632,7 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
       updatePayload.loserEmail = loserEmail;
       updatePayload.winnerTime = winnerTime;
       updatePayload.loserTime = loserTime;
-      updatePayload.isDraw = isDraw; // 👈 [신규] 무승부 여부 저장
+      updatePayload.isDraw = isDraw;
       batch.update(battleRef, updatePayload);
 
       // 2. 승자/패자/무승부 사용자 문서 업데이트
@@ -1730,7 +1683,7 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
 
       // 7-A. 상대방에게 '이제 네 차례' 알림 전송 (신규 타입)
       await db.collection("notifications").doc(otherUserEmail).collection("items").add({
-        type: "async_battle_turn", // 👈 [신규] 알림 타입
+        type: "async_battle_turn",
         title: notificationTitle,
         message: notificationMessage,
         battleId: battleId,
@@ -1747,9 +1700,7 @@ const completeAsyncBattle = onCall({ region: "asia-northeast3", memory: "512MiB"
     throw new HttpsError("internal", "대결 기록 제출 중 오류가 발생했습니다.");
   }
 });
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ (19) 닉네임 및 무승부 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ (20) 닉네임 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 const cancelAsyncBattle = onCall({ region: "asia-northeast3" }, async (request) => {
   // 1. 인증 확인
   if (!request.auth) {
@@ -1757,10 +1708,8 @@ const cancelAsyncBattle = onCall({ region: "asia-northeast3" }, async (request) 
   }
   const myEmail = request.auth.token.email;
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // [수정] Firestore에서 닉네임을 조회하도록 로직 변경
-  // const myNickname = request.auth.token.name || "알 수 없음"; // 👈 (기존)
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
+  // Firestore에서 닉네임을 조회하도록 로직 변경
+  // const myNickname = request.auth.token.name || "알 수 없음";
 
   const { battleId } = request.data;
   if (!battleId) {
@@ -1775,11 +1724,9 @@ const cancelAsyncBattle = onCall({ region: "asia-northeast3" }, async (request) 
       throw new HttpsError("not-found", "해당 대결을 찾을 수 없습니다.");
     }
 
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-    // [신규] 내 닉네임을 DB에서 조회
+    // 내 닉네임을 DB에서 조회
     const myUserDoc = await db.collection("users").doc(myEmail).get();
     const myNickname = myUserDoc.data()?.nickname || "알 수 없음";
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     const battleData = battleDoc.data();
 
@@ -1807,9 +1754,7 @@ const cancelAsyncBattle = onCall({ region: "asia-northeast3" }, async (request) 
     await db.collection("notifications").doc(otherUserEmail).collection("items").add({
       type: "async_battle_result", // (결과 알림 타입 재사용)
       title: "오프라인 대결 취소",
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-      message: `${myNickname} 님이 [${battleData.targetDistanceKm}km] 대결을 취소했습니다.`, // 👈 수정된 닉네임 사용
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 오류 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
+      message: `${myNickname} 님이 [${battleData.targetDistanceKm}km] 대결을 취소했습니다.`,
       battleId: battleId,
       isRead: false,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -1824,15 +1769,13 @@ const cancelAsyncBattle = onCall({ region: "asia-northeast3" }, async (request) 
     throw new HttpsError("internal", "대결 취소 중 오류가 발생했습니다.");
   }
 });
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ (20) 닉네임 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 
 // --- 4. 정의한 모든 Callable 함수들을 내보내기(export) ---
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 (신규 함수 2/2) ⭐️⭐️⭐️ ] ▼▼▼▼▼
 module.exports = {
   deleteUserAccount,
   sendNotificationToAllUsers,
-  sendNotificationToUser, // 👈 [신규 추가]
+  sendNotificationToUser,
   setAdminRole,
   removeAdminRole,
   setSuperAdminRole,
@@ -1844,16 +1787,15 @@ module.exports = {
   rejectOrRemoveFriend,
   clearStaleAdminSessions,
   searchUsersWithStatus,
-  deleteEventChallenge, // ⭐️ (14)
+  deleteEventChallenge,
 
-  // ✅ [기존] 친구 대결 (실시간) 함수 3개
-  sendFriendBattleRequest,      // ⭐️ (15)
-  respondToFriendBattleRequest, // ⭐️ (16)
-  cancelFriendBattle,           // ⭐️ (17)
+ 
+  sendFriendBattleRequest,     
+  respondToFriendBattleRequest,
+  cancelFriendBattle,          
 
-  // ✅ [신규 추가] 친구 대결 (오프라인) 함수 3개
-  sendAsyncBattleRequest,       // ⭐️ (18)
-  completeAsyncBattle,          // ⭐️ (19)
-  cancelAsyncBattle,            // ⭐️ (20)
+ 
+  sendAsyncBattleRequest,      
+  completeAsyncBattle,         
+  cancelAsyncBattle,           
 };
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 (신규 함수 2/2) ⭐️⭐️⭐️ ] ▲▲▲▲▲

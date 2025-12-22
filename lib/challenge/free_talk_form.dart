@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-// import 'dart:convert'; // 👈 [제거]
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:http/http.dart' as http; // 👈 [제거]
-import 'package:firebase_storage/firebase_storage.dart'; // 👈 [신규 추가]
+import 'package:firebase_storage/firebase_storage.dart';
 import '../admin/admin_screen.dart';
 import '../admin/utils/admin_permissions.dart';
 
@@ -25,7 +23,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
   bool _showContentHint = true;
   bool _isNotice = false;
 
-  // [수정] 관리자 권한 상태 변수들
   bool _isSuperAdmin = false;
   String _currentUserRole = 'user';
   Map<String, dynamic> _currentAdminPermissions = {};
@@ -34,19 +31,16 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
       _titleController.text.trim().isNotEmpty &&
           _contentController.text.trim().isNotEmpty;
 
-  // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-  bool _isUploading = false; // 업로드 중복 방지
-  // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
+  bool _isUploading = false;
 
   @override
   void initState() {
     super.initState();
     _titleController.addListener(_updateState);
     _contentController.addListener(_updateState);
-    _checkCurrentUserPermissions(); // [수정] 권한 확인 함수 호출
+    _checkCurrentUserPermissions();
   }
 
-  // [수정] 세분화된 관리자 권한 확인 함수
   Future<void> _checkCurrentUserPermissions() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null || user.email == null) return;
@@ -74,7 +68,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
     }
   }
 
-  // [추가] 특정 권한이 있는지 확인하는 헬퍼 함수
   bool _hasPermission(AdminPermission permission) {
     if (_isSuperAdmin || _currentUserRole == 'general_admin') return true;
     return _currentAdminPermissions[permission.name] ?? false;
@@ -98,7 +91,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
     super.dispose();
   }
 
-  // [추가] 디자인이 적용된 커스텀 SnackBar 함수
   void _showCustomSnackBar(String message, {bool isError = false, bool isSuccess = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +110,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
             ),
           ],
         ),
-        // [수정] 성공 스낵바 색상 변경
         backgroundColor: isError ? Colors.redAccent.shade400 : (isSuccess ? Color(0xFFFF9F80) : Colors.black87),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -128,7 +119,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
     );
   }
 
-  // ▼▼▼▼▼ [수정된 함수] _submitPost (Firebase Storage 사용) ▼▼▼▼▼
   void _submitPost() async {
     if (_isUploading) return; // 업로드 중복 방지
 
@@ -144,47 +134,44 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
     }
 
     final String userEmail = user.email!;
-    final String userUid = user.uid; // 👈 Storage 경로에 사용
+    final String userUid = user.uid;
 
-    setState(() => _isUploading = true); // 로딩 시작
+    setState(() => _isUploading = true);
 
     try {
       String imageUrl = '';
       if (_selectedImage != null) {
-        // 1. Firebase Storage에 업로드
-        // (storage.rules에 /freeTalks/{userId}/{fileName} 경로 규칙이 필요합니다)
         final storageRef = FirebaseStorage.instance
             .ref()
-            .child('freeTalks') // 1. freeTalks 폴더
-            .child(userUid)       // 2. {userId} (본인 UID)
-            .child('talk_${DateTime.now().millisecondsSinceEpoch}.jpg'); // 3. {fileName}
+            .child('freeTalks')
+            .child(userUid)
+            .child('talk_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
         UploadTask uploadTask = storageRef.putFile(_selectedImage!);
         TaskSnapshot snapshot = await uploadTask;
-        imageUrl = await snapshot.ref.getDownloadURL(); // 4. 다운로드 URL 가져오기
+        imageUrl = await snapshot.ref.getDownloadURL();
       }
 
       final postData = {
         'userEmail': userEmail,
         'title': _titleController.text,
         'content': _contentController.text,
-        'imageUrl': imageUrl, // Firebase Storage URL
+        'imageUrl': imageUrl,
         'timestamp': FieldValue.serverTimestamp(),
         'isNotice': _hasPermission(AdminPermission.canManageFreeBoard) ? _isNotice : false,
       };
 
       await FirebaseFirestore.instance.collection('freeTalks').add(postData);
 
-      _showCustomSnackBar('게시물이 성공적으로 등록되었습니다.', isSuccess: true); // 성공 스낵바
+      _showCustomSnackBar('게시물이 성공적으로 등록되었습니다.', isSuccess: true);
       if (mounted) Navigator.pop(context);
 
     } catch (e) {
       _showCustomSnackBar('저장 중 오류가 발생했습니다: $e', isError: true);
     } finally {
-      if (mounted) setState(() => _isUploading = false); // 로딩 종료
+      if (mounted) setState(() => _isUploading = false);
     }
   }
-  // ▲▲▲▲▲ [수정된 함수] _submitPost ▲▲▲▲▲
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -195,14 +182,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
       });
     }
   }
-
-  // ▼▼▼▼▼ [제거된 함수] uploadImageToCloudinary ▼▼▼▼▼
-  /*
-  Future<String> uploadImageToCloudinary(File image) async {
-    // ... (Cloudinary 로직 제거됨) ...
-  }
-  */
-  // ▲▲▲▲▲ [제거된 함수] uploadImageToCloudinary ▲▲▲▲▲
 
   void _openPollDialog() {
     showModalBottomSheet(
@@ -223,7 +202,7 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // 👈 키보드 오버플로우 방지
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
         leading: IconButton(
@@ -236,7 +215,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
         elevation: 1,
         centerTitle: true,
         actions: [
-          // [수정] 업로드 중일 때는 버튼 비활성화
           TextButton(
             onPressed: (_isFormValid && !_isUploading) ? _submitPost : null,
             child: _isUploading
@@ -256,16 +234,12 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
           )
         ],
       ),
-      // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-      // 빈 화면 클릭 시 키보드를 내리기 위해 GestureDetector로 감쌉니다.
       body: GestureDetector(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
         },
-        // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
-        child: Column( // 👈 기존 body
+        child: Column(
           children: [
-            // ✨ [디자인 수정] 제목 입력 필드
             Container(
               margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -301,10 +275,9 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
                     ),
                     const Text('공지사항으로 등록'),
                   ],
-                ),
               ),
+            ),
 
-            // ✨ [디자인 수정] 내용 입력 필드
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -316,16 +289,13 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
                 ),
                 child: TextField(
                   controller: _contentController,
-                  enabled: !_isUploading, // 업로드 중 비활성화
+                  enabled: !_isUploading,
                   maxLines: null,
                   expands: true,
-                  // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-                  keyboardType: TextInputType.multiline, // 👈 멀티라인 키보드
-                  textInputAction: TextInputAction.newline,   // 👈 [수정] '완료' 대신 '줄바꿈'으로 변경
-                  // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
                   style: const TextStyle(fontSize: 16),
                   decoration: const InputDecoration(
-                    // ✨ [문구 수정] 경고 메시지 추가
                     hintText: '자유롭게 얘기해보세요.\n\n욕설, 비방 등 부적절한 언어 사용 시 게시물이 삭제되거나 서비스 이용이 제한될 수 있습니다.',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
@@ -340,20 +310,18 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
                 child: Stack(
                   alignment: Alignment.topRight,
                   children: [
-                    Container( // ✅ Container로 감싸서 이미지의 최대 너비를 제한하고 높이를 유연하게 만듭니다.
-                      width: double.infinity, // 부모 너비를 최대로 사용
-                      constraints: const BoxConstraints(maxHeight: 250), // ✅ 최대 높이 설정 (원하는 값으로 조절 가능)
+                    Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxHeight: 250),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey[200], // 이미지가 없는 부분을 채울 배경색 (선택 사항)
+                        color: Colors.grey[200],
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.file(
                           _selectedImage!,
-                          // height: 150, // ❌ [제거] 고정된 높이 대신, 컨테이너의 maxHeight를 따르도록 합니다.
-                          fit: BoxFit.contain, // ✅ [수정] 이미지가 잘리지 않고 전체가 보이도록 변경
-                          // width: double.infinity, // ❌ [제거] Container가 이미 처리합니다.
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -386,12 +354,10 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.camera_alt_outlined, color: Colors.redAccent),
-                    // [수정] 업로드 중일 때 비활성화
                     onPressed: _isUploading ? null : _pickImage,
                   ),
                   IconButton(
                     icon: const Icon(Icons.poll_outlined, color: Colors.blueAccent),
-                    // [수정] 업로드 중일 때 비활성화
                     onPressed: _isUploading ? null : _openPollDialog,
                   ),
                 ],

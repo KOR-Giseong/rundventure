@@ -29,20 +29,17 @@ class TermsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ 1. 제목 수정
             Text(
-              '런드벤처 이용약관', // '런드벤처' -> 'Rundventure'로 통일 (첫 파일 기준)
+              '런드벤처 이용약관',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            // ✅ 2. 시행일 수정 (첫 파일 기준)
             Text(
               '시행일: 2025년 6월 25일',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             SizedBox(height: 24),
 
-            // ✅ 3. 약관 본문 전체 내용 적용
             _buildArticleTitle('제1조 (목적)'),
             _buildArticleBody(
               '이 약관은 런드벤처(이하 "회사")가 제공하는 모바일 애플리케이션(이하 "앱")과 관련된 모든 서비스(이하 "서비스")의 이용조건 및 절차, 이용자와 회사의 권리·의무 및 책임사항 등을 규정함을 목적으로 합니다.',
@@ -67,7 +64,7 @@ class TermsScreen extends StatelessWidget {
                   '  - 러닝 기록 추적 및 통계 제공\n'
                   '  - 사용자 간 챌린지 기능\n'
                   '  - 커뮤니티 게시판\n'
-                  '  - 기타 관련 기능\n\n' // 항목 간 구분을 위해 줄바꿈 추가
+                  '  - 기타 관련 기능\n\n'
                   '② 회사는 서비스의 내용을 변경할 수 있으며, 이 경우 사전에 앱을 통해 공지합니다.',
             ),
             SizedBox(height: 16),
@@ -118,7 +115,6 @@ class TermsScreen extends StatelessWidget {
     );
   }
 
-  // 약관 제목 스타일
   Widget _buildArticleTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -129,7 +125,6 @@ class TermsScreen extends StatelessWidget {
     );
   }
 
-  // 약관 본문 스타일
   Widget _buildArticleBody(String body) {
     return Text(
       body,

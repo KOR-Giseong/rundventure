@@ -24,7 +24,6 @@ class _AdminSupportDashboardScreenState
     _searchController.addListener(() {
       if (mounted) {
         setState(() {
-          // ✅ [수정] trim()을 추가하여 검색어의 앞뒤 공백을 제거합니다.
           _searchQuery = _searchController.text.trim().toLowerCase();
         });
       }
@@ -65,10 +64,8 @@ class _AdminSupportDashboardScreenState
       ),
       body: Column(
         children: [
-          // ▼▼▼▼▼ [신규 추가] 안내 문구 배너 ▼▼▼▼▼
           Container(
             padding: const EdgeInsets.all(12.0),
-            // ✅ [수정] 좌우 패딩을 16으로 설정하여 검색창과 맞춤
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             decoration: BoxDecoration(
               color: Colors.blue[50],
@@ -94,7 +91,6 @@ class _AdminSupportDashboardScreenState
               ],
             ),
           ),
-          // ▲▲▲▲▲ [신규 추가] 안내 문구 배너 ▲▲▲▲▲
 
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -152,15 +148,11 @@ class _AdminSupportDashboardScreenState
                   final nickname =
                   (data['userNickname'] ?? '').toLowerCase();
 
-                  // ▼▼▼▼▼▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼▼▼▼▼▼
-                  // lastMessage(채팅 내용)을 가져옵니다.
                   final String lastMessage =
                   (data['lastMessage'] ?? '').toLowerCase();
 
-                  // 닉네임 *또는* 채팅 내용에 검색어가 포함되어 있는지 확인합니다.
                   return nickname.contains(_searchQuery) ||
                       lastMessage.contains(_searchQuery);
-                  // ▲▲▲▲▲▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲▲▲▲▲▲
 
                 }).toList();
 

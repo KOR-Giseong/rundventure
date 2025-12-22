@@ -12,7 +12,7 @@ class ProfileHeader extends StatelessWidget {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.pop(context), // 뒤로가기 기능 추가
+                onTap: () => Navigator.pop(context),
                 child: Image.asset('assets/images/Back-Navs.png', width: 70, height: 70),
               ),
               const SizedBox(width: 75),
@@ -38,7 +38,7 @@ class ProfileHeader extends StatelessWidget {
           child: ClipOval(
             child: Image.asset(
               'assets/images/user.png',
-              fit: BoxFit.cover, // 이미지를 상자에 맞게 조정
+              fit: BoxFit.cover,
               width: 84,
               height: 84,
             ),

@@ -8,13 +8,9 @@ class GameChallengeSection extends StatelessWidget {
   final double challengeTitleSpacing;
   final double challengeDescriptionSpacing;
 
-  // 텍스트 크기 조절용 파라미터 추가
   final double titleFontSize;
   final double descriptionFontSize;
-
-  // ▼▼▼▼▼ [ ✨ 추가된 부분 ✨ ] ▼▼▼▼▼
-  final bool hasNewNotification; // ✅ 퀘스트/도전과제 알림 상태
-  // ▲▲▲▲▲ [ ✨ 추가된 부분 ✨ ] ▲▲▲▲▲
+  final bool hasNewNotification;
 
   const GameChallengeSection({
     Key? key,
@@ -24,7 +20,7 @@ class GameChallengeSection extends StatelessWidget {
     this.challengeDescriptionSpacing = 120.0,
     this.titleFontSize = 22.0,
     this.descriptionFontSize = 14.0,
-    this.hasNewNotification = false, // ✅ 생성자 기본값
+    this.hasNewNotification = false,
   }) : super(key: key);
 
   @override
@@ -44,22 +40,19 @@ class GameChallengeSection extends StatelessWidget {
               child: _buildGameRunCard(context, cardHeight),
             ),
           ),
-          // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(left: deviceWidth * 0.015),
-              // ✅ Stack으로 감싸서 배지 추가
               child: Stack(
-                clipBehavior: Clip.none, // 카드를 벗어나도 배지가 보이도록
+                clipBehavior: Clip.none,
                 children: [
                   _buildChallengeCard(context, cardHeight),
-                  // ✅ '도전과제' 카드에 대한 알림 배지
                   if (hasNewNotification)
                     Positioned(
-                      top: -4,  // 카드 상단에서 Y위치
-                      right: 6, // 카드 우측에서 X위치
+                      top: -4,
+                      right: 6,
                       child: Container(
-                        padding: const EdgeInsets.all(4.5), // 점 크기
+                        padding: const EdgeInsets.all(4.5),
                         decoration: BoxDecoration(
                           color: Colors.redAccent,
                           shape: BoxShape.circle,
@@ -71,7 +64,6 @@ class GameChallengeSection extends StatelessWidget {
               ),
             ),
           ),
-          // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
         ],
       ),
     );

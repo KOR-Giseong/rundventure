@@ -21,7 +21,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _signUpWithEmail() async {
-    // 이메일 회원가입 로직
   }
 
   Future<void> _signUpWithGoogle() async {
@@ -39,7 +38,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       UserCredential userCredential = await _auth.signInWithCredential(credential);
 
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        // 새로운 유저 -> 약관 동의 화면
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -50,7 +48,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
       } else {
-        // ✅ [수정] 기존 유저 -> 로그인 여부 묻는 대화상자 표시
         showDialog(
           context: context,
           builder: (context) {
@@ -64,7 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     _auth.signOut();
-                    googleSignIn.signOut(); // 구글 세션도 깔끔하게 로그아웃
+                    googleSignIn.signOut();
                   },
                   child: Text('취소'),
                 ),
@@ -87,10 +84,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       print("구글 연동 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        // ✅✅✅ [스낵바 디자인 수정] ✅✅✅
         SnackBar(
           content: Text("구글 연동 중 오류가 발생했습니다."),
-          backgroundColor: Colors.redAccent.shade400, // 에러 메시지 색상
+          backgroundColor: Colors.redAccent.shade400,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
@@ -120,7 +116,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (user == null) throw Exception("유저 정보 없음");
 
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        // 새로운 유저 -> 약관 동의 화면
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -131,7 +126,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
       } else {
-        // ✅ [수정] 기존 유저 -> 로그인 여부 묻는 대화상자 표시
         showDialog(
           context: context,
           builder: (context) {
@@ -144,7 +138,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    _auth.signOut(); // 애플은 Firebase Auth 로그아웃만으로 충분
+                    _auth.signOut();
                   },
                   child: Text('취소'),
                 ),
@@ -167,10 +161,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       print("애플 연동 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        // ✅✅✅ [스낵바 디자인 수정] ✅✅✅
         SnackBar(
           content: Text("애플 연동 중 오류가 발생했습니다."),
-          backgroundColor: Colors.redAccent.shade400, // 에러 메시지 색상
+          backgroundColor: Colors.redAccent.shade400,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),

@@ -12,11 +12,8 @@ import '../admin/utils/admin_permissions.dart';
 import 'announcement_form.dart';
 import 'chat_room_screen.dart';
 import 'components/challenge_form.dart';
-// ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-// 3개의 신규 페이지 임포트
 import 'admin/event_challenge_detail_screen.dart';
 import 'admin/ended_event_challenges_screen.dart';
-// ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
 import 'free_talk_form.dart';
 
 class ChallengeScreen extends StatefulWidget {
@@ -236,31 +233,27 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Column(mainAxisSize: MainAxisSize.min, children: [
                   SwitchListTile(
-                    // ✅ [수정] Text 위젯에 style 속성 추가
                       title: const Text(
                         '챌린지 게시판 잠금',
-                        style: TextStyle(fontSize: 14), // 👈 원하는 크기로 조절
+                        style: TextStyle(fontSize: 14),
                       ),
                       value: challengeLocked,
                       activeColor: Colors.black,
                       onChanged: (value) =>
                           setDialogState(() => challengeLocked = value)),
                   SwitchListTile(
-                    // ✅ [수정] Text 위젯에 style 속성 추가
                       title: const Text(
                         '자유게시판 잠금',
-                        style: TextStyle(fontSize: 14), // 👈 원하는 크기로 조절
+                        style: TextStyle(fontSize: 14),
                       ),
                       value: freeTalkLocked,
                       activeColor: Colors.black,
                       onChanged: (value) =>
                           setDialogState(() => freeTalkLocked = value)),
-                  // 2. '익명 댓글 기능 잠금' 스위치 UI 추가
                   SwitchListTile(
-                    // ✅ [수정] Text 위젯에 style 속성 추가
                       title: const Text(
                         '익명 댓글 기능 잠금',
-                        style: TextStyle(fontSize: 14), // 👈 원하는 크기로 조절
+                        style: TextStyle(fontSize: 14),
                       ),
                       value: anonymousCommentingDisabled,
                       activeColor: Colors.black,
@@ -292,7 +285,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                 ])));
   }
 
-  // ▼▼▼▼▼ (수정 없음) _buildFloatingActionButton ▼▼▼▼▼
   Widget? _buildFloatingActionButton(bool isFreeTalkLocked) {
     final bool isAdmin = _currentUserRole != 'user';
     final bool shouldShowFreeTalkFab =
@@ -310,7 +302,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     if (_selectedTabIndex == 2 &&
         _hasPermission(AdminPermission.canManageAnnouncements)) {
       return FloatingActionButton.extended(
-        // ✅ [수정] async 추가 및 결과 처리 로직
           onPressed: () async {
             // Navigator.push의 결과를 기다립니다.
             final result = await Navigator.push(
@@ -351,7 +342,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
               _tabController.animateTo(2);
             }
           },
-          // ✅ [수정 완료]
           label: const Text("공지 작성"),
           icon: const Icon(Icons.campaign),
           backgroundColor: Colors.red.shade700,
@@ -359,7 +349,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     }
     return null;
   }
-  // ▲▲▲▲▲ (수정 없음) _buildFloatingActionButton ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
@@ -372,9 +361,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         }
         final boardStatus = snapshot.data?.data() as Map<String, dynamic>? ?? {};
         final isChallengeLocked = boardStatus['isChallengeLocked'] ?? false;
-        // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
         final isFreeTalkLocked = boardStatus['isFreeTalkLocked'] ?? false;
-        // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
 
         final bool isAdmin = _currentUserRole != 'user';
 
@@ -394,10 +381,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       ),
                   ],
                   isChallengeBoardLocked: isChallengeLocked,
-                  // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-                  // NavigationBar에 관리자 여부 전달
                   isAdmin: isAdmin,
-                  // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
                 ),
                 TabBar(
                   controller: _tabController,
@@ -524,8 +508,6 @@ class _ChallengeTabState extends State<ChallengeTab>
     await Future.wait(futures);
   }
 
-  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-  // 이벤트 챌린지 위젯 빌드 함수 (status에 따라 UI 변경)
   Widget _buildEventChallengePost(
       DocumentSnapshot eventDoc, BuildContext context) {
     final data = eventDoc.data() as Map<String, dynamic>;
@@ -535,18 +517,16 @@ class _ChallengeTabState extends State<ChallengeTab>
     final int participantCount = data['participantCount'] ?? 0;
     final int participantLimit = data['participantLimit'] ?? 0;
     final Timestamp timestamp =
-        data['timestamp'] ?? Timestamp.now(); // null 체크
+        data['timestamp'] ?? Timestamp.now();
     final duration = int.tryParse(data['duration']?.toString() ?? '0') ?? 0;
     final endDate = timestamp.toDate().add(Duration(days: duration));
     final daysLeft = endDate.difference(DateTime.now()).inDays;
 
-    // ❗️ [신규] status 가져오기
     final String status = data['status'] ?? 'active';
 
     String limitText =
     participantLimit > 0 ? '$participantCount / $participantLimit명' : '$participantCount명';
 
-    // ❗️ [수정] status에 따라 D-day 텍스트 변경
     String daysLeftText = '종료';
     Color daysLeftColor = Colors.red;
 
@@ -562,15 +542,14 @@ class _ChallengeTabState extends State<ChallengeTab>
     if (status == 'active') {
       daysLeftText = daysLeft >= 0 ? 'D-$daysLeft' : '종료';
       daysLeftColor = Colors.red;
-      // (기본값 사용)
     } else if (status == 'calculating') {
-      daysLeftText = '집계 중'; // 👈 집계 중 텍스트
-      daysLeftColor = Colors.black87; // 👈 집계 중 색상
+      daysLeftText = '집계 중';
+      daysLeftColor = Colors.black87;
 
-      statusTagText = '📊 집계 중'; // 👈 집계 중 태그
-      statusTagColor = Colors.grey[700]!; // 👈 집계 중 태그 색상
-      borderColor = Colors.grey[700]!; // 👈 집계 중 테두리 색상
-      shadow = BoxShadow( // 👈 집계 중 그림자
+      statusTagText = '📊 집계 중';
+      statusTagColor = Colors.grey[700]!;
+      borderColor = Colors.grey[700]!;
+      shadow = BoxShadow(
         color: Colors.grey.withOpacity(0.1),
         blurRadius: 8,
         offset: Offset(0, 4),
@@ -581,7 +560,6 @@ class _ChallengeTabState extends State<ChallengeTab>
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          // 👈 상세 페이지로 이동 (상세 페이지가 'calculating' UI 처리)
           builder: (_) => EventChallengeDetailScreen(eventChallengeId: eventId),
         ),
       ),
@@ -591,8 +569,8 @@ class _ChallengeTabState extends State<ChallengeTab>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 2), // 👈 수정된 테두리
-          boxShadow: [ shadow ], // 👈 수정된 그림자
+          border: Border.all(color: borderColor, width: 2),
+          boxShadow: [ shadow ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,11 +581,11 @@ class _ChallengeTabState extends State<ChallengeTab>
                   padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusTagColor, // 👈 수정된 태그 색상
+                    color: statusTagColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    statusTagText, // 👈 수정된 태그 텍스트
+                    statusTagText,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -616,9 +594,9 @@ class _ChallengeTabState extends State<ChallengeTab>
                 ),
                 const Spacer(),
                 Text(
-                  daysLeftText, // 👈 수정된 D-day 텍스트
+                  daysLeftText,
                   style: TextStyle(
-                      color: daysLeftColor, // 👈 수정된 D-day 색상
+                      color: daysLeftColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 14),
                 )
@@ -658,7 +636,6 @@ class _ChallengeTabState extends State<ChallengeTab>
       ),
     );
   }
-  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
@@ -707,21 +684,15 @@ class _ChallengeTabState extends State<ChallengeTab>
           ),
         ),
         Expanded(
-          // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-          // 이제 Column으로 감싸서 이벤트 챌린지와 일반 챌린지를 순서대로 보여줍니다.
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-                // 1. [수정] 'active'와 'calculating' 상태의 이벤트 챌린지 StreamBuilder
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('eventChallenges')
-                  // ❗️ 'active'와 'calculating' 상태인 것만 가져오기
                       .where('status', whereIn: ['active', 'calculating'])
                       .orderBy('timestamp', descending: true)
                       .snapshots(),
-                  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
                   builder: (context, snapshot) {
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return SizedBox.shrink(); // 이벤트 없으면 공간 차지 안함
@@ -739,7 +710,6 @@ class _ChallengeTabState extends State<ChallengeTab>
                   },
                 ),
 
-                // 2. [기존] 일반 챌린지 StreamBuilder
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('challenges')
@@ -773,10 +743,8 @@ class _ChallengeTabState extends State<ChallengeTab>
                                   ? '작성된 챌린지 게시물이 없습니다.'
                                   : '검색 결과가 없습니다.'));
                         return ListView.builder(
-                          // ▼ [수정] 스크롤 충돌 방지
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
-                          // ▲ [수정]
                           itemCount: filteredDocs.length,
                           itemBuilder: (context, index) {
                             final doc = filteredDocs[index];
@@ -796,7 +764,6 @@ class _ChallengeTabState extends State<ChallengeTab>
                   },
                 ),
 
-                // 3. [신규] 종료된 이벤트 보기 버튼 (수정 없음)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
                   child: TextButton.icon(
@@ -825,11 +792,10 @@ class _ChallengeTabState extends State<ChallengeTab>
                     ),
                   ),
                 ),
-                SizedBox(height: 20), // 하단 여백
+                SizedBox(height: 20),
               ],
             ),
           ),
-          // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
         ),
       ],
     );
@@ -1383,7 +1349,6 @@ Widget _buildAnnouncementPost(
                     ),
                   ),
                   if (canManage) ...[
-                    // ✅ [신규 추가] 메인 공지 등록 아이콘
                     GestureDetector(
                       onTap: () async {
                         final confirm = await showDialog<bool>(
@@ -1417,7 +1382,6 @@ Widget _buildAnnouncementPost(
                               'timestamp': FieldValue.serverTimestamp(),
                             });
                             if (ScaffoldMessenger.of(context).mounted) {
-                              // ✅✅✅ [스낵바 수정] 성공 스낵바 ✅✅✅
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Row(
@@ -1450,7 +1414,6 @@ Widget _buildAnnouncementPost(
                             }
                           } catch (e) {
                             if (ScaffoldMessenger.of(context).mounted) {
-                              // ✅✅✅ [스낵바 수정] 실패 스낵바 ✅✅✅
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Row(
@@ -1484,12 +1447,11 @@ Widget _buildAnnouncementPost(
                           }
                         }
                       },
-                      child: Icon(Icons.campaign_outlined, // 👈 신규 아이콘
+                      child: Icon(Icons.campaign_outlined,
                           color: Colors.blueAccent,
                           size: 22),
                     ),
-                    const SizedBox(width: 12), // 👈 아이콘 간 간격
-                    // ✅ [기존] 삭제 아이콘
+                    const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
                         final confirm = await showDialog<bool>(

@@ -21,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isPasswordVisible = false;
-  // bool isAutoLogin = false; // 👈 [삭제]
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -30,14 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // _loadPreferences(); // 👈 [삭제]
   }
 
-  // void _loadPreferences() async { ... } // 👈 [삭제] 함수 전체
-
-  // void _saveAutoLogin() async { ... } // 👈 [삭제] 함수 전체
-
-  // ▼▼▼▼▼ [신규 추가] 커스텀 스낵바 함수 ▼▼▼▼▼
   void _showCustomSnackBar(String message, {bool isError = false, bool isSuccess = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  // ▲▲▲▲▲ [신규 추가] 커스텀 스낵바 함수 ▲▲▲▲▲
 
   Future<void> _sendWelcomeNotification(User user) async {
     final now = DateTime.now();
@@ -74,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
         .doc(user.email)
         .collection('items');
 
-    // [수정] 스낵바와 디자인이 다르므로 이 부분은 그대로 둡니다.
     await ref.add({
       'title': '러너가 되신 것을 환영합니다!',
       'message': '다양한 콘텐츠를 지금 바로 즐겨보세요!',
@@ -84,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showAccountNotFoundDialog(User user) {
-    // ✅ [수정] mounted 확인
     if (!mounted) return;
     showDialog(
       context: context,
@@ -200,36 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-                      // 에러 메시지를 Text 위젯 대신,
-                      // 빌드 시점에 즉시 스낵바로 표시하도록 변경
-                      // (단, 이 방식은 빌드 시마다 스낵바가 뜰 수 있으므로,
-                      // login 함수 내부에서만 호출하는 것이 더 좋습니다.)
-                      // 여기서는 기존 로직(errorMessage 상태 변수 사용)을 유지하되,
-                      // 텍스트로만 표시합니다.
-                      // 스낵바는 _loginWithEmailPassword 함수 내부에서 호출됩니다.
                       child: Text(errorMessage!, style: TextStyle(color: Colors.red)),
-                      // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
                     ),
-                  // ▼▼▼▼▼ [삭제] '자동 로그인' Row 전체 삭제 ▼▼▼▼▼
-                  /*
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: isAutoLogin,
-                        onChanged: (value) {
-                          setState(() {
-                            isAutoLogin = value ?? false;
-                            _saveAutoLogin();
-                          });
-                        },
-                        activeColor: Colors.grey[600],
-                      ),
-                      Text('자동 로그인', style: TextStyle(color: Colors.grey[600])),
-                    ],
-                  ),
-                  */
-                  // ▲▲▲▲▲ [삭제] '자동 로그인' Row 전체 삭제 ▲▲▲▲▲
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
@@ -316,13 +278,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ▼▼▼▼▼ [⭐️⭐️⭐️ 수정된 부분 (비밀번호 찾기 밑줄) ⭐️⭐️⭐️] ▼▼▼▼▼
                   Center(
                     child: GestureDetector(
                       onTap: _showPasswordResetDialog,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start, // 텍스트 상단 정렬
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           IntrinsicWidth(
                             child: Column(
@@ -336,9 +297,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 Container(
-                                  height: 1.0, // 밑줄 두께
-                                  color: Colors.grey[600], // 밑줄 색상
-                                  margin: const EdgeInsets.only(top: 1.0), // 텍스트와의 간격
+                                  height: 1.0,
+                                  color: Colors.grey[600],
+                                  margin: const EdgeInsets.only(top: 1.0),
                                 ),
                               ],
                             ),
@@ -354,7 +315,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  // ▲▲▲▲▲ [⭐️⭐️⭐️ 수정된 부분 (비밀번호 찾기 밑줄) ⭐️⭐️⭐️] ▲▲▲▲▲
 
                   const SizedBox(height: 10),
                   Center(
@@ -421,18 +381,13 @@ class _LoginScreenState extends State<LoginScreen> {
         final bool isSuspended = data['isSuspended'] ?? false;
 
         if (isSuspended) {
-          // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
           _showCustomSnackBar('이 계정은 정지되었습니다. 관리자에게 문의하세요.', isError: true);
-          // 팝업 대신 스낵바를 띄우고 로그인을 중단합니다.
-          // if (mounted) Navigator.pop(context); // 👈 pop 제거
           return;
-          // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
         }
 
         final idTokenResult = await refreshedUser.getIdTokenResult();
         final isAdmin = idTokenResult.claims?['admin'] ?? false;
 
-        // ✅ [수정] mounted 확인
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -440,10 +395,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      // ✅ [수정] mounted 확인
       if (!mounted) return;
 
-      String displayError; // 👈 표시할 에러 메시지 변수
+      String displayError;
       switch (e.code) {
         case 'user-not-found':
           displayError = '존재하지 않는 계정입니다.';
@@ -464,27 +418,11 @@ class _LoginScreenState extends State<LoginScreen> {
           displayError = '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
       }
 
-      // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-      // setState 대신 스낵바 호출
       _showCustomSnackBar(displayError, isError: true);
-      /*
-      setState(() {
-        errorMessage = displayError;
-      });
-      */
-      // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
 
     } catch (e) {
-      // ✅ [수정] mounted 확인
       if (!mounted) return;
-      // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
       _showCustomSnackBar('로그인 오류: $e', isError: true);
-      /*
-      setState(() {
-        errorMessage = '로그인 오류: $e';
-      });
-      */
-      // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
     }
   }
 
@@ -499,15 +437,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final methods = await _auth.fetchSignInMethodsForEmail(email);
 
       if (methods.contains('password')) {
-        // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
         _showCustomSnackBar('해당 이메일은 이메일/비밀번호 로그인으로 등록되어 있습니다. 소셜 로그인을 사용하려면 비밀번호 재설정을 해주세요.', isError: true);
-        /*
-        if (!mounted) return;
-        setState(() {
-          errorMessage = '해당 이메일은 이메일/비밀번호 로그인으로 등록되어 있습니다. 소셜 로그인을 사용하려면 비밀번호 재설정을 해주세요.';
-        });
-        */
-        // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
         return;
       }
 
@@ -525,11 +455,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (userDoc.exists && data != null) {
         final bool isSuspended = data['isSuspended'] ?? false;
         if (isSuspended) {
-          // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
           _showCustomSnackBar('이 계정은 정지되었습니다. 관리자에게 문의하세요.', isError: true);
-          // if (mounted) Navigator.pop(context); // 👈 pop 제거
           return;
-          // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
         }
       }
 
@@ -543,29 +470,12 @@ class _LoginScreenState extends State<LoginScreen> {
           await _sendWelcomeNotification(user);
         }
 
-        // ✅ [수정] mounted 확인
         if (!mounted) return;
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(showWelcomeMessage: true)));
-        // ▼▼▼▼▼ [삭제] 자동 로그인 관련 prefs 저장 ▼▼▼▼▼
-        /*
-        if (isAutoLogin) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('loginMethod', 'google');
-        }
-        */
-        // ▲▲▲▲▲ [삭제] 자동 로그인 관련 prefs 저장 ▲▲▲▲▲
       }
     } catch (e) {
-      print("❌ 구글 로그인 상세 오류: $e");
-      // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
+      print("구글 로그인 상세 오류: $e");
       _showCustomSnackBar('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', isError: true);
-      /*
-      if (!mounted) return;
-      setState(() {
-        errorMessage = '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      });
-      */
-      // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
     }
   }
 
@@ -584,15 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final methods = await _auth.fetchSignInMethodsForEmail(email);
 
         if (methods.contains('password')) {
-          // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
           _showCustomSnackBar('해당 이메일은 이메일/비밀번호 로그인으로 등록되어 있습니다. 소셜 로그인을 사용하려면 비밀번호 재설정을 해주세요.', isError: true);
-          /*
-          if (!mounted) return;
-          setState(() {
-            errorMessage = '해당 이메일은 이메일/비밀번호 로그인으로 등록되어 있습니다. 소셜 로그인을 사용하려면 비밀번호 재설정을 해주세요.';
-          });
-          */
-          // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
           return;
         }
       }
@@ -611,11 +513,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (userDoc.exists && data != null) {
         final bool isSuspended = data['isSuspended'] ?? false;
         if (isSuspended) {
-          // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
           _showCustomSnackBar('이 계정은 정지되었습니다. 관리자에게 문의하세요.', isError: true);
-          // if (mounted) Navigator.pop(context); // 👈 pop 제거
           return;
-          // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
         }
       }
 
@@ -629,47 +528,21 @@ class _LoginScreenState extends State<LoginScreen> {
           await _sendWelcomeNotification(user);
         }
 
-        // ✅ [수정] mounted 확인
         if (!mounted) return;
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(showWelcomeMessage: true)));
-        // ▼▼▼▼▼ [삭제] 자동 로그인 관련 prefs 저장 ▼▼▼▼▼
-        /*
-        if (isAutoLogin) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('loginMethod', 'apple');
-        }
-        */
-        // ▲▲▲▲▲ [삭제] 자동 로그인 관련 prefs 저장 ▲▲▲▲▲
       }
     } catch (e) {
-      print("❌ 애플 로그인 상세 오류: $e");
-      // ✅ [수정] mounted 확인
+      print("애플 로그인 상세 오류: $e");
       if (!mounted) return;
       if (e is SignInWithAppleAuthorizationException &&
           e.code == AuthorizationErrorCode.canceled) {
-        // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-        // (취소는 오류가 아니므로 스낵바 표시 안 함)
-        /*
-        setState(() {
-          errorMessage = null;
-        });
-        */
-        // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
       } else {
-        // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
         _showCustomSnackBar('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', isError: true);
-        /*
-        setState(() {
-          errorMessage = '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-        });
-        */
-        // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
       }
     }
   }
 
   void _showPasswordResetDialog() {
-    // ✅ [수정] mounted 확인
     if (!mounted) return;
     showDialog(
       context: context,
@@ -698,16 +571,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 try {
                   await _auth.sendPasswordResetEmail(email: resetEmailController.text.trim());
                   Navigator.of(localContext).pop();
-                  // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
                   _showCustomSnackBar('비밀번호 재설정 메일을 보냈습니다.', isSuccess: true);
-                  // ScaffoldMessenger.of(localContext).showSnackBar(SnackBar(content: Text('비밀번호 재설정 메일을 보냈습니다.')));
-                  // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
                 } catch (e) {
                   Navigator.of(localContext).pop();
-                  // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
                   _showCustomSnackBar('이메일 전송 실패: $e', isError: true);
-                  // ScaffoldMessenger.of(localContext).showSnackBar(SnackBar(content: Text('이메일 전송 실패: $e')));
-                  // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
@@ -720,7 +587,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showEmailVerificationDialog(User user) {
-    // ✅ [수정] mounted 확인
     if (!mounted) return;
     showDialog(
       context: context,
@@ -736,15 +602,14 @@ class _LoginScreenState extends State<LoginScreen> {
               final refreshedUser = _auth.currentUser;
               if (refreshedUser != null && refreshedUser.emailVerified) {
                 timer?.cancel();
-                // ✅ [수정] mounted 확인
                 if (mounted) {
                   setState(() => isVerified = true);
                 }
               }
             });
 
-            return PopScope( // ✅ [수정] WillPopScope -> PopScope (최신 Flutter)
-              canPop: false, // 뒤로가기 버튼으로 닫기 방지
+            return PopScope(
+              canPop: false,
               onPopInvoked: (didPop) {
                 if (didPop) return;
                 timer?.cancel(); // '취소' 버튼 외의 방식으로 닫힐 때 타이머 취소
@@ -773,7 +638,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? () {
                       timer?.cancel();
                       Navigator.of(context).pop();
-                      // ✅ [수정] mounted 확인
                       if (mounted) {
                         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(showWelcomeMessage: true)));
                       }

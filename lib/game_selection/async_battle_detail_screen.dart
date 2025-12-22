@@ -1,5 +1,3 @@
-// [전체 코드] async_battle_detail_screen.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -7,19 +5,16 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'; // 캡처용
+import 'package:flutter/rendering.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart'; // 파일 저장용
-import 'package:share_plus/share_plus.dart'; // 공유용
-import 'package:apple_maps_flutter/apple_maps_flutter.dart'; // 지도 좌표용
-
-// ▼▼▼▼▼ [경로 수정 필수] ▼▼▼▼▼
-import 'async_battle_running_screen.dart'; // 러닝 시작을 위해 임포트
-import 'package:rundventure/free_running/free_running_start.dart'; // RouteDataPoint용
-// ▲▲▲▲▲ [경로 수정 필수] ▲▲▲▲▲
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:apple_maps_flutter/apple_maps_flutter.dart';
+import 'async_battle_running_screen.dart';
+import 'package:rundventure/free_running/free_running_start.dart';
 
 class AsyncBattleDetailScreen extends StatefulWidget {
   final String battleId;
@@ -37,12 +32,10 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
 
   late Stream<DocumentSnapshot> _battleStream;
   String? _currentUserEmail;
-  bool _isProcessing = false; // 취소/시작 시 중복 클릭 방지
+  bool _isProcessing = false;
 
-  // ▼▼▼▼▼ [ ⭐️ 신규: 공유 관련 변수 ⭐️ ] ▼▼▼▼▼
   final GlobalKey _shareBoundaryKey = GlobalKey();
   bool _isSharing = false;
-  // ▲▲▲▲▲ [ ⭐️ 신규: 공유 관련 변수 ⭐️ ] ▲▲▲▲▲
 
   @override
   void initState() {
@@ -51,7 +44,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
     _battleStream = _firestore.collection('asyncBattles').doc(widget.battleId).snapshots();
   }
 
-  // (기존 로직) 대결 취소
   Future<void> _cancelBattle() async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
@@ -62,18 +54,18 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
       final result = await callable.call({'battleId': widget.battleId});
 
       if (!mounted) return;
-      Navigator.pop(context); // 로딩 닫기
+      Navigator.pop(context);
 
       if (result.data['success'] == true) {
         _showCustomSnackBar("대결이 취소되었습니다.");
-        Navigator.pop(context); // 성공 시 상세 페이지 닫기
+        Navigator.pop(context);
       } else {
         _showCustomSnackBar(result.data['message'] ?? "취소에 실패했습니다.", isError: true);
       }
     } catch (e) {
       print("cancelAsyncBattle 호출 오류: $e");
       if (mounted) {
-        Navigator.pop(context); // 로딩 닫기
+        Navigator.pop(context);
         _showCustomSnackBar("대결 취소 중 오류가 발생했습니다.", isError: true);
       }
     } finally {
@@ -83,7 +75,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
     }
   }
 
-  // (기존 로직) 러닝 시작
   void _startRun(double targetDistanceKm) {
     if (_isProcessing) return;
     if (!mounted) return;
@@ -99,26 +90,20 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
     );
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 신규: 공유하기 로직 ⭐️ ] ▼▼▼▼▼
   Future<void> _shareBattleResult() async {
     if (_isSharing) return;
     setState(() { _isSharing = true; });
 
     try {
-      // 1. 화면 밖의 위젯 캡처
       RenderRepaintBoundary boundary = _shareBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-
-      // 해상도 확보를 위해 pixelRatio 3.0 설정
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-      // 2. 임시 파일로 저장
       final tempDir = await getTemporaryDirectory();
       final file = await File('${tempDir.path}/async_battle_result.png').create();
       await file.writeAsBytes(pngBytes);
 
-      // 3. 공유 실행
       final xFile = XFile(file.path);
       await Share.shareXFiles([xFile], text: '런드벤처 오프라인 대결 결과! 🏃🔥');
 
@@ -129,7 +114,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
       if (mounted) setState(() { _isSharing = false; });
     }
   }
-  // ▲▲▲▲▲ [ ⭐️ 신규: 공유하기 로직 ⭐️ ] ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +146,7 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
             backgroundColor: Colors.grey[100],
             elevation: 0,
             centerTitle: true,
-            // ▼▼▼▼▼ [ ⭐️ 수정: 공유 버튼 추가 ⭐️ ] ▼▼▼▼▼
             actions: [
-              // 완료된 대결일 때만 공유 버튼 표시
               if (status == 'finished')
                 _isSharing
                     ? Padding(
@@ -176,23 +158,19 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
                   onPressed: _shareBattleResult,
                 ),
             ],
-            // ▲▲▲▲▲ [ ⭐️ 수정: 공유 버튼 추가 ⭐️ ] ▲▲▲▲▲
           ),
           body: Stack(
             children: [
-              // 1. 메인 UI
               _buildDetailsPage(data),
 
-              // ▼▼▼▼▼ [ ⭐️ 신규: 공유용 숨겨진 카드 ⭐️ ] ▼▼▼▼▼
               Positioned(
-                left: -2000, // 화면 밖으로 숨김
+                left: -2000,
                 top: 0,
                 child: RepaintBoundary(
                   key: _shareBoundaryKey,
                   child: _buildShareableCard(data),
                 ),
               ),
-              // ▲▲▲▲▲ [ ⭐️ 신규: 공유용 숨겨진 카드 ⭐️ ] ▲▲▲▲▲
             ],
           ),
         );
@@ -312,32 +290,24 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
     );
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 신규: 공유용 카드 위젯 (Off-screen) - 한글 적용 ⭐️ ] ▼▼▼▼▼
   Widget _buildShareableCard(Map<String, dynamic> data) {
-    // 1. 데이터 준비
     final bool amIChallenger = data['challengerEmail'] == _currentUserEmail;
 
-    // 내 정보, 상대 정보
     final myNickname = amIChallenger ? data['challengerNickname'] : data['opponentNickname'];
     final opNickname = amIChallenger ? data['opponentNickname'] : data['challengerNickname'];
     final myRunData = (amIChallenger ? data['challengerRunData'] : data['opponentRunData']) as Map<String, dynamic>?;
     final opRunData = (amIChallenger ? data['opponentRunData'] : data['challengerRunData']) as Map<String, dynamic>?;
 
-    // 결과 판정
     final bool isDraw = data['isDraw'] == true;
     bool iAmWinner = false;
     if (!isDraw && data['status'] == 'finished' && data['winnerEmail'] == _currentUserEmail) {
       iAmWinner = true;
     }
 
-    // 시간 텍스트
     final String myTimeStr = myRunData != null ? _formatTime(myRunData['seconds'] as num) : "--:--";
     final String opTimeStr = opRunData != null ? _formatTime(opRunData['seconds'] as num) : "--:--";
 
-    // 거리
     final double distance = (data['targetDistanceKm'] as num).toDouble();
-
-    // 경로 데이터
     List<LatLng> routePoints = [];
     if (myRunData != null && myRunData['routePoints'] != null) {
       routePoints = (myRunData['routePoints'] as List).map((p) {
@@ -353,7 +323,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
       }).toList();
     }
 
-    // Bounds 계산
     LatLngBounds bounds = LatLngBounds(southwest: LatLng(0,0), northeast: LatLng(0,0));
     if(routePoints.length >= 2) {
       double minLat = routePoints.map((p) => p.latitude).reduce(math.min);
@@ -363,7 +332,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
       bounds = LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng));
     }
 
-    // 2. UI 구성 (한글 텍스트 적용)
     return Container(
       width: 450,
       height: 800,
@@ -393,14 +361,12 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 헤더 [한글 적용]
                   Text(
                     '오프라인 대결 결과',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.grey[400], letterSpacing: 2.0, decoration: TextDecoration.none),
                   ),
                   SizedBox(height: 20),
 
-                  // VS 라인 [한글 적용: 나 / 상대방]
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -433,7 +399,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
                   Divider(color: Colors.grey[300], thickness: 1),
                   SizedBox(height: 20),
 
-                  // 승패 텍스트 [한글 적용: 승리! / 패배 / 무승부]
                   Text(
                     isDraw ? "무승부" : (iAmWinner ? "승리!" : "패배"),
                     style: TextStyle(
@@ -446,7 +411,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
                   ),
                   SizedBox(height: 20),
 
-                  // 시간 비교 [한글 적용: 시간]
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -471,7 +435,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
                   ),
                   SizedBox(height: 30),
 
-                  // 하단 정보 [한글 적용]
                   Container(
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(20)),
@@ -493,10 +456,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
       ),
     );
   }
-  // ▲▲▲▲▲ [ ⭐️ 신규: 공유용 카드 위젯 (Off-screen) - 한글 적용 ⭐️ ] ▲▲▲▲▲
-
-
-  // --- 기존 UI 헬퍼 함수들 ---
 
   Widget _buildPlayerHeader(
       String myNickname, String? myProfileUrl, bool myIsWinner,
@@ -726,8 +685,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
     return SizedBox.shrink();
   }
 
-  // --- 헬퍼 함수들 ---
-
   String _formatTime(num seconds) {
     final double totalSeconds = seconds.toDouble();
     final int totalSecInt = totalSeconds.floor();
@@ -799,8 +756,6 @@ class _AsyncBattleDetailScreenState extends State<AsyncBattleDetailScreen> {
   }
 }
 
-
-// ▼▼▼▼▼ [ ⭐️ 신규: 경로 그리기용 Painter ⭐️ ] ▼▼▼▼▼
 class RoutePainter extends CustomPainter {
   final List<LatLng> points;
   final LatLngBounds bounds;
@@ -864,4 +819,3 @@ class RoutePainter extends CustomPainter {
     return oldDelegate.points != points || oldDelegate.bounds != bounds;
   }
 }
-// ▲▲▲▲▲ [ ⭐️ 신규: 경로 그리기용 Painter ⭐️ ] ▲▲▲▲▲

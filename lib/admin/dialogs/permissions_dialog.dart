@@ -54,7 +54,7 @@ class _PermissionsDialogState extends State<PermissionsDialog> {
     setState(() => _isLoading = true);
     try {
       final permissionsToSave = _permissions.map((key, value) => MapEntry(key.name, value));
-      final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3') // 👈 이 부분 수정
+      final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
           .httpsCallable('setAdminRole');
       await callable.call({
         'email': widget.userEmail,
@@ -74,7 +74,6 @@ class _PermissionsDialogState extends State<PermissionsDialog> {
       });
 
       if (mounted) {
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -100,7 +99,6 @@ class _PermissionsDialogState extends State<PermissionsDialog> {
       }
     } catch (e) {
       if(mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

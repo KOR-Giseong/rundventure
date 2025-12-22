@@ -29,14 +29,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ [수정] 내용을 더 구체적인 템플릿으로 변경
             Text(
               '런드벤처 개인정보 처리방침',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              '시행일: 2025년 10월 31일', // TODO: 실제 시행일로 변경
+              '시행일: 2025년 10월 31일',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             SizedBox(height: 24),
@@ -112,9 +111,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildArticleTitle('제10조 (개인정보보호 책임자)'),
             _buildArticleBody(
               '회사는 이용자의 개인정보를 보호하고 개인정보와 관련한 불만을 처리하기 위하여 아래와 같이 관련 부서 및 개인정보보호 책임자를 지정하고 있습니다.\n\n'
-                  ' - 개인정보보호 책임자 : 홍기성\n' // TODO: 실제 책임자 이름
-                  ' - 이메일 : support@rundventure.com\n' // TODO: 실제 연락 이메일
-                  ' - 전화번호 : 010-5572-4143\n\n' // TODO: 실제 연락처
+                  ' - 개인정보보호 책임자 : 홍기성\n'
+                  ' - 이메일 : support@rundventure.com\n'
+                  ' - 전화번호 : 010-5572-4143\n\n'
                   '기타 개인정보 침해에 대한 신고나 상담이 필요하신 경우에는 아래 기관에 문의하시기 바랍니다.\n'
                   ' - 개인정보침해신고센터 (privacy.kisa.or.kr / 국번없이 118)\n'
                   ' - 대검찰청 사이버수사과 (www.spo.go.kr / 국번없이 1301)\n'
@@ -125,14 +124,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildArticleBody(
               '현 개인정보 처리방침 내용 추가, 삭제 및 수정이 있을 시에는 개정 최소 7일 전부터 앱 내 공지사항을 통하여 고지할 것입니다.',
             ),
-            // ✅ [수정 완료]
           ],
         ),
       ),
     );
   }
 
-  // 정책 제목 스타일
   Widget _buildArticleTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -143,7 +140,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  // 정책 본문 스타일
   Widget _buildArticleBody(String body) {
     return Text(
       body,

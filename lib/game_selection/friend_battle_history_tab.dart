@@ -1,13 +1,9 @@
-// [전체 코드] friend_battle_history_tab.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-// Part 2에서 수정한 결과 화면
 import 'friend_battle_result_screen.dart';
-// RouteDataPoint (free_running_start.dart)
 import 'package:rundventure/free_running/free_running_start.dart';
 
 
@@ -65,9 +61,6 @@ class FriendBattleHistoryTab extends StatelessWidget {
     );
   }
 
-
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 상세 페이지 이동 로직 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  /// 상세 기록 조회 로직 (밀리초 데이터 포함)
   void _navigateToResult(BuildContext context, DocumentSnapshot battleDoc) async {
     // 1. 로딩 표시
     showDialog(
@@ -103,9 +96,7 @@ class FriendBattleHistoryTab extends StatelessWidget {
       List<RouteDataPoint>? opponentRoutePoints = null;
 
       int myFinalSeconds = 0;
-      // ▼▼▼▼▼ [ ⭐️ 밀리초 변수 추가 ⭐️ ] ▼▼▼▼▼
-      int? myFinalTimeMs; // DB에서 가져올 밀리초
-      // ▲▲▲▲▲ [ ⭐️ 밀리초 변수 추가 ⭐️ ] ▲▲▲▲▲
+      int? myFinalTimeMs;
 
       int myStepCount = 0;
       double myElevation = 0.0;
@@ -125,13 +116,9 @@ class FriendBattleHistoryTab extends StatelessWidget {
         }
 
         if (runRecordData['email'] == myEmail) {
-          // 내 기록
           myRoutePoints = routePoints;
           myFinalSeconds = runRecordData['seconds'] as int;
-          // ▼▼▼▼▼ [ ⭐️ 밀리초 데이터 추출 ⭐️ ] ▼▼▼▼▼
-          // DB에 'finalTimeMs'가 있으면 가져오고, 없으면(구버전 데이터) null
           myFinalTimeMs = runRecordData['finalTimeMs'] as int?;
-          // ▲▲▲▲▲ [ ⭐️ 밀리초 데이터 추출 ⭐️ ] ▲▲▲▲▲
 
           myStepCount = runRecordData['stepCount'] as int;
           myElevation = (runRecordData['elevation'] as num).toDouble();
@@ -156,12 +143,9 @@ class FriendBattleHistoryTab extends StatelessWidget {
             battleId: battleId,
             finalBattleData: battleData,
 
-            // 내 상세 정보
             myRoutePoints: myRoutePoints,
             myFinalSeconds: myFinalSeconds,
-            // ▼▼▼▼▼ [ ⭐️ 밀리초 전달 ⭐️ ] ▼▼▼▼▼
-            myFinalTimeMs: myFinalTimeMs, // 👈 여기에 밀리초 전달
-            // ▲▲▲▲▲ [ ⭐️ 밀리초 전달 ⭐️ ] ▲▲▲▲▲
+            myFinalTimeMs: myFinalTimeMs,
 
             myStepCount: myStepCount,
             myElevation: myElevation,
@@ -186,7 +170,6 @@ class FriendBattleHistoryTab extends StatelessWidget {
       _showCustomSnackBar(context, '기록 로딩 중 오류: ${e.toString()}', isError: true);
     }
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 상세 페이지 이동 로직 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 
   @override
@@ -302,13 +285,9 @@ class FriendBattleHistoryTab extends StatelessWidget {
                 resultTextColor = Colors.redAccent;
               }
 
-              // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 핵심 수정: 취소된 대결도 상세 페이지로 이동 ⭐️⭐️⭐️ ] ▼▼▼▼▼
               onTapCallback = () {
-                // 기존: _showCustomSnackBar(...)
-                // 수정: 상세 페이지로 이동 시도
                 _navigateToResult(context, doc);
               };
-              // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 핵심 수정: 취소된 대결도 상세 페이지로 이동 ⭐️⭐️⭐️ ] ▲▲▲▲▲
             }
 
             // --- 4. 리스트 아이템 반환 ---
@@ -364,7 +343,6 @@ class FriendBattleHistoryTab extends StatelessWidget {
                     ),
                   ],
                 ),
-                // ⭐️ 수정: 취소된 대결도 화살표 표시
                 trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
                 onTap: onTapCallback,
               ),

@@ -17,7 +17,6 @@ class ChallengeSetupScreen extends StatelessWidget {
             children: [
               const Header(),
 
-              // ✅ ChallengeForm을 스크롤 가능하게 감싸기
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -62,13 +62,11 @@ class _QuestScreenState extends State<QuestScreen>
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
-        // ✅✅✅ [추가] actions 속성 ✅✅✅
         actions: [
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87), // 👈 배경이 밝으니 아이콘은 어둡게
+            icon: const Icon(Icons.home_outlined, color: Colors.black87),
             tooltip: '메인 화면',
             onPressed: () {
-              // MainScreen으로 이동 (현재 화면을 스택에서 제거)
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -76,7 +74,6 @@ class _QuestScreenState extends State<QuestScreen>
             },
           ),
         ],
-        // ✅✅✅ 여기까지 ✅✅✅
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.black,
@@ -163,7 +160,7 @@ class _QuestScreenState extends State<QuestScreen>
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white, // ✅✅✅ 배경색 흰색으로 지정 ✅✅✅
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -237,24 +234,20 @@ class _QuestScreenState extends State<QuestScreen>
                 onPressed: quest.isCompleted ? () async {
                   try {
                     await _questService.claimQuestReward(quest);
-                    if (!mounted) return; // 비동기 작업 후 위젯 존재 확인
-                    // ✅✅✅ 수정된 스낵바 호출 ✅✅✅
+                    if (!mounted) return;
                     _showCustomSnackBar('보상을 받았습니다! +${quest.rewardXp} XP');
-                    _loadQuests(); // 목록 새로고침
+                    _loadQuests();
                   } catch (e) {
                     if (!mounted) return;
-                    // 사용자에게 오류 메시지 표시 (이미 보상받은 경우 포함)
-                    // ✅✅✅ 수정된 스낵바 호출 (오류) ✅✅✅
                     _showCustomSnackBar(
-                        '보상 받기 실패: ${e.toString().replaceFirst("Exception: ", "")}', // "Exception: " 제거
+                        '보상 받기 실패: ${e.toString().replaceFirst("Exception: ", "")}',
                         isError: true
                     );
-                    // 이미 보상받은 경우에도 목록 새로고침 (삭제 반영)
                     if (e.toString().contains("이미 보상을 받았습니다")) {
                       _loadQuests();
                     }
                   }
-                } : null, // 미완료 시 비활성화
+                } : null,
                 child: Text(quest.isCompleted ? '보상 받기' : '진행 중'),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: quest.isCompleted ? Colors.green : Colors.grey[400], // 완료 시 초록색, 아니면 회색
@@ -273,7 +266,6 @@ class _QuestScreenState extends State<QuestScreen>
     );
   }
 
-  // ✅ 퀘스트 없을 때 표시할 위젯
   Widget _buildEmptyQuestList(QuestType type) {
     String typeName = '';
     switch(type) {
@@ -281,19 +273,19 @@ class _QuestScreenState extends State<QuestScreen>
       case QuestType.weekly: typeName = '주간'; break;
       case QuestType.monthly: typeName = '월간'; break;
     }
-    return Center(
+      return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.list_alt_rounded, size: 80, color: Colors.grey[350]), // 아이콘 변경 및 색상 조정
+          Icon(Icons.list_alt_rounded, size: 80, color: Colors.grey[350]),
           SizedBox(height: 16),
           Text(
             '$typeName 퀘스트가 없습니다.',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]), // 색상 약간 진하게
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           SizedBox(height: 8),
           Text(
-            '다음 갱신 시간에 새로운 퀘스트가 지급됩니다.', // 안내 문구 추가
+            '다음 갱신 시간에 새로운 퀘스트가 지급됩니다.',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
@@ -301,9 +293,8 @@ class _QuestScreenState extends State<QuestScreen>
     );
   }
 
-  // ✅✅✅ 여기에 커스텀 스낵바 함수 추가 ✅✅✅
   void _showCustomSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // mounted 확인
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -321,12 +312,11 @@ class _QuestScreenState extends State<QuestScreen>
             ),
           ],
         ),
-        // ✅✅✅ 요청하신 대로 다른 색상(Colors.blueAccent)으로 변경 ✅✅✅
-        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.blueAccent, // 성공 시 파란색 계열
+        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.blueAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
-        duration: Duration(seconds: isError ? 4 : 2), // 오류 시 더 길게
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }

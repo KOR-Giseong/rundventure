@@ -10,18 +10,16 @@ import 'package:flutter/services.dart';
 import 'GhostRun_Resultpage.dart'; // GhostRunResultScreen이 있는 파일
 import 'ghostrunpage.dart'; // GhostRunPage가 있는 파일
 import 'package:flutter_tts/flutter_tts.dart';
-// ✅ [추가] 워치 커넥티비티 임포트
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class GhostRunTrackingPage extends StatefulWidget {
   final Map<String, dynamic> ghostRunData;
-  // ✅ [추가] withWatch 변수 추가
   final bool withWatch;
 
   const GhostRunTrackingPage({
     Key? key,
     required this.ghostRunData,
-    this.withWatch = false, // 기본값 false
+    this.withWatch = false,
   }) : super(key: key);
 
   @override
@@ -50,9 +48,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
   final Location _location = Location();
   LocationData? _currentLocation;
-  // ▼▼▼▼▼ [ ✨ 신규 추가 ✨ ] ▼▼▼▼▼
-  LocationData? _previousLocationData; // 👈 속도 및 순간이동 감지를 위한 이전 위치 데이터
-  // ▲▲▲▲▲ [ ✨ 신규 추가 ✨ ] ▲▲▲▲▲
+  LocationData? _previousLocationData;
 
   bool _isTracking = false;
   bool _isPaused = false;
@@ -82,10 +78,8 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
   String _countdownMessage = "";
   bool _showCountdown = false;
   int _countdown = 3;
-  // ✅✅✅ [수정 1/3] 카운트다운 텍스트 크기를 위한 변수 추가
   double _countdownFontSize = 60.0;
 
-  // ✅ [추가] 워치 커넥티비티 변수
   final _watch = WatchConnectivity();
   StreamSubscription<Map<String, dynamic>>? _watchMessageSubscription;
 
@@ -98,7 +92,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
     _liveActivityChannel = const MethodChannel('com.rundventure/liveactivity');
 
-    // ✅ [수정 1/2] Native(Swift)의 App Intent 호출을 수신할 핸들러 설정
     _liveActivityChannel.setMethodCallHandler(_handleNativeMethodCall);
 
     _loadGhostIcon();
@@ -108,11 +101,9 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
     _startCountdown();
 
-    // ✅ [추가] 워치 리스너 초기화 호출
     _initializeWatchConnectivity();
   }
 
-  // ✅ [수정 2/2] Native(Swift)에서 "handleLiveActivityCommand" 호출 시 실행될 함수
   Future<dynamic> _handleNativeMethodCall(MethodCall call) async {
     if (!mounted) return; // 위젯이 화면에 없으면 무시
 
@@ -124,11 +115,11 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
         if (command == 'pauseRunning') {
           print("⏸️ [DART] Live Activity로부터 '일시정지' 명령 실행");
-          if (!_isPaused) _pauseTracking(); // 👈 고스트런 함수 호출
+          if (!_isPaused) _pauseTracking();
 
         } else if (command == 'resumeRunning') {
           print("▶️ [DART] Live Activity로부터 '재개' 명령 실행");
-          if (_isPaused) _resumeTracking(); // 👈 고스트런 함수 호출
+          if (_isPaused) _resumeTracking();
         }
       } catch (e) {
         print("🚨 [DART] _handleNativeMethodCall Error: $e");
@@ -136,9 +127,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     }
   }
 
-  // ✅ [추가] 워치 리스너 초기화 함수
   void _initializeWatchConnectivity() {
-    // '아니요'를 눌렀을 경우 (withWatch == false) 워치 리스너를 활성화하지 않습니다.
     if (!widget.withWatch) return;
 
     _watchMessageSubscription?.cancel();
@@ -177,8 +166,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
 
   void _updateLiveActivity() {
-    // if (!_isTracking) return; // ✅ [수정] _isPaused 조건 제거 (일시정지 상태도 전송해야 함)
-    // 💡 [수정] _isTracking이 false여도 (즉, 종료되었어도) 호출될 수 있으니, _isTracking일 때만 호출하도록 복원
     if (!_isTracking) return;
     _liveActivityChannel.invokeMethod('updateLiveActivity', {
       'type': 'ghost_race',
@@ -186,7 +173,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
       'userDistance': _distanceKm.toStringAsFixed(2),
       'userPace': _paceDisplay,
       'raceStatus': _raceStatus.isNotEmpty ? _raceStatus : "고스트와 경주 중",
-      'isPaused': _isPaused, // ✅ [추가] 일시정지 상태 전송
+      'isPaused': _isPaused,
     });
   }
 
@@ -197,7 +184,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     _locationSubscription?.cancel();
     _flutterTts.stop();
     WidgetsBinding.instance.removeObserver(this);
-    // ✅ [추가] 워치 구독 취소
     _watchMessageSubscription?.cancel();
     super.dispose();
   }
@@ -206,7 +192,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _isTracking && !_isPaused) {
       setState(() {});
-      // ✅ [추가] 앱이 다시 활성화될 때 워치 리스너 재시작
       _initializeWatchConnectivity();
     }
   }
@@ -228,29 +213,24 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setPitch(1.0);
 
-    // ✅ [수정] iOS 오디오 설정 강화 (무음 모드 무시 + 스피커 강제 + 음악과 함께 재생)
     await _flutterTts.setIosAudioCategory(
-        IosTextToSpeechAudioCategory.playback, // 👈 'playback'은 무음 모드에서도 소리가 납니다.
+        IosTextToSpeechAudioCategory.playback,
         [
           IosTextToSpeechAudioCategoryOptions.allowBluetooth,
           IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-          IosTextToSpeechAudioCategoryOptions.mixWithOthers, // 👈 노래 들으면서도 안내음 나옴
-          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker // 👈 이어폰 없으면 스피커로 강제
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
         ],
         IosTextToSpeechAudioMode.voicePrompt
     );
 
-    // ✅ [추가] 공유 인스턴스 활성화 (오류 방지)
     await _flutterTts.setSharedInstance(true);
   }
 
   Future<void> _speak(String text) async {
-    // 💡 [수정] _pauseTracking에서 "일시정지"를 말할 수 있도록 _isPaused 조건 제거
-    // (호출하는 쪽에서 _isPaused를 체크하도록 변경)
     await _flutterTts.speak(text);
   }
 
-  // ✅✅✅ [수정 2/3] _startCountdown 함수 수정
   void _startCountdown() {
     setState(() {
       _showCountdown = true;
@@ -259,19 +239,16 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     });
     _speak("준비하세요");
 
-    // ✅ [수정] 카운트다운 시작 시 워치 상태 설정
     if (widget.withWatch) {
-      // ▼▼▼▼▼ [ ✨ 여기가 수정되었습니다 (try-catch 추가) ✨ ] ▼▼▼▼▼
       try {
         _watch.updateApplicationContext({
-          'runType': 'ghostRace', // 👈 '경주' 모드
+          'runType': 'ghostRace',
           'isRunning': true,
           'isEnded': false,
         });
       } catch (e) {
         print("워치 Context 업데이트 실패 (정상 동작): $e");
       }
-      // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
       _watch.sendMessage({'command': 'showWarmup'});
     }
 
@@ -283,7 +260,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         });
         _speak("$_countdown");
 
-        // ✅ [추가] 워치로 카운트다운 숫자 전송
         if (widget.withWatch) {
           _watch.sendMessage({'command': 'countdown', 'value': _countdown});
         }
@@ -293,22 +269,21 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         timer.cancel();
         setState(() {
           _countdownMessage = "대결을 시작합니다!";
-          _countdownFontSize = 40.0; // 👈 "대결을 시작합니다!" 텍스트 크기 (이 값을 조절하세요)
+          _countdownFontSize = 40.0;
           _showCountdown = false;
         });
         _speak("대결을 시작합니다!");
 
-        // ✅ [추가] 워치로 시작 신호 전송
         if (widget.withWatch) {
           _watch.sendMessage({'command': 'startRunningUI'});
         }
 
-        _startTracking(); // 유저 타이머 시작
-        _startGhostRun(); // 고스트 타이머 시작
+        _startTracking();
+        _startGhostRun();
 
         _liveActivityChannel.invokeMethod('startLiveActivity', {
           'type': 'ghost_race',
-          'isPaused': false, // ✅ [추가] 초기 상태는 false
+          'isPaused': false,
         });
 
         Future.delayed(const Duration(seconds: 1), () {
@@ -507,8 +482,8 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
       await _location.changeSettings(accuracy: LocationAccuracy.high, interval: 1000, distanceFilter: 0);
       await _location.enableBackgroundMode(enable: true);
       _currentLocation = await _location.getLocation();
-      _previousLocationData = _currentLocation; // 👈 [추가] 초기 위치를 이전 위치로 설정
-      if(mounted) setState(() {}); // 초기 위치 설정 후 UI 업데이트
+      _previousLocationData = _currentLocation;
+      if(mounted) setState(() {});
 
       // 위치 변경 감지 리스너 설정
       _locationSubscription = _location.onLocationChanged.listen((LocationData newLocation) {
@@ -518,8 +493,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
         final newPoint = LatLng(newLocation.latitude!, newLocation.longitude!);
 
-        // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: _previousLocationData 사용 ✨✨✨ ] ▼▼▼▼▼
-        // 1. 이전 위치 데이터 가져오기
         LocationData? lastLoc = _previousLocationData;
 
         // 2. UI 및 카메라 업데이트
@@ -534,39 +507,31 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
           });
         }
 
-        // 3. 이전 위치가 있을 때만 거리/속도 계산 및 검사
         if (lastLoc != null) {
           final distanceInMeters = _calculateDistance(
               lastLoc.latitude!, lastLoc.longitude!,
               newPoint.latitude!, newPoint.longitude!
           );
 
-          // ▼▼▼▼▼ [ ✨ 신규 추가: 비정상 이동 방지 로직 ✨ ] ▼▼▼▼▼
-          // 시간 간격 계산
           double timeIntervalSec = (newLocation.time! - (lastLoc.time ?? 0)) / 1000;
-          if (timeIntervalSec <= 0) timeIntervalSec = 0.5; // 0 나누기 방지
+          if (timeIntervalSec <= 0) timeIntervalSec = 0.5;
 
-          // 속도 계산 (m/s)
           double speed = distanceInMeters / timeIntervalSec;
 
-          // 1. 순간이동 감지 (2초 이내 50m 초과)
           if (distanceInMeters > 50.0) {
             print('비정상적인 거리 이동(순간이동) 감지: $distanceInMeters m. 무시합니다.');
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
-            return; // 👈 거리/경로에 추가 안 함.
+            _previousLocationData = newLocation;
+            return;
           }
 
-          // 2. 비현실적인 속도 감지 (시속 36km/h 초과)
           if (speed > 10.0) {
             print('비현실적인 속도 감지: $speed m/s. 무시합니다.');
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
-            return; // 👈 거리/경로에 추가 안 함.
+            _previousLocationData = newLocation;
+            return;
           }
-          // ▲▲▲▲▲ [ ✨ 신규 추가 ✨ ] ▲▲▲▲▲
 
-          // 기존의 작은 이동 무시
           if (distanceInMeters < 2) {
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
+            _previousLocationData = newLocation;
             return;
           }
 
@@ -594,22 +559,17 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
           }
         }
 
-        // 4. 검사를 통과했거나, 첫 번째 위치일 경우 경로에 추가
-        _points.add(newPoint); // 현재 위치를 경로에 추가
-        _updatePolylines(); // 지도에 경로 업데이트
+        _points.add(newPoint);
+        _updatePolylines();
 
-        // 5. 현재 위치를 다음 계산을 위한 "이전 위치"로 저장
         _previousLocationData = newLocation;
-        // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 완료 ✨✨✨ ] ▲▲▲▲▲
 
-        // ✅ [수정] 위치 변경 시 워치로 데이터 전송
         if (widget.withWatch) {
           _sendWatchData();
         }
 
-        _updateLiveActivity(); // 라이브 액티비티 업데이트
+        _updateLiveActivity();
 
-        // 유저 거리가 고스트 목표 거리를 넘으면 레이스 종료
         if (_ghostDistanceKm > 0 && _distanceKm >= _ghostDistanceKm) {
           _finishRace();
         }
@@ -623,21 +583,18 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     }
   }
 
-
-  // ✅ [추가] 워치로 데이터를 전송하는 별도 함수
   void _sendWatchData() {
     if (!widget.withWatch || !_isTracking || _isPaused) return;
 
-    // paceMinPerKm이 유효하지 않으면 0.0 전송
     double paceToSend = (_paceMinPerKm.isFinite && _paceMinPerKm > 0) ? _paceMinPerKm : 0.0;
 
     _watch.sendMessage({
       'type': 'main',
       'kilometers': _distanceKm,
       'seconds': _elapsedSeconds,
-      'pace': paceToSend, // 유효한 페이스 또는 0.0 전송
-      'calories': 0.0, // 고스트런은 칼로리 없음
-      'raceStatus': _raceStatus, // ✅ 경주 상태 포함
+      'pace': paceToSend,
+      'calories': 0.0,
+      'raceStatus': _raceStatus,
       'isEnded': false,
     });
   }
@@ -658,60 +615,48 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
       setState(() {
         _elapsedSeconds = elapsed.inSeconds; // 초 단위로 저장
         final minutes = _elapsedSeconds ~/ 60; // 분 계산
-        final seconds = _elapsedSeconds % 60; // 초 계산
-        _timeDisplay = "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}"; // 표시용 시간 문자열 업데이트
+        final seconds = _elapsedSeconds % 60;
+        _timeDisplay = "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
 
-        // ✅ [수정] 1초 타이머에서도 워치로 데이터 전송
         if (widget.withWatch) {
           _sendWatchData();
         }
 
-        _updateLiveActivity(); // 라이브 액티비티 업데이트
+        _updateLiveActivity();
       });
     });
   }
 
   void _pauseTracking() {
-    if (_trackingStartTime != null && !_isPaused) { // 러닝 중에만 누적
-      // 💡 [수정] _pausedDuration 계산 로직 수정
-      // _pausedDuration += DateTime.now().difference(_trackingStartTime!); // ⛔️ 제거
-      _pauseStartTime = DateTime.now(); // 👈 [추가] 일시정지 시작 시간만 기록
+    if (_trackingStartTime != null && !_isPaused) {
+      _pauseStartTime = DateTime.now();
     }
-    // 💡 [수정] _speak 호출을 setState 전에
     _speak("일시정지");
     setState(() {
       _isPaused = true;
-      // _trackingStartTime = null; // ⛔️ 제거 (재개 시 _pausedDuration 계산에 필요)
     });
 
-    // ✅ [추가] 워치로 일시정지 명령 전송
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'pauseFromPhone'});
     }
 
-    // ✅ [추가] 일시정지 즉시 Live Activity 업데이트
     _updateLiveActivity();
   }
 
   void _resumeTracking() {
-    // 💡 [수정] 총 일시정지 시간 누적
-    if (_pauseStartTime != null) { // 일시정지 시작 시간이 기록되어 있으면
-      _pausedDuration += DateTime.now().difference(_pauseStartTime!); // 총 일시정지 시간에 더함
+    if (_pauseStartTime != null) {
+      _pausedDuration += DateTime.now().difference(_pauseStartTime!);
     }
-    // _trackingStartTime = DateTime.now(); // ⛔️ 제거 (기존 시작 시간 유지)
-    _pauseStartTime = null; // 일시정지 시작 시간 초기화
+    _pauseStartTime = null;
     setState(() {
       _isPaused = false;
     });
-    // 💡 [수정] _speak 호출을 setState 이후에
     _speak("운동을 다시 시작합니다");
 
-    // ✅ [추가] 워치로 재개 명령 전송
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'resumeFromPhone'});
     }
 
-    // ✅ [추가] 재개 즉시 Live Activity 업데이트
     _updateLiveActivity();
   }
 
@@ -754,75 +699,59 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
 
   // 레이스 완료 처리 함수
   Future<void> _finishRace() async {
-    if (!_isTracking) return; // 이미 종료 처리가 시작되었으면 중복 실행 방지
-    _isTracking = false; // 트래킹 상태 비활성화
+    if (!_isTracking) return;
+    _isTracking = false;
 
-    // 💡 [추가] 최종 경과 시간 계산 (일시정지 상태에서 종료 시)
     if (_isPaused && _pauseStartTime != null) {
-      // _pauseTracking 로직과 동일하게, 마지막 _pausedDuration을 확정
-      // _pausedDuration += DateTime.now().difference(_trackingStartTime!); // ⛔️ _trackingStartTime이 null일 수 있음
-      // _pauseStartTime을 기준으로 계산해야 함
-      _pausedDuration += DateTime.now().difference(_pauseStartTime!); // 👈 마지막 일시정지 시간 누적
+      _pausedDuration += DateTime.now().difference(_pauseStartTime!);
       _pauseStartTime = null;
     }
 
-    // 💡 [추가] _trackingStartTime이 null이 아닌지 확인
     if (_trackingStartTime != null) {
       final elapsed = DateTime.now().difference(_trackingStartTime!) - _pausedDuration;
-      _elapsedSeconds = elapsed.inSeconds; // 최종 시간 확정
+      _elapsedSeconds = elapsed.inSeconds;
     }
-    // _elapsedSeconds는 타이머에 의해 이미 최신 상태일 것이나, 안전장치로 재계산
 
-
-    // 승패 판정
     final bool isWin = _elapsedSeconds < _ghostTotalSeconds;
     final String raceResult = isWin ? 'win' : (_elapsedSeconds == _ghostTotalSeconds ? 'tie' : 'lose');
 
-    // ✅ [수정] 워치 종료 명령 전송 (최종 데이터 + 승패 결과 포함)
     if (widget.withWatch) {
       double finalPace = (_ghostDistanceKm > 0 && _elapsedSeconds > 0) ? (_elapsedSeconds / 60) / _ghostDistanceKm : 0.0;
-      if (!finalPace.isFinite) finalPace = 0.0; // 유효성 검사
+      if (!finalPace.isFinite) finalPace = 0.0;
 
       _watch.sendMessage({
-        'command': 'stopFromPhone', // 👈 워치 요약 화면 표시 명령
-        'kilometers': _ghostDistanceKm, // 최종 유저 거리 (목표 거리)
-        'seconds': _elapsedSeconds,   // 최종 유저 시간
-        'pace': finalPace,        // 최종 유저 페이스
-        'calories': 0.0,              // 칼로리 없음
-        'raceOutcome': raceResult,    // 🏁 승패 결과 ('win', 'lose', 'tie')
+        'command': 'stopFromPhone',
+        'kilometers': _ghostDistanceKm,
+        'seconds': _elapsedSeconds,
+        'pace': finalPace,
+        'calories': 0.0,
+        'raceOutcome': raceResult,
         'isEnded': true,
       });
 
-      // ▼▼▼▼▼ [ ✨ 여기가 수정되었습니다 (try-catch, await 추가) ✨ ] ▼▼▼▼▼
       try {
         await _watch.updateApplicationContext({
-          'runType': 'ghostRace', // 👈 런 타입 재확인
+          'runType': 'ghostRace',
           'isRunning': false,
-          'isEnded': true          // 👈 종료 상태로 변경
+          'isEnded': true
         });
       } catch (e) {
         print("워치 Context 업데이트 실패 (정상 동작): $e");
       }
-      // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
     }
 
-    _stopAndCleanUp(); // 타이머, 위치 구독 등 정리
+    _stopAndCleanUp();
 
-
-    // 결과 음성 안내
-    // 💡 [수정] _isPaused 상태와 관계없이 종료 음성 안내
     if (raceResult == 'win') _speak("승리했습니다!");
     else if (raceResult == 'lose') _speak("아쉽지만 패배했습니다.");
     else _speak("무승부입니다.");
 
-    // 고스트 최종 페이스 계산
     double ghostPaceResult = 0.0;
-    if (_ghostDistanceKm > 0 && _ghostTotalSeconds > 0) { // 0 나누기 방지
+    if (_ghostDistanceKm > 0 && _ghostTotalSeconds > 0) {
       ghostPaceResult = (_ghostTotalSeconds / 60) / _ghostDistanceKm;
     }
-    if (!ghostPaceResult.isFinite) ghostPaceResult = 0.0; // 유효성 검사
+    if (!ghostPaceResult.isFinite) ghostPaceResult = 0.0;
 
-    // 💡 [수정] 최종 페이스 재계산 (0 나누기 방지)
     if (_ghostDistanceKm > 0 && _elapsedSeconds > 0) {
       _paceMinPerKm = (_elapsedSeconds / 60) / _ghostDistanceKm;
     } else {
@@ -878,11 +807,10 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     // 가짜 결과 생성 (무조건 승리)
     final double finalDistance = _distanceKm > 0.1 ? _distanceKm : _ghostDistanceKm; // 최소 0.1km 또는 고스트 거리
     final int finalTime = _ghostTotalSeconds > 10 ? _ghostTotalSeconds - 10 : 50; // 고스트보다 10초 빠르게 (최소 50초)
-    final double finalPace = (finalDistance > 0 && finalTime > 0) ? (finalTime / 60) / finalDistance : 0.0; // 0 나누기 방지
+    final double finalPace = (finalDistance > 0 && finalTime > 0) ? (finalTime / 60) / finalDistance : 0.0;
     final bool isWin = true;
     final String raceResult = 'win';
 
-    // ✅ [수정] 워치 종료 명령 전송 (가짜 최종 데이터 + 승패 결과 포함)
     if (widget.withWatch) {
       _watch.sendMessage({
         'command': 'stopFromPhone',
@@ -890,11 +818,10 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         'seconds': finalTime,
         'pace': finalPace.isFinite ? finalPace : 0.0, // 유효성 검사
         'calories': 0.0,
-        'raceOutcome': raceResult, // 🏁 승패 결과
+        'raceOutcome': raceResult,
         'isEnded': true,
       });
 
-      // ▼▼▼▼▼ [ ✨ 여기가 수정되었습니다 (try-catch, await 추가) ✨ ] ▼▼▼▼▼
       try {
         await _watch.updateApplicationContext({
           'runType': 'ghostRace',
@@ -904,7 +831,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
       } catch (e) {
         print("워치 Context 업데이트 실패 (정상 동작): $e");
       }
-      // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
     }
 
     _stopAndCleanUp();
@@ -949,16 +875,12 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     }
   }
 
-  // 파이어베이스에 기록 저장 함수
-// ✅✅✅ [핵심 수정] _saveRunRecord 함수 ✅✅✅
-  // 파이어베이스에 기록 저장 함수 (WriteBatch 사용 및 경험치 추가)
   Future<void> _saveRunRecord({required String raceResult, double? userDistance, int? userTime, double? userPace}) async {
     try {
       final String userEmail = _auth.currentUser?.email ?? '';
-      if (userEmail.isEmpty) return; // 이메일 없으면 저장 불가
+      if (userEmail.isEmpty) return;
       final now = DateTime.now();
 
-      // 💡 [수정] _paceMinPerKm이 null이 될 수 있는 가능성 보완
       double finalPace = userPace ?? _paceMinPerKm;
       if (finalPace <= 0 && (userDistance ?? _ghostDistanceKm) > 0 && (userTime ?? _elapsedSeconds) > 0) {
         finalPace = ((userTime ?? _elapsedSeconds) / 60) / (userDistance ?? _ghostDistanceKm);
@@ -994,7 +916,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         }, SetOptions(merge: true)); // 기존 필드가 있으면 덮어쓰지 않고 병합
 
         // 2b. (신규) 보너스 경험치 지급
-        final int victoryBonusExp = 100; // 🏆 승리 보너스 (100 EXP)
+        final int victoryBonusExp = 100;
         final userRankingRef = _firestore.collection('users').doc(userEmail);
 
         // users 컬렉션의 주간/월간 경험치 증가
@@ -1003,7 +925,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
           'monthlyExp': FieldValue.increment(victoryBonusExp),
           // 'totalXp': FieldValue.increment(victoryBonusExp), // (필요시)
         });
-        print("✅ 고스트런 승리! 보너스 +${victoryBonusExp} EXP 지급");
+        print("고스트런 승리! 보너스 +${victoryBonusExp} EXP 지급");
       }
 
       // 3. Batch 실행
@@ -1030,8 +952,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
   // 고스트 현재 위치로 지도 이동 함수
   void _moveToGhost() {
     if (_ghostPoints.isNotEmpty && _mapController != null) {
-      // 현재 고스트 인덱스에 해당하는 위치 가져오기
-      // 💡 [수정] _ghostIndex가 _ghostPoints 길이를 넘지 않도록 clamp
       int safeIndex = _ghostIndex.clamp(0, _ghostPoints.length - 1);
       LatLng ghostPosition = LatLng(_ghostPoints[safeIndex]['latitude']!, _ghostPoints[safeIndex]['longitude']!);
       // 지도를 해당 위치로 애니메이션 이동 (줌 레벨 16)
@@ -1090,7 +1010,6 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
                 _updateGhostPolylines(); // 고스트 전체 경로 표시
               },
             ),
-            // ✅✅✅ [수정 3/3] 카운트다운 오버레이 Text 위젯 수정
             // 카운트다운 오버레이
             if (_showCountdown || _countdownMessage.isNotEmpty)
               Container(

@@ -109,10 +109,7 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     } catch (e) {
       print('공유 오류: $e');
       if (mounted) {
-        // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-        // 기존 SnackBar 호출 대신 _showCustomSnackBar 호출
         _showCustomSnackBar('결과를 공유하는 중 오류가 발생했습니다.', isError: true);
-        // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
       }
     } finally {
       if (mounted) {
@@ -121,8 +118,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     }
   }
 
-  // ▼▼▼▼▼ [ ✨ 추가된 함수 ✨ ] ▼▼▼▼▼
-  // ProfileScreen에서 가져온 커스텀 스낵바 함수
   void _showCustomSnackBar(String message, {bool isError = false}) {
     if (!mounted) return; // Check mounted
     ScaffoldMessenger.of(context).showSnackBar(
@@ -142,15 +137,14 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
             ),
           ],
         ),
-        backgroundColor: isError ? Colors.redAccent.shade400 : Color(0xFFFF9F80), // 에러는 붉은색, 성공은 주황색
+        backgroundColor: isError ? Colors.redAccent.shade400 : Color(0xFFFF9F80),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
-        duration: Duration(seconds: isError ? 4 : 2), // 에러는 더 길게
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }
-  // ▲▲▲▲▲ [ ✨ 추가된 함수 ✨ ] ▲▲▲▲▲
 
   Future<void> _loadGoalForDate(DateTime date) async {
     setState(() {
@@ -472,7 +466,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
               onDaySelected: (selectedDay, focusedDay) {
                 setState(() {
                   _selectedDate = selectedDay;
-                  // [수정] 새로운 날짜 선택 시, 특정 기록 선택 상태를 초기화합니다.
                   _selectedRecord = null;
                   _showCalendar = false;
                 });
@@ -520,7 +513,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
       onTap: () async {
         setState(() {
           _selectedDate = dayDate;
-          // [수정] 새로운 날짜 선택 시, 특정 기록 선택 상태를 초기화합니다.
           _selectedRecord = null;
         });
         await _loadGoalForDate(dayDate);
@@ -569,7 +561,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final double deviceWidth = MediaQuery.of(context).size.width;
 
-    // ✅ [수정] Scaffold에 AppBar를 직접 추가하여 레이아웃 문제를 해결합니다.
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -578,10 +569,8 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
         scrolledUnderElevation: 0,
         centerTitle: true,
 
-        // ✅ 1. leading 영역의 너비를 직접 지정해 공간을 확보합니다.
         leadingWidth: 80,
 
-        // ✅ 2. IconButton 대신 InkWell과 SizedBox를 사용해 크기를 강제합니다.
         leading: Center(
           child: InkWell(
             onTap: () {
@@ -589,13 +578,13 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
             },
             customBorder: CircleBorder(),
             child: Padding(
-              padding: const EdgeInsets.all(5.0), // 터치 영역 확보
+              padding: const EdgeInsets.all(5.0),
               child: SizedBox(
-                width: 55,  // 👈 원하는 너비로 확실하게 고정
-                height: 50, // 👈 원하는 높이로 확실하게 고정
+                width: 55,
+                height: 50,
                 child: Image.asset(
                   'assets/images/Back-Navs.png',
-                  fit: BoxFit.contain, // 이미지가 공간에 맞게 조절되도록 설정
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -638,7 +627,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
         ],
       ),
       body: SafeArea(
-        // ✅ [수정] SafeArea의 top 속성을 false로 설정하여 AppBar와의 중복 여백을 방지합니다.
         top: false,
         child: _isLoadingGoal
             ? Center(child: CircularProgressIndicator())
@@ -688,9 +676,8 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
                     physics: ClampingScrollPhysics(),
                     padding: EdgeInsets.only(bottom: 20.0),
                     children: [
-                      // ✅ [수정] 요일 Row의 상단 패딩을 조정하여 AppBar와 간격을 띄웁니다.
                       Padding(
-                        padding: const EdgeInsets.only(top: 15.0, left: 20.0, right: 20.0), // top: 15.0 추가
+                        padding: const EdgeInsets.only(top: 15.0, left: 20.0, right: 20.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
@@ -920,7 +907,6 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     );
   }
 
-  // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
   Widget _buildShareableCard(Map<String, dynamic> data, List<LatLng> latLngPoints) {
     final double safeKilometers = (data['kilometers'] as num? ?? 0.0).toDouble();
     final double safePace = (data['pace'] as num? ?? 0.0).toDouble();
@@ -931,15 +917,15 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
       return Container(
         width: 450,
         height: 800,
-        color: Colors.white, // 배경 흰색으로 변경
+        color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)), // 텍스트 검은색
-              Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)), // 텍스트 검은색
+              Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)),
+              Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
               SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -950,7 +936,7 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
                 ],
               ),
               SizedBox(height: 40),
-              Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))), // 텍스트 어두운 회색
+              Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))),
             ],
           ),
         ),
@@ -969,12 +955,12 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     return Container(
       width: 450,
       height: 800,
-      color: Colors.white, // 배경 흰색으로 변경
+      color: Colors.white,
       child: Stack(
         children: [
           CustomPaint(
             size: Size(450, 800),
-            painter: RoutePainter(points: latLngPoints, bounds: bounds), // RoutePainter가 경로를 그림
+            painter: RoutePainter(points: latLngPoints, bounds: bounds),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
@@ -982,8 +968,8 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)), // 텍스트 검은색
-                Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)), // 텍스트 검은색
+                Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)),
+                Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
                 SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -994,7 +980,7 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
                   ],
                 ),
                 SizedBox(height: 40),
-                Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))), // 텍스트 어두운 회색
+                Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))),
               ],
             ),
           ),
@@ -1002,20 +988,17 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
       ),
     );
   }
-  // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
 
-  // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
   Widget _buildStatColumn(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 18, decoration: TextDecoration.none)), // 텍스트 어두운 회색
+        Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 18, decoration: TextDecoration.none)),
         SizedBox(height: 4),
-        Text(value, style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold, decoration: TextDecoration.none)), // 텍스트 검은색
+        Text(value, style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold, decoration: TextDecoration.none)),
       ],
     );
   }
-  // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
 
   Widget _buildDetailStatCard(String label, String value) {
     final double deviceWidth = MediaQuery.of(context).size.width;
@@ -1185,7 +1168,6 @@ class ThreeDProgressPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
 class RoutePainter extends CustomPainter {
   final List<LatLng> points;
   final LatLngBounds bounds;
@@ -1203,7 +1185,7 @@ class RoutePainter extends CustomPainter {
     }
 
     final paint = Paint()
-      ..color = Colors.black54 // 경로 색상 어둡게 변경
+      ..color = Colors.black54
       ..strokeWidth = 5.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -1262,7 +1244,6 @@ class RoutePainter extends CustomPainter {
     return oldDelegate.points != points || oldDelegate.bounds != bounds;
   }
 }
-// ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
 
 String _formatPace(double pace) {
   int minutes = pace.floor();
@@ -1370,7 +1351,6 @@ class _FullScreenMapPageState extends State<FullScreenMapPage> {
     );
   }
 
-  // ✅ [추가] 지도 위에 표시될 범례 위젯을 생성하는 함수
   Widget _buildLegend() {
     return Positioned(
       top: 10,
@@ -1403,7 +1383,6 @@ class _FullScreenMapPageState extends State<FullScreenMapPage> {
     );
   }
 
-  // ✅ [추가] 범례의 각 항목을 만드는 Helper 함수
   Widget _buildLegendItem(Color color, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
@@ -1427,27 +1406,25 @@ class _FullScreenMapPageState extends State<FullScreenMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // [수정] AppBar 디자인 전체 수정
       appBar: AppBar(
-        backgroundColor: Colors.white, // 배경 흰색
-        elevation: 0, // 그림자 제거
-        centerTitle: true, // 제목 중앙 정렬
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
         title: Text(
           '경로 상세보기',
           style: TextStyle(
-            color: Colors.black, // 글자색 검은색
+            color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
         leading: IconButton(
-          icon: Image.asset('assets/images/Back-Navs.png', width: 40, height: 40), // 요청하신 이미지 아이콘
+          icon: Image.asset('assets/images/Back-Navs.png', width: 40, height: 40),
           onPressed: () {
-            Navigator.of(context).pop(); // 뒤로가기 기능
+            Navigator.of(context).pop();
           },
         ),
       ),
-      // ✅ [수정] AppleMap을 Stack으로 감싸고 범례 위젯을 추가합니다.
       body: Stack(
         children: [
           AppleMap(
@@ -1465,7 +1442,7 @@ class _FullScreenMapPageState extends State<FullScreenMapPage> {
             zoomGesturesEnabled: true,
             scrollGesturesEnabled: true,
           ),
-          _buildLegend(), // 범례 위젯 호출
+          _buildLegend(),
         ],
       ),
     );

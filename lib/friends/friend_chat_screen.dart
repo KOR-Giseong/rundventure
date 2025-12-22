@@ -8,13 +8,13 @@ import 'package:intl/date_symbol_data_local.dart'; // 날짜 로케일
 class FriendChatScreen extends StatefulWidget {
   final String friendEmail;
   final String friendNickname;
-  final String? friendProfileUrl; // ✅ [추가] 친구 프로필 URL
+  final String? friendProfileUrl;
 
   const FriendChatScreen({
     Key? key,
     required this.friendEmail,
     required this.friendNickname,
-    this.friendProfileUrl, // ✅ [추가]
+    this.friendProfileUrl,
   }) : super(key: key);
 
   @override
@@ -29,8 +29,8 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
 
   String? _myEmail;
   String? _myNickname;
-  String? _myProfileUrl; // ✅ [추가] 내 프로필 URL
-  String? _chatRoomId; // 두 사용자 간의 고유한 채팅방 ID
+  String? _myProfileUrl;
+  String? _chatRoomId;
 
   bool _isInitialLoading = true;
 
@@ -68,16 +68,16 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
         final data = doc.data()! as Map;
         if (mounted) {
           _myNickname = data['nickname'] ?? '나';
-          _myProfileUrl = data['profileImageUrl'] as String?; // ✅ [추가]
+          _myProfileUrl = data['profileImageUrl'] as String?;
         }
       } else {
         _myNickname = '나';
-        _myProfileUrl = null; // ✅ [추가]
+        _myProfileUrl = null;
       }
     } catch (e) {
       print("내 정보 로드 실패: $e");
       _myNickname = '나';
-      _myProfileUrl = null; // ✅ [추가]
+      _myProfileUrl = null;
     }
 
     // 2. 채팅방 ID 생성
@@ -85,8 +85,6 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
     _summaryStream =
         _firestore.collection('userChats').doc(_chatRoomId).snapshots();
 
-    // 3. 채팅방 진입 시 '읽음'으로 처리 (✅ [수정] lastUpdated 갱신 포함)
-    //    (닉네임과 프로필 로드가 완료된 후에 호출)
     await _markAsReadByMe();
 
     // 4. 타이핑 리스너 추가
@@ -128,7 +126,6 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
 
   // 타이핑 이벤트 핸들러
   void _onTyping() {
-    // ✅ [수정] 닉네임 로드 확인
     if (_chatRoomId == null || _myEmailKey == null || _friendEmailKey == null || _myNickname == null) return;
     final myTypingKey = 'typing_$_myEmailKey';
 
@@ -139,7 +136,6 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
         _myEmailKey!: _myNickname,
         _friendEmailKey!: widget.friendNickname,
       },
-      // ✅ [추가] 프로필 URL 맵
       'participantProfileUrls': {
         _myEmailKey!: _myProfileUrl,
         _friendEmailKey!: widget.friendProfileUrl,
@@ -159,11 +155,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
     });
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 함수 (숨김 해제) ✨✨✨ ] ▼▼▼▼▼
-  // 친구 재추가 문제(1)와 프로필 사진 문제(2), '숨김 해제'(3)를 모두 해결하기 위해
-  // 채팅방 입장 시 'lastUpdated'와 'participantProfileUrls', 'hiddenBy...'를 항상 갱신합니다.
   Future<void> _markAsReadByMe() async {
-    // ✅ [수정] 닉네임 로드 확인
     if (_chatRoomId == null || _myEmailKey == null || _friendEmailKey == null || _myNickname == null) {
       print("Warning: _markAsReadByMe called before _myNickname was loaded.");
       return;
@@ -172,53 +164,42 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
     final myReadKey = 'isReadBy_$_myEmailKey';
     final summaryRef = _firestore.collection('userChats').doc(_chatRoomId!);
 
-    // ✅ 트랜잭션을 사용하여 문서를 읽고 씁니다.
     try {
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(summaryRef);
 
-        // ✅ 갱신할 공통 데이터 (프로필, 닉네임, 읽음, lastUpdated, 숨김 해제)
         Map<String, dynamic> updateData = {
-          myReadKey: true, // 1. 나는 읽음
-          // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 ✨✨✨ ] ▼▼▼▼▼
-          'hiddenBy_$_myEmailKey': false, // 2. ✅ [추가] 채팅방에 다시 입장했으므로 '숨김' 상태 해제
-          // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 ✨✨✨ ] ▲▲▲▲▲
-          'participants': [_myEmail, widget.friendEmail], // 3. 참여자 정보
-          'participantNicknames': { // 4. 닉네임 정보
+          myReadKey: true,
+          'hiddenBy_$_myEmailKey': false,
+          'participants': [_myEmail, widget.friendEmail],
+          'participantNicknames': {
             _myEmailKey!: _myNickname,
             _friendEmailKey!: widget.friendNickname,
           },
-          'participantProfileUrls': { // 5. ✅ [추가] 프로필 URL 정보
+          'participantProfileUrls': {
             _myEmailKey!: _myProfileUrl,
             _friendEmailKey!: widget.friendProfileUrl,
           },
-          // 6. ✅ [핵심] 'lastUpdated' 갱신
-          //    채팅방에 입장하는 것만으로 'lastUpdated'를 갱신하여
-          //    채팅 목록(FriendManagementScreen) 상단에 노출시킵니다.
           'lastUpdated': FieldValue.serverTimestamp(),
         };
 
         if (!snapshot.exists) {
-          // ✅ 문서가 없으면(최초 생성) 'lastMessage' 등 추가 정보 설정
           updateData.addAll({
             'lastMessage': '채팅이 시작되었습니다.',
             'lastSenderEmail': 'system',
-            'isReadBy_$_friendEmailKey': false, // 상대는 아직 안 읽음
+            'isReadBy_$_friendEmailKey': false,
           });
           transaction.set(summaryRef, updateData);
         } else {
-          // ✅ 문서가 있으면(기존 채팅방 입장/재입장)
-          // 'lastMessage' 등은 건드리지 않고 위 1~6번 항목만 갱신 (merge)
           transaction.set(summaryRef, updateData, SetOptions(merge: true));
         }
       });
     } catch (e) {
       print("Error in _markAsReadByMe transaction: $e");
-      // 트랜잭션 실패 시 간단한 업데이트라도 시도
       try {
         await summaryRef.set({
           myReadKey: true,
-          'hiddenBy_$_myEmailKey': false, // ✅ [추가] 숨김 해제
+          'hiddenBy_$_myEmailKey': false,
           'participants': [_myEmail, widget.friendEmail],
           'participantNicknames': {
             _myEmailKey!: _myNickname,
@@ -235,7 +216,6 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
       }
     }
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 함수 (숨김 해제) ✨✨✨ ] ▲▲▲▲▲
 
 
   Future<void> _sendMessage() async {
@@ -261,17 +241,16 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
       'lastMessage': text,
       'lastSenderEmail': _myEmail,
       'lastSenderNickname': _myNickname,
-      'lastUpdated': messageTimestamp, // ✅ [필수]
+      'lastUpdated': messageTimestamp,
       myReadKey: true,
       friendReadKey: false,
       myTypingKey: false,
-      'hiddenBy_$_myEmailKey': false, // ✅ [추가] 메시지 보낼 때도 숨김 해제
+      'hiddenBy_$_myEmailKey': false,
       'participants': [_myEmail, widget.friendEmail],
       'participantNicknames': {
         _myEmailKey!: _myNickname,
         _friendEmailKey!: widget.friendNickname,
       },
-      // ✅ [추가] 프로필 URL 맵
       'participantProfileUrls': {
         _myEmailKey!: _myProfileUrl,
         _friendEmailKey!: widget.friendProfileUrl,
@@ -336,7 +315,6 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
         ),
         centerTitle: true,
       ),
-      // ✅ [수정] _myNickname 로딩 확인 추가
       body: _isInitialLoading || _chatRoomId == null || _friendEmailKey == null || _myNickname == null
           ? Center(child: CircularProgressIndicator()) // 로딩 중
           : StreamBuilder<DocumentSnapshot>(

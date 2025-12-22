@@ -353,8 +353,8 @@ class _AdminSupportChatRoomScreenState
               context,
               MaterialPageRoute(
                 builder: (context) => OtherUserProfileScreen(
-                  userEmail: widget.userEmail, // 사용자 이메일 전달
-                  isAdminViewing: true, // 👈 [핵심] 관리자 모드로 프로필 보기
+                  userEmail: widget.userEmail,
+                  isAdminViewing: true,
                 ),
               ),
             );

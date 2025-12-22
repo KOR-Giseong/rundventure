@@ -14,7 +14,6 @@ const String defaultProfileImageUrl =
 
 class FreeTalkDetailScreen extends StatefulWidget {
   final String postId;
-  // ✅ [수정] 모든 파라미터를 Nullable (선택적)으로 변경
   final String? nickname;
   final String? title;
   final String? content;
@@ -25,7 +24,6 @@ class FreeTalkDetailScreen extends StatefulWidget {
   const FreeTalkDetailScreen({
     Key? key,
     required this.postId,
-    // ✅ [수정] Nullable로 변경
     this.nickname,
     this.title,
     this.content,
@@ -43,7 +41,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
   final FocusNode _commentFocusNode = FocusNode();
 
   bool isAnonymous = true;
-  String? nickname; // 👈 (참고) '내' 닉네임
+  String? nickname;
   String? postAuthorProfileImageUrl;
   bool hasLiked = false;
   bool hasDisliked = false;
@@ -61,7 +59,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
   String _currentTitle = '';
   String _currentContent = '';
   String _postAuthorEmail = '';
-  String _nickname = ''; // 👈 (참고) '글쓴이' 닉네임
+  String _nickname = '';
   Timestamp _timestamp = Timestamp.now();
   String? _imageUrl; // 이미지 URL도 상태 변수로
 
@@ -280,15 +278,14 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     return {'nickname': '익명', 'profileImageUrl': ''};
   }
 
-  // ▼▼▼▼▼▼▼▼▼▼ [ ✨✨✨ 핵심 수정 부분 ✨✨✨ ] ▼▼▼▼▼▼▼▼▼▼
-  // 알림 전송 로직(규칙 위반)을 제거하고, 배치(Batch)를 단일 set으로 변경
+  // 댓글 작성 - 보안 규칙 위반으로 인해 알림 로직 제거, 단일 set 사용
   Future<void> _submitComment(bool isAnonymousCommentingDisabled) async {
     final commentText = _commentController.text.trim();
     final user = FirebaseAuth.instance.currentUser;
 
     if (commentText.isEmpty || user == null) return;
 
-    final userEmail = user.email!; // 댓글 작성자 이메일
+    final userEmail = user.email!;
 
     final userDoc =
     await FirebaseFirestore.instance.collection('users').doc(userEmail).get();
@@ -310,33 +307,9 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     final postRef =
     FirebaseFirestore.instance.collection('freeTalks').doc(widget.postId);
 
-    // (주석 처리 - 알림 전송 로직이 제거되어 아래 코드는 불필요)
-    // final String postAuthorEmailDecoded =
-    // _postAuthorEmail.replaceAll('_at_', '@').replaceAll('_dot_', '.');
-    // final String postTitle = _currentTitle;
-    //
-    // final commentsSnapshot = await postRef.collection('comments').get();
-    // final Set<String> usersToNotify = {
-    //   postAuthorEmailDecoded // 1. 글쓴이 추가
-    // };
-    // for (var doc in commentsSnapshot.docs) {
-    //   final data = doc.data() as Map<String, dynamic>;
-    //
-    //   if (data.containsKey('userEmail')) {
-    //     usersToNotify.add(data['userEmail'] as String);
-    //   }
-    // }
-
-    // (주석 처리 - 단일 쓰기를 사용할 것이므로 배치가 필요 없음)
-    // final batch = FirebaseFirestore.instance.batch();
-
     final newCommentRef = postRef.collection('comments').doc();
-    String imageUrl = ''; // (참고: 현재 이미지 첨부 로직은 없으나 필드는 유지)
+    String imageUrl = ''; // 이미지 첨부 기능 미구현
 
-    // (주석 처리 - 배치 대신 단일 set() 사용)
-    // batch.set(newCommentRef, { ... });
-
-    // ✅ 배치 대신 단일 .set()을 사용하여 댓글만 생성합니다.
     await newCommentRef.set({
       'userEmail': userEmail,
       'isAnonymous': isAnonymousFinal,
@@ -347,7 +320,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
       'imageUrl': imageUrl,
     });
 
-    // (주석 처리 - 다른 사용자에게 알림을 쓰는 로직은 보안 규칙 위반으로 제거)
+    // 알림 로직 제거됨 (보안 규칙 위반)
     // for (String emailToNotify in usersToNotify) {
     //   if (emailToNotify == userEmail) {
     //     continue;
@@ -355,7 +328,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     //
     //   final notificationRef = FirebaseFirestore.instance
     //       .collection('notifications')
-    //       .doc(emailToNotify) // <-- 이 부분이 보안 규칙 위반
+    //       .doc(emailToNotify)
     //       .collection('items')
     //       .doc();
     //
@@ -371,7 +344,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     //   });
     // }
     //
-    // await batch.commit(); // <-- 오류가 발생했던 지점
+    // await batch.commit();
 
     setState(() {
       replyingToCommentId = null;
@@ -380,7 +353,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
 
     _commentController.clear();
   }
-  // ▲▲▲▲▲▲▲▲▲▲ [ ✨✨✨ 핵심 수정 부분 ✨✨✨ ] ▲▲▲▲▲▲▲▲▲▲
 
   Future<void> _loadLikeDislikeState() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -873,18 +845,15 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
             ),
           ),
 
-          // ▼▼▼▼▼▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼▼▼▼▼▼
-          // 댓글 입력창을 StreamBuilder로 감싸서 실시간 잠금 상태 확인
+          // 댓글 입력창 - 실시간 익명 댓글 잠금 상태 확인
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('boardStatus').doc('status').snapshots(),
             builder: (context, snapshot) {
 
-              // 기본값은 false (기능 활성화)
               bool isAnonymousDisabled = false;
 
               if (snapshot.hasData && snapshot.data!.exists) {
                 final data = snapshot.data!.data() as Map<String, dynamic>?;
-                // 'isAnonymousCommentingDisabled' 필드가 true이면 익명 비활성화
                 isAnonymousDisabled = data?['isAnonymousCommentingDisabled'] ?? false;
               }
 
@@ -928,7 +897,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                       ),
                     Row(
                       children: [
-                        // '익명 댓글' 기능이 비활성화되지 않았을 때만 체크박스 표시
                         if (!isAnonymousDisabled)
                           GestureDetector(
                             onTap: () {
@@ -952,7 +920,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                               ],
                             ),
                           ),
-                        // '익명' 체크박스가 있을 때만 간격 추가
                         if (!isAnonymousDisabled) const SizedBox(width: 12),
 
                         Expanded(
@@ -978,7 +945,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                         IconButton(
                           icon: const Icon(Icons.send, size: 22),
                           color: Colors.grey[700],
-                          // 'submit' 함수에 현재 익명 잠금 상태를 전달
                           onPressed: () => _submitComment(isAnonymousDisabled),
                         ),
                       ],
@@ -988,7 +954,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
               );
             },
           ),
-          // ▲▲▲▲▲▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲▲▲▲▲▲
         ],
       ),
     );
@@ -1021,7 +986,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     final timestamp = (data['timestamp'] is Timestamp)
         ? data['timestamp'] as Timestamp
         : Timestamp.now();
-    final commentEmail = data['userEmail'] as String?; // 👈 [수정] String?으로 받음
+    final commentEmail = data['userEmail'] as String?;
     final isAnonymousComment = data['isAnonymous'] == true;
     final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
 

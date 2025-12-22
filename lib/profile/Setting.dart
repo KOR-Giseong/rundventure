@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 ✨ [수정] SharedPreferences 임포트
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../home_Screens/home_screen2.dart';
@@ -27,10 +27,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
   bool _isSuperAdmin = false;
 
-  // ▼▼▼▼▼ [ ✨ 1. 신규 추가 ✨ ] ▼▼▼▼▼
-  bool _watchSyncEnabled = false; // 👈 Apple Watch 연동 스위치 상태
-  bool _isLoadingWatchSync = true; // 👈 설정 로딩 중 상태
-  // ▲▲▲▲▲ [ ✨ 1. 신규 추가 ✨ ] ▲▲▲▲▲
+  bool _watchSyncEnabled = false;
+  bool _isLoadingWatchSync = true;
 
   final FirebaseFunctions _functions =
   FirebaseFunctions.instanceFor(region: 'us-central1');
@@ -40,7 +38,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     super.initState();
     _loadAppVersion();
     _checkSuperAdminStatus();
-    _loadWatchSyncSetting(); // 👈 ✨ [수정] 워치 설정 로드
+    _loadWatchSyncSetting();
   }
 
   @override
@@ -49,29 +47,23 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     super.dispose();
   }
 
-  // ▼▼▼▼▼ [ ✨ 2. 신규 추가 ✨ ] ▼▼▼▼▼
-  /// SharedPreferences에서 Apple Watch 연동 설정을 불러옵니다.
   Future<void> _loadWatchSyncSetting() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        // 'watchSyncEnabled' 키로 저장된 값을 읽어오며, 없으면 false(끄기)를 기본값으로 합니다.
         _watchSyncEnabled = prefs.getBool('watchSyncEnabled') ?? false;
         _isLoadingWatchSync = false;
       });
     }
   }
 
-  /// Apple Watch 연동 설정을 SharedPreferences에 저장합니다.
   Future<void> _updateWatchSyncSetting(bool newValue) async {
     setState(() {
       _watchSyncEnabled = newValue;
     });
     final prefs = await SharedPreferences.getInstance();
-    // 'watchSyncEnabled' 키로 새로운 값을 저장합니다.
     await prefs.setBool('watchSyncEnabled', newValue);
   }
-  // ▲▲▲▲▲ [ ✨ 2. 신규 추가 ✨ ] ▲▲▲▲▲
 
   // (수정 없음) 슈퍼 관리자 확인
   Future<void> _checkSuperAdminStatus() async {
@@ -466,8 +458,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             value: _appVersion,
           ),
 
-          // ▼▼▼▼▼ [ ✨ 3. 신규 추가 (UI) ✨ ] ▼▼▼▼▼
-          // SharedPreferences에서 설정을 불러오는 동안 로딩 인디케이터를 표시합니다.
           if (_isLoadingWatchSync)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 5),
@@ -493,7 +483,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 ],
               ),
             )
-          // 로딩이 끝나면 스위치 타일을 표시합니다.
           else
             Container(
               padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
@@ -514,19 +503,15 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
                 ),
                 value: _watchSyncEnabled,
-                onChanged: _updateWatchSyncSetting, // 👈 스위치 조작 시 저장 함수 호출
+                onChanged: _updateWatchSyncSetting,
                 activeColor: Colors.blueAccent,
-                // 👇👇👇 [ 여기 색상 수정됨 ] 👇👇👇
-                // 꺼져있을 때 색상을 깔끔한 회색/흰색 조합으로 변경
                 inactiveThumbColor: Colors.white,
                 inactiveTrackColor: Colors.grey[300],
-                trackOutlineColor: MaterialStateProperty.all(Colors.transparent), // 테두리 없앰
-                // 👆👆👆 [ 여기까지 ] 👆👆👆
+                trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 5),
                 visualDensity: VisualDensity.compact,
               ),
             ),
-          // ▲▲▲▲▲ [ ✨ 3. 신규 추가 (UI) ✨ ] ▲▲▲▲▲
 
           if (isEmailLogin)
             _buildSettingItem(

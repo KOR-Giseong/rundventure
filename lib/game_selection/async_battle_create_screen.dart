@@ -1,30 +1,13 @@
-// [전체 코드] async_battle_create_screen.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
-// ▼▼▼▼▼ [ ⭐️ 수정: TTS 임포트 추가 ⭐️ ] ▼▼▼▼▼
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:flutter/services.dart'; // for IosTextToSpeechAudioCategory
-// ▲▲▲▲▲ [ ⭐️ 수정: TTS 임포트 추가 ⭐️ ] ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 커넥티비티 임포트 ⭐️⭐️⭐️ ] ▼▼▼▼▼
+import 'package:flutter/services.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 커넥티비티 임포트 ⭐️⭐️⭐️ ] ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: 설정값 로드용 임포트 ✨✨✨ ] ▼▼▼▼▼
 import 'package:shared_preferences/shared_preferences.dart';
-// ▲▲▲▲▲ [ ✨✨✨ 핵심 수정: 설정값 로드용 임포트 ✨✨✨ ] ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 파트 4 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-// 1. [제거] RunningPage 임포트
-// import '../free_running/free_running_start.dart';
-// 2. [신규] 오프라인 대결 전용 러닝 페이지 임포트
 import 'async_battle_running_screen.dart';
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 파트 4 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
 // 친구 정보를 담기 위한 간단한 모델
 class FriendData {
@@ -56,33 +39,20 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
   bool _isLoadingFriends = true;
   bool _isCreatingBattle = false;
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 수정 1/4: 상태 변수 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
   String _myNickname = '알수없음';
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 수정 1/4: 상태 변수 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   String? _selectedFriendEmail;
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ UI 수정 (Part 13) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // 선택된 친구의 전체 정보를 저장하기 위해 FriendData 타입으로 변경
   FriendData? _selectedFriend;
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ UI 수정 (Part 13) ⭐️⭐️⭐️ ] ▲▲▲▲▲
   double? _selectedDistanceKm;
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 7km 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // 거리 선택 옵션
   final List<double> _distanceOptions = [1.0, 2.0, 3.0, 5.0, 7.0, 10.0];
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 7km 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   @override
   void initState() {
     super.initState();
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 수정 2/4: initState 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-    // 닉네임 로딩과 친구 목록 로딩을 동시에 시작
     _loadMyDataAndFriends();
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 닉네임 수정 2/4: initState 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 닉네임 수정 3/4: 함수 2개(_loadMyDataAndFriends, _fetchFriends) 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // (신규) 닉네임과 친구목록을 병렬로 로드하는 함수
   Future<void> _loadMyDataAndFriends() async {
     if (!mounted) return;
     setState(() => _isLoadingFriends = true);
@@ -95,20 +65,16 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     }
 
     try {
-      // 1. 내 닉네임 가져오기
       final userDocFuture =
       _firestore.collection('users').doc(user.email).get();
-      // 2. 친구 목록 가져오기
       final friendsFuture = _firestore
           .collection('users')
           .doc(user.email)
           .collection('friends')
           .get();
 
-      // 두 작업을 동시에 실행
       final results = await Future.wait([userDocFuture, friendsFuture]);
 
-      // 1. 내 닉네임 처리
       final userDoc = results[0] as DocumentSnapshot;
       if (userDoc.exists) {
         _myNickname =
@@ -117,7 +83,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
         _myNickname = '알수없음';
       }
 
-      // 2. 친구 목록 처리
       final friendsSnapshot = results[1] as QuerySnapshot;
       final friends = friendsSnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -143,11 +108,9 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     }
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ (요청) 카운트다운 로직 수정 1/2: _startAsyncBattle 함수 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
   Future<void> _startAsyncBattle() async {
-    if (_isCreatingBattle) return; // 중복 생성 방지
+    if (_isCreatingBattle) return;
 
-    // 1. 유효성 검사
     if (_selectedFriend == null) {
       _showCustomSnackBar("대결할 친구를 선택해주세요.", isError: true);
       return;
@@ -162,7 +125,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     _showLoadingDialog("대결 생성 중...");
 
     try {
-      // 2. Cloud Function (sendAsyncBattleRequest) 호출
       final callable = _functions.httpsCallable('sendAsyncBattleRequest');
 
       final HttpsCallableResult result = await callable.call({
@@ -172,13 +134,11 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
       });
 
       if (!mounted) return;
-      Navigator.pop(context); // 로딩 다이얼로그 닫기
+      Navigator.pop(context);
 
       if (result.data['success'] == true) {
-        // 3. 성공 시: battleId를 받아 RunningPage로 이동
         final String? battleId = result.data['battleId'] as String?;
 
-        // 3-1. [⭐️⭐️⭐️핵심 수정⭐️⭐️⭐️] battleId가 null이거나 비어있는지 확인
         if (battleId == null || battleId.isEmpty) {
           print(
               "🚨 [CREATE BATTLE] CRITICAL ERROR: Cloud Function 'sendAsyncBattleRequest' succeeded but returned an invalid battleId.");
@@ -187,67 +147,53 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
                 isError: true);
             setState(() => _isCreatingBattle = false);
           }
-          return; // 👈 [중요] ID가 없으면 네비게이션을 중단
+          return;
         }
 
-        // 3-2. (기존 로직)
         if (!mounted) return;
 
-        // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: 설정값 로드 및 적용 ✨✨✨ ] ▼▼▼▼▼
-        // SharedPreferences에서 워치 설정값 미리 로드
         final prefs = await SharedPreferences.getInstance();
         final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
-        // 3-2. (수정) 3초 카운트다운 다이얼로그 표시
         showDialog(
           context: context,
-          barrierDismissible: false, // 👈 뒤로가기/바탕 터치로 닫기 금지
-          builder: (context) => CountdownDialog(), // 👈 신규 위젯 호출
+          barrierDismissible: false,
+          builder: (context) => CountdownDialog(),
         ).then((_) {
-          // 3-3. (수정) 다이얼로그가 닫히면 (즉, 3초가 지나면) 러닝 화면으로 이동
           if (mounted) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: withWatch 전달 ⭐️⭐️⭐️ ] ▼▼▼▼▼
                 builder: (context) => AsyncBattleRunningScreen(
                   targetDistanceKm: _selectedDistanceKm!,
                   battleId: battleId,
-                  // ❗️ [수정] 저장된 설정값(withWatch)을 전달합니다.
                   withWatch: withWatch,
                 ),
-                // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: withWatch 전달 ⭐️⭐️⭐️ ] ▲▲▲▲▲
               ),
             );
           }
         });
-        // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정: 설정값 로드 및 적용 ✨✨✨ ] ▲▲▲▲▲
 
       } else {
-        // 4. 실패 시 (Functions에서 success: false 반환)
         _showCustomSnackBar(result.data['message'] ?? "대결 생성에 실패했습니다.",
             isError: true);
         setState(() => _isCreatingBattle = false);
       }
     } catch (e) {
-      // 5. 호출 자체 실패 시 (네트워크 오류 등)
       print("Cloud Function 'sendAsyncBattleRequest' 호출 오류: $e");
       if (mounted) {
-        Navigator.pop(context); // 로딩 다이얼로그 닫기
+        Navigator.pop(context);
         _showCustomSnackBar("대결 생성 중 오류가 발생했습니다.", isError: true);
         setState(() => _isCreatingBattle = false);
       }
     }
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ (요청) 카운트다운 로직 수정 1/2: _startAsyncBattle 함수 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-  // (UI 함수 - 수정 없음)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        // (Part 12에서 수정한 내용 - 유지)
         leading: IconButton(
           icon: Image.asset('assets/images/Back-Navs.png',
               width: 66, height: 66),
@@ -274,19 +220,15 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ▼▼▼▼▼ [ ⭐️⭐️⭐️ UI 수정 (Part 13) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-            // --- 1. 친구 선택 (Dropdown -> ListTile) ---
             Text(
               "1. 친구 선택",
               style: TextStyle(
                   fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            _buildFriendSelector(), // 👈 [신규] 헬퍼 위젯 호출
+            _buildFriendSelector(),
             SizedBox(height: 32),
-            // ▲▲▲▲▲ [ ⭐️⭐️⭐️ UI 수정 (Part 13) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-            // --- 2. 거리 선택 ---
             Text(
               "2. 대결 거리 선택",
               style: TextStyle(
@@ -300,10 +242,7 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
                 final isSelected = _selectedDistanceKm == distance;
                 return ChoiceChip(
                   label: Text(
-                    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 요청하신 수정 (1km, 2km 포맷팅) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-                    // 1.0, 2.0 등도 .0 없이 "1 km"로 보이도록 .toInt() 사용
                     "${distance.toInt()} km",
-                    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 요청하신 수정 (1km, 2km 포맷팅) ⭐️⭐️⭐️ ] ▼▼▼▼▼
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -374,8 +313,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     );
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 헬퍼 (Part 13) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  /// 친구 선택 버튼 (ListTile) UI
   Widget _buildFriendSelector() {
     return Material(
       color: Colors.grey[100],
@@ -391,7 +328,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
           ),
           child: Row(
             children: [
-              // 선택된 친구 프로필 또는 기본 아이콘
               _selectedFriend != null
                   ? CircleAvatar(
                 radius: 18,
@@ -404,7 +340,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
                   : Icon(Icons.person_outline,
                   color: Colors.grey[700], size: 24),
               SizedBox(width: 12),
-              // 선택된 친구 닉네임 또는 힌트 텍스트
               Expanded(
                 child: Text(
                   _selectedFriend?.nickname ?? "대결할 친구를 선택하세요",
@@ -427,7 +362,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     );
   }
 
-  /// 친구 선택 바텀시트
   void _showFriendSelectionDialog() {
     showModalBottomSheet(
       context: context,
@@ -493,10 +427,9 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
                       onTap: () {
                         setState(() {
                           _selectedFriend = friend;
-                          _selectedFriendEmail =
-                              friend.email; // (기존 로직 유지를 위해 이것도 세팅)
+                          _selectedFriendEmail = friend.email;
                         });
-                        Navigator.pop(context); // 바텀시트 닫기
+                        Navigator.pop(context);
                       },
                     );
                   },
@@ -508,9 +441,7 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
       },
     );
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 헬퍼 (Part 13) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-  // (헬퍼 함수 - 수정 없음)
   void _showCustomSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -531,8 +462,7 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
             ),
           ],
         ),
-        backgroundColor:
-        isError ? Colors.redAccent.shade400 : Colors.blueAccent, // 성공/오류 색상
+        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.blueAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
@@ -540,7 +470,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
     );
   }
 
-  // 👇👇👇 [ ⭐️⭐️⭐️ 요청에 의해 수정된 부분: 심플한 로딩 다이얼로그 ⭐️⭐️⭐️ ] 👇👇👇
   void _showLoadingDialog(String message) {
     if (!mounted) return;
     showDialog(
@@ -581,10 +510,8 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
       },
     );
   }
-// 👆👆👆 [ ⭐️⭐️⭐️ 요청에 의해 수정된 부분: 심플한 로딩 다이얼로그 ⭐️⭐️⭐️ ] 👆👆👆
 }
 
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ TTS 및 워치 연동이 포함된 CountdownDialog 수정 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 class CountdownDialog extends StatefulWidget {
   const CountdownDialog({Key? key}) : super(key: key);
 
@@ -595,23 +522,16 @@ class CountdownDialog extends StatefulWidget {
 class _CountdownDialogState extends State<CountdownDialog> {
   int _countdown = 3;
   Timer? _timer;
-
-  // ▼▼▼▼▼ [ ⭐️ 수정: TTS 인스턴스 추가 ⭐️ ] ▼▼▼▼▼
   late FlutterTts _flutterTts;
-  // ▲▲▲▲▲ [ ⭐️ 수정: TTS 인스턴스 추가 ⭐️ ] ▼▼▼▼▼
-
   final _watch = WatchConnectivity();
 
   @override
   void initState() {
     super.initState();
-    // ▼▼▼▼▼ [ ⭐️ 수정: TTS 초기화 후 타이머 시작 ⭐️ ] ▼▼▼▼▼
     _flutterTts = FlutterTts();
     _initTts();
-    // ▲▲▲▲▲ [ ⭐️ 수정: TTS 초기화 후 타이머 시작 ⭐️ ] ▼▼▼▼▼
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 수정: TTS 설정 및 음성 출력 함수 추가 ⭐️ ] ▼▼▼▼▼
   Future<void> _initTts() async {
     await _flutterTts.setLanguage("ko-KR");
     await _flutterTts.setSpeechRate(0.5);
@@ -624,7 +544,6 @@ class _CountdownDialogState extends State<CountdownDialog> {
         IosTextToSpeechAudioMode.voicePrompt
     );
 
-    // TTS 준비 완료 후 타이머 시작
     _startTimer();
   }
 
@@ -633,12 +552,10 @@ class _CountdownDialogState extends State<CountdownDialog> {
       await _flutterTts.speak(text);
     }
   }
-  // ▲▲▲▲▲ [ ⭐️ 수정: TTS 설정 및 음성 출력 함수 추가 ⭐️ ] ▲▲▲▲▲
 
   void _startTimer() {
-    // 시작 시 3초 음성 및 워치 전송
     if (_countdown > 0) {
-      _speak(_countdown.toString()); // 👈 3초 음성
+      _speak(_countdown.toString());
       try {
         _watch.sendMessage({'command': 'showWarmup'});
         _watch.sendMessage({'command': 'countdown', 'value': _countdown});
@@ -655,11 +572,9 @@ class _CountdownDialogState extends State<CountdownDialog> {
 
       if (_countdown == 1) {
         timer.cancel();
-        setState(() => _countdown = 0); // "START!"로 변경
+        setState(() => _countdown = 0);
 
-        // ▼▼▼▼▼ [ ⭐️ 수정: START 화면과 함께 음성 출력 ⭐️ ] ▼▼▼▼▼
-        _speak("대결을 시작합니다!"); // 👈 여기로 이동됨
-        // ▲▲▲▲▲ [ ⭐️ 수정: START 화면과 함께 음성 출력 ⭐️ ] ▲▲▲▲▲
+        _speak("대결을 시작합니다!");
 
         try {
           _watch.sendMessage({'command': 'startRunningUI'});
@@ -676,7 +591,7 @@ class _CountdownDialogState extends State<CountdownDialog> {
         });
 
         if (_countdown > 0) {
-          _speak(_countdown.toString()); // 👈 2초, 1초 음성
+          _speak(_countdown.toString());
           try {
             _watch.sendMessage(
                 {'command': 'countdown', 'value': _countdown});
@@ -691,7 +606,7 @@ class _CountdownDialogState extends State<CountdownDialog> {
   @override
   void dispose() {
     _timer?.cancel();
-    _flutterTts.stop(); // 👈 TTS 중지
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -725,4 +640,3 @@ class _CountdownDialogState extends State<CountdownDialog> {
     );
   }
 }
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ TTS 및 워치 연동이 포함된 CountdownDialog 수정 ⭐️⭐️⭐️ ] ▲▲▲▲▲

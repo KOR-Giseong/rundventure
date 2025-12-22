@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:video_player/video_player.dart'; // ❗️ Video Player 패키지 임포트
+import 'package:video_player/video_player.dart';
 import 'birthday_input_screen.dart';
 
 class ProfileGenderScreen extends StatefulWidget {
@@ -22,32 +22,30 @@ class ProfileGenderScreen extends StatefulWidget {
 
 class _ProfileGenderScreenState extends State<ProfileGenderScreen> {
   String? _selectedGender;
-  VideoPlayerController? _controller; // ❗️ 비디오 컨트롤러 변수 추가
+  VideoPlayerController? _controller;
 
   @override
   void dispose() {
-    _controller?.dispose(); // ❗️ 화면이 사라질 때 컨트롤러를 제거하여 메모리 누수 방지
+    _controller?.dispose();
     super.dispose();
   }
 
-  // ❗️ 성별 선택 시 비디오를 교체하고 재생하는 함수
   void _onGenderSelected(String gender) {
-    if (_selectedGender == gender) return; // 이미 선택된 성별이면 아무것도 안 함
+    if (_selectedGender == gender) return;
 
     setState(() {
       _selectedGender = gender;
-      _controller?.dispose(); // 이전 컨트롤러가 있다면 제거
+      _controller?.dispose();
 
       final videoPath =
       gender == '남자' ? 'assets/videos/man.mp4' : 'assets/videos/woman.mp4';
 
       _controller = VideoPlayerController.asset(videoPath)
         ..initialize().then((_) {
-          // 비디오 초기화가 끝나면 화면을 다시 그려서 비디오를 표시
           setState(() {});
-          _controller?.setLooping(true); // 비디오 무한 반복
-          _controller?.setVolume(0.0);  // 비디오 음소거
-          _controller?.play(); // 비디오 재생
+          _controller?.setLooping(true);
+          _controller?.setVolume(0.0);
+          _controller?.play();
         });
     });
   }
@@ -87,7 +85,7 @@ class _ProfileGenderScreenState extends State<ProfileGenderScreen> {
   Widget _genderBox(String gender, {double? height, double? width}) {
     return GestureDetector(
       onTap: () {
-        _onGenderSelected(gender); // ❗️ 탭했을 때 비디오 재생 함수 호출
+        _onGenderSelected(gender);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -126,15 +124,13 @@ class _ProfileGenderScreenState extends State<ProfileGenderScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView( // ✅ 화면 넘침 방지를 위해 SingleChildScrollView 추가
+      body: SingleChildScrollView(
         child: Padding(
-          // ✅ 원래 코드의 vertical 패딩을 그대로 유지하여 기존 위치를 보존
           padding: EdgeInsets.symmetric(
               horizontal: screenWidth * 0.1, vertical: screenHeight * 0.25),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 프로필 입력 안내 텍스트 (원래 위치)
               Text(
                 '프로필을 입력해주세요!',
                 style: TextStyle(
@@ -152,7 +148,6 @@ class _ProfileGenderScreenState extends State<ProfileGenderScreen> {
               ),
               const SizedBox(height: 45),
 
-              // 성별 선택 박스 (원래 위치)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -165,17 +160,15 @@ class _ProfileGenderScreenState extends State<ProfileGenderScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 30), // ✅ 성별 선택과 비디오 사이 여백
+              const SizedBox(height: 30),
 
-              // ✅ 비디오 위젯 (성별 선택 칸 아래에 배치)
-              Center( // ✅ Center 위젯으로 감싸서 중앙 정렬
+              Center(
                 child: Container(
                   height: screenHeight * 0.29,
-                  width: screenWidth * 0.5, // ✅ 넓이를 화면의 70%로 줄임
+                  width: screenWidth * 0.5,
                   decoration: BoxDecoration(
-                    color: Colors.white, // ✅ 배경색을 흰색으로 변경
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    // ✅ 흰색 배경에서도 잘 보이도록 옅은 테두리 추가
                     border: Border.all(color: Colors.grey[200]!),
                   ),
                   child: _controller != null && _controller!.value.isInitialized

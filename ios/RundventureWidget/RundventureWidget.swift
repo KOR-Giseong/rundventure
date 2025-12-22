@@ -1,10 +1,3 @@
-//
-//  RundventureWidget.swift
-//  RundventureWidget
-//
-//  Created by 홍기성 on 7/21/25.
-//
-
 import WidgetKit
 import SwiftUI
 

@@ -24,12 +24,10 @@ class ExerciseRecord {
     final data = doc.data() as Map<String, dynamic>;
     return ExerciseRecord(
       id: doc.id,
-      // ✅ [수정] Firestore의 int/double 타입을 모두 수용하도록 변경
       kilometers: (data['kilometers'] as num? ?? 0.0).toDouble(),
       calories: (data['calories'] as num? ?? 0.0).toDouble(),
-      stepCount: (data['stepCount'] as num? ?? 0).toInt(), // stepCount는 정수가 맞음
+      stepCount: (data['stepCount'] as num? ?? 0).toInt(),
       date: (data['date'] as Timestamp).toDate(),
-      // ✅ [추가] userId 필드가 없을 경우를 대비 (필요시 userEmail 등 다른 필드 사용)
       userId: data['userId'] ?? (data['userEmail'] ?? ''),
     );
   }

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart'; // 👈 RTDB 임포트
+import 'package:firebase_database/firebase_database.dart';
 
 class FriendListTile extends StatefulWidget {
   final String friendEmail;
@@ -103,9 +103,7 @@ class _FriendListTileState extends State<FriendListTile> {
       // 2. 닉네임 (이메일 subtitle 부분은 삭제함)
       title: Text(widget.friendNickname, style: TextStyle(fontWeight: FontWeight.w600)),
 
-      // 3. '대결 요청' / '오프라인' 버튼
       trailing: ElevatedButton(
-        // [핵심] 온라인 상태일 때만 버튼 활성화
         onPressed: _isOnline
             ? () => widget.onBattleRequestPressed(widget.friendEmail, widget.friendNickname)
             : null, // null이면 비활성화됨

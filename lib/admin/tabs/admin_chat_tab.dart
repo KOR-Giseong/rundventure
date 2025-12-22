@@ -24,13 +24,9 @@ class _AdminChatTabState extends State<AdminChatTab>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // ▼▼▼▼▼▼▼▼▼▼ [추가된 부분] ▼▼▼▼▼▼▼▼▼▼
-  // 검색 결과의 인덱스와 GlobalKey를 저장하기 위한 리스트
   List<int> _matchIndices = [];
   List<GlobalKey> _matchKeys = [];
-  // 현재 보고 있는 검색 결과의 인덱스 (-1은 선택되지 않음을 의미)
   int _currentMatchIndex = -1;
-  // ▲▲▲▲▲▲▲▲▲▲ [추가된 부분] ▲▲▲▲▲▲▲▲▲▲
 
   @override
   bool get wantKeepAlive => true;
@@ -58,59 +54,49 @@ class _AdminChatTabState extends State<AdminChatTab>
     super.dispose();
   }
 
-  // ▼▼▼▼▼▼▼▼▼▼ [추가된 함수] ▼▼▼▼▼▼▼▼▼▼
-  // 특정 인덱스의 매치 항목으로 스크롤하는 함수
   void _scrollToMatch(int index) {
     if (index < 0 || index >= _matchKeys.length) return;
 
-    // 현재 선택된 인덱스 업데이트
     setState(() {
       _currentMatchIndex = index;
     });
 
-    // 해당 GlobalKey의 컨텍스트를 가져와 화면에 보이도록 스크롤
     final context = _matchKeys[index].currentContext;
     if (context != null) {
       Scrollable.ensureVisible(
         context,
-        duration: Duration(milliseconds: 300), // 부드러운 스크롤
-        alignment: 0.5, // 화면 중앙에 오도록 정렬
+        duration: Duration(milliseconds: 300),
+        alignment: 0.5,
       );
     }
   }
 
-  // 다음 검색 결과로 이동 (아래로)
   void _findNext() {
     if (_matchIndices.isEmpty) return;
     int nextIndex = _currentMatchIndex + 1;
     if (nextIndex >= _matchIndices.length) {
-      nextIndex = 0; // 마지막이면 처음으로 순환
+      nextIndex = 0;
     }
     _scrollToMatch(nextIndex);
   }
 
-  // 이전 검색 결과로 이동 (위로)
   void _findPrevious() {
     if (_matchIndices.isEmpty) return;
     int prevIndex = _currentMatchIndex - 1;
     if (prevIndex < 0) {
-      prevIndex = _matchIndices.length - 1; // 처음이면 마지막으로 순환
+      prevIndex = _matchIndices.length - 1;
     }
     _scrollToMatch(prevIndex);
   }
-  // ▲▲▲▲▲▲▲▲▲▲ [추가된 함수] ▲▲▲▲▲▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Column(
       children: [
-        _buildSearchInput(), // 검색창 위젯
+        _buildSearchInput(),
 
-        // ▼▼▼▼▼▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼▼▼▼▼▼
-        // 검색 컨트롤 UI (검색어가 있을 때만 보임)
         if (_searchQuery.isNotEmpty) _buildSearchControls(),
-        // ▲▲▲▲▲▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲▲▲▲▲▲
 
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
@@ -127,8 +113,6 @@ class _AdminChatTabState extends State<AdminChatTab>
 
               final allDocs = snapshot.data!.docs;
 
-              // --- [ 검색 매칭 로직 ] ---
-              // build가 실행될 때마다(검색어 변경 시) 매치 목록을 새로 만듦
               _matchIndices.clear();
               _matchKeys.clear();
               if (_searchQuery.isNotEmpty) {
@@ -137,24 +121,19 @@ class _AdminChatTabState extends State<AdminChatTab>
                   final text = (data['text'] ?? '').toLowerCase();
                   final nickname = (data['nickname'] ?? '').toLowerCase();
 
-                  // 시스템 메시지(userEmail == 'system')는 검색에서 제외
                   if (data['userEmail'] != 'system' &&
                       (text.contains(_searchQuery) ||
                           nickname.contains(_searchQuery)))
                   {
-                    _matchIndices.add(i); // 매치되는 문서의 인덱스 저장
+                    _matchIndices.add(i);
                   }
                 }
-                // 매치된 개수만큼 GlobalKey 생성
                 _matchKeys = List.generate(_matchIndices.length, (_) => GlobalKey());
               }
-              // 현재 선택된 인덱스가 매치 목록 범위를 벗어나면 리셋
               if (_currentMatchIndex >= _matchIndices.length) {
                 _currentMatchIndex = -1;
               }
-              // --- [ 검색 매칭 로직 끝 ] ---
 
-              // 검색 중이 아닐 때만 자동 스크롤
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (_chatScrollController.hasClients && _searchQuery.isEmpty) {
                   _chatScrollController
@@ -172,15 +151,12 @@ class _AdminChatTabState extends State<AdminChatTab>
                   final data = doc.data() as Map<String, dynamic>;
                   final isMe = data['userEmail'] == currentUser?.email;
 
-                  // --- [ Key 할당 로직 ] ---
                   GlobalKey? itemKey;
                   if (_matchIndices.contains(index)) {
-                    // 이 아이템이 검색 결과 중 몇 번째인지 찾음
                     int matchIndex = _matchIndices.indexOf(index);
                     itemKey = _matchKeys[matchIndex];
                   }
 
-                  // --- 날짜 구분선 로직 (Ascending List) ---
                   bool showDateSeparator = false;
                   final dynamic currentTimestamp = data['timestamp'];
 
@@ -202,8 +178,6 @@ class _AdminChatTabState extends State<AdminChatTab>
                     }
                   }
 
-                  // ▼▼▼▼▼▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼▼▼▼▼▼
-                  // Container로 감싸고 Key 할당
                   return Container(
                     key: itemKey,
                     child: Column(
@@ -215,7 +189,6 @@ class _AdminChatTabState extends State<AdminChatTab>
                       ],
                     ),
                   );
-                  // ▲▲▲▲▲▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲▲▲▲▲▲
                 },
               );
             },
@@ -226,7 +199,6 @@ class _AdminChatTabState extends State<AdminChatTab>
     );
   }
 
-  // 검색창 위젯 (변경 없음)
   Widget _buildSearchInput() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 8.0),
@@ -242,19 +214,17 @@ class _AdminChatTabState extends State<AdminChatTab>
           )
               : null,
           filled: true,
-          fillColor: Colors.grey.shade100, // 배경색
+          fillColor: Colors.grey.shade100,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), // 둥근 모서리
-            borderSide: BorderSide.none, // 테두리 없음
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 10), // 높이 조절
+          contentPadding: EdgeInsets.symmetric(vertical: 10),
         ),
       ),
     );
   }
 
-  // ▼▼▼▼▼▼▼▼▼▼ [추가된 부분] ▼▼▼▼▼▼▼▼▼▼
-  // 검색 컨트롤 (매치 카운트, 위/아래 버튼) 위젯
   Widget _buildSearchControls() {
     bool hasMatches = _matchIndices.isNotEmpty;
 
@@ -267,7 +237,6 @@ class _AdminChatTabState extends State<AdminChatTab>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // 매치 카운트
           Text(
             hasMatches ? "${_currentMatchIndex + 1} / ${_matchIndices.length}" : "0 / 0",
             style: TextStyle(
@@ -276,14 +245,12 @@ class _AdminChatTabState extends State<AdminChatTab>
             ),
           ),
           SizedBox(width: 16),
-          // 이전(위) 버튼
           IconButton(
             icon: Icon(Icons.arrow_upward,
                 color: hasMatches ? primaryColor : Colors.grey),
             onPressed: hasMatches ? _findPrevious : null,
             tooltip: '이전 검색 결과',
           ),
-          // 다음(아래) 버튼
           IconButton(
             icon: Icon(Icons.arrow_downward,
                 color: hasMatches ? primaryColor : Colors.grey),
@@ -294,8 +261,6 @@ class _AdminChatTabState extends State<AdminChatTab>
       ),
     );
   }
-  // ▲▲▲▲▲▲▲▲▲▲ [추가된 부분] ▲▲▲▲▲▲▲▲▲▲
-
 
   Widget _buildChatMessage(
       Map<String, dynamic> data, bool isMe, String searchQuery) {
@@ -343,16 +308,15 @@ class _AdminChatTabState extends State<AdminChatTab>
           if (!isMe)
             Padding(
               padding: const EdgeInsets.only(left: 12.0, bottom: 4.0),
-              // 닉네임 Text를 RichText로 변경 (하이라이트)
               child: RichText(
-                text: _highlightText(
+                  text: _highlightText(
                   data['nickname'] ?? '이름없음',
                   searchQuery,
                   TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Colors.black87),
-                  TextStyle( // 닉네임 하이라이트 스타일
+                  TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Colors.redAccent,
@@ -377,7 +341,6 @@ class _AdminChatTabState extends State<AdminChatTab>
                             blurRadius: 1,
                             offset: Offset(0, 1))
                       ]),
-                  // 메시지 Text를 RichText로 변경 (하이라이트)
                   child: RichText(
                     text: _highlightText(
                       data['text'],
@@ -407,7 +370,7 @@ class _AdminChatTabState extends State<AdminChatTab>
 
   Widget _buildChatInput() {
     return Material(
-      elevation: 4.0, // 그림자 강조
+      elevation: 4.0,
       shadowColor: Colors.black26,
       color: Colors.white,
       child: Container(
@@ -433,7 +396,6 @@ class _AdminChatTabState extends State<AdminChatTab>
             ),
             SizedBox(width: 8),
             Container(
-              // 전송 버튼 배경 추가
               decoration: BoxDecoration(
                 color: primaryColor,
                 shape: BoxShape.circle,
@@ -465,10 +427,9 @@ class _AdminChatTabState extends State<AdminChatTab>
       'nickname': nickname,
       'timestamp': FieldValue.serverTimestamp(),
     });
-    _chatController.clear();
+    _chatController.clear(    );
   }
 
-  // 날짜가 다른지 확인하는 헬퍼 함수
   bool _isDifferentDay(Timestamp ts1, Timestamp ts2) {
     final date1 = ts1.toDate();
     final date2 = ts2.toDate();
@@ -484,12 +445,12 @@ class _AdminChatTabState extends State<AdminChatTab>
     return Container(
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-        decoration: BoxDecoration(
-          color: Color(0xFFEFEFF4), // 연한 회색 배경
-          borderRadius: BorderRadius.circular(12),
-        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: Color(0xFFEFEFF4),
+            borderRadius: BorderRadius.circular(12),
+          ),
         child: Text(
           formatter.format(date),
           textAlign: TextAlign.center,
@@ -503,7 +464,6 @@ class _AdminChatTabState extends State<AdminChatTab>
     );
   }
 
-  // 검색어 하이라이트를 위한 RichText 헬퍼 함수
   TextSpan _highlightText(
       String text, String query, TextStyle normalStyle, TextStyle highlightStyle) {
     if (query.isEmpty || text.isEmpty) {
@@ -518,24 +478,20 @@ class _AdminChatTabState extends State<AdminChatTab>
     while (start < text.length) {
       final int matchIndex = textLower.indexOf(queryLower, start);
 
-      // 일치하는 부분이 더 이상 없으면
       if (matchIndex == -1) {
         spans.add(TextSpan(text: text.substring(start), style: normalStyle));
         break;
       }
 
-      // 일치하는 부분 *이전*의 텍스트 (일반 스타일)
       if (matchIndex > start) {
         spans.add(TextSpan(
             text: text.substring(start, matchIndex), style: normalStyle));
       }
 
-      // 일치하는 부분 *자체*의 텍스트 (하이라이트 스타일)
       final int matchEnd = matchIndex + query.length;
       spans.add(TextSpan(
           text: text.substring(matchIndex, matchEnd), style: highlightStyle));
 
-      // 다음 검색 시작 위치 갱신
       start = matchEnd;
     }
 

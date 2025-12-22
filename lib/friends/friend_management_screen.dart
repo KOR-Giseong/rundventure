@@ -3,13 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart'; // 날짜 포맷팅
-import 'dart:async'; // StreamSubscription
+import 'dart:async';
 
-// ▼▼▼▼▼ [경로 수정 필수] ▼▼▼▼▼
 import '../profile/other_user_profile.dart';
 import 'search_friend_screen.dart';
-import 'friend_chat_screen.dart'; // 새로 만든 채팅 스크린
-// ▲▲▲▲▲ [경로 수정 필수] ▲▲▲▲▲
+import 'friend_chat_screen.dart';
 
 
 class FriendManagementScreen extends StatefulWidget {
@@ -146,7 +144,6 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
         _showCustomSnackBar(successMessage, isError: false);
       }
     } on FirebaseFunctionsException catch (e) {
-      // 🔥 [중요] Part 1 서버에서 '친구 30명 초과' 에러를 보내면 여기서 잡혀서 스낵바로 표시됩니다.
       print("Firebase Functions 오류 ($functionName): ${e.message}");
       _showCustomSnackBar("오류: ${e.message ?? '알 수 없는 오류'}", isError: true);
     } catch (e) {
@@ -447,7 +444,6 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
         // 친구가 없어도 0/30 표시는 하기 위해 docs 비었는지 체크는 뒤로 미룸
 
         final friends = snapshot.data?.docs ?? [];
-        // ▼▼▼▼▼ [ ✨ 수정: 친구 수 카운트 표시 ✨ ] ▼▼▼▼▼
         final int currentCount = friends.length;
         final int maxCount = 30;
 
@@ -558,7 +554,6 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
             ),
           ],
         );
-        // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
       },
     );
   }

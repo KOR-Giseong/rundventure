@@ -1,18 +1,11 @@
-// [전체 코드] friend_battle_list_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // 👈 Cloud Function 호출
+import 'package:cloud_functions/cloud_functions.dart';
 
-// ▼▼▼▼▼ [ ✅ 신규 추가 ] ▼▼▼▼▼
-// 1. 대결 기록 탭을 위한 신규 파일
 import 'friend_battle_history_tab.dart';
-// 2. Part 2에서 생성한 로비 화면
 import 'friend_battle_lobby_screen.dart';
-// 3. Part 10에서 생성한 '온라인 상태' 타일
 import 'friend_list_tile.dart';
-// ▲▲▲▲▲ [ ✅ 신규 추가 ] ▲▲▲▲▲
 
 class FriendBattleListScreen extends StatefulWidget {
   const FriendBattleListScreen({Key? key}) : super(key: key);
@@ -25,20 +18,18 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     with SingleTickerProviderStateMixin {
 
   final String? _myEmail = FirebaseAuth.instance.currentUser?.email;
-  bool _isLoading = false; // 로딩 중 상태
+  bool _isLoading = false;
   late TabController _tabController;
 
-  // ▼▼▼▼▼ [ ⭐️ 권한 및 잠금 상태 변수 추가 ⭐️ ] ▼▼▼▼▼
-  String? _userRole; // 'user', 'admin', 'general_admin', 'super_admin'
-  bool _isDebugLocked = false; // 기능 잠금 여부 (기본값 false)
-  // ▲▲▲▲▲ [ ⭐️ 권한 및 잠금 상태 변수 추가 ⭐️ ] ▲▲▲▲▲
+  String? _userRole;
+  bool _isDebugLocked = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _checkUserRole(); // 👈 권한 확인
-    _listenToSystemLock(); // 👈 잠금 상태 구독
+    _checkUserRole();
+    _listenToSystemLock();
   }
 
   @override
@@ -47,15 +38,12 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     super.dispose();
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 권한 및 잠금 로직 ⭐️ ] ▼▼▼▼▼
-  /// 현재 사용자의 권한(Role)을 확인합니다.
   Future<void> _checkUserRole() async {
     if (_myEmail == null) return;
     try {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(_myEmail).get();
       if (mounted && userDoc.exists) {
         setState(() {
-          // DB에 role 필드가 있다고 가정 (없으면 'user')
           _userRole = userDoc.data()?['role'] ?? 'user';
         });
       }
@@ -64,9 +52,7 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     }
   }
 
-  /// 시스템 설정(잠금 여부)을 실시간으로 확인합니다.
   void _listenToSystemLock() {
-    // 'system' 컬렉션의 'settings' 문서를 실시간 구독
     FirebaseFirestore.instance
         .collection('system')
         .doc('settings')
@@ -74,28 +60,22 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
         .listen((snapshot) {
       if (mounted) {
         setState(() {
-          // 문서가 없거나 필드가 없으면 기본값 false (풀림)
           _isDebugLocked = snapshot.exists ? (snapshot.data()?['isDebugLocked'] ?? false) : false;
         });
       }
     });
   }
 
-  /// [슈퍼관리자 전용] 잠금 상태 토글 함수 (수정됨)
   Future<void> _toggleSystemLock() async {
-    // 1. 변경하려는 목표 상태를 미리 변수에 저장 (현재 상태의 반대)
-    // await 실행 중에 스트림이 먼저 업데이트 되어버리는 문제를 방지하기 위함
     final bool nextStatus = !_isDebugLocked;
 
     try {
       final docRef = FirebaseFirestore.instance.collection('system').doc('settings');
 
-      // 2. 미리 저장해둔 상태값(nextStatus)으로 DB 저장
       await docRef.set({
         'isDebugLocked': nextStatus
       }, SetOptions(merge: true));
 
-      // 3. 메시지 출력 시에도 nextStatus를 사용해야 정확함
       String statusMsg = nextStatus ? "기능을 잠갔습니다. 🔒" : "기능 잠금을 해제했습니다. 🔓";
       _showCustomSnackBar(statusMsg);
     } catch (e) {
@@ -103,15 +83,12 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     }
   }
 
-  /// 디버그 버튼 클릭 시 처리 로직
   void _handleDebugPress() {
-    // 1. 잠겨있는데 슈퍼관리자가 아니면 차단
     if (_isDebugLocked && _userRole != 'super_admin') {
       _showCustomSnackBar("현재 개발자에 의해 기능이 잠겨있습니다.(관리자 모드) 🚫", isError: true);
-      return; // 👈 여기서 즉시 함수 종료 (다이얼로그 표시 차단)
+      return;
     }
 
-    // 2. 경고 다이얼로그 표시 (잠금이 풀렸거나, 슈퍼관리자일 경우에만 실행)
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -141,10 +118,7 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
       ),
     );
   }
-  // ▲▲▲▲▲ [ ⭐️ 권한 및 잠금 로직 ⭐️ ] ▲▲▲▲▲
 
-
-  // (수정 없음) 스낵바
   void _showCustomSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -156,7 +130,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     );
   }
 
-  // (수정 없음) 1. 대결 거리 선택 다이얼로그
   Future<int?> _showDistanceSelectionDialog() async {
     return await showDialog<int>(
       context: context,
@@ -185,7 +158,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     );
   }
 
-  // (수정 없음) 1-1. 거리 선택 버튼
   Widget _buildDistanceButton(BuildContext context, int km) {
     return ListTile(
       title: Text('${km}km 대결', style: TextStyle(fontWeight: FontWeight.w500)),
@@ -196,7 +168,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     );
   }
 
-  // (수정 없음) 2. 대결 신청 로직
   Future<void> _sendBattleRequest(String opponentEmail, String opponentNickname, int distanceKm) async {
     if (_myEmail == null) {
       _showCustomSnackBar("로그인이 필요합니다.", isError: true);
@@ -273,9 +244,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     }
   }
 
-
-  // ▼▼▼▼▼ [ ⭐️ 디버그 기능 ⭐️ ] ▼▼▼▼▼
-  /// (신규) 디버그용 가짜 대결방을 만들고 로비로 즉시 이동하는 함수
   Future<void> _createFakeBattleAndNavigate() async {
     if (_myEmail == null) {
       _showCustomSnackBar("로그인이 필요합니다.", isError: true);
@@ -284,53 +252,45 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
 
     setState(() => _isLoading = true);
 
-    // 1. (Hardcoded) 가짜 상대방 정보 설정
-    // (내 정보는 Firestore에서 가져오기)
     final String opponentEmail = "debug_opponent@test.com";
     final String opponentNickname = "디버그봇";
     final String? opponentProfileUrl = null;
-    final int targetDistanceKm = 3; // (테스트용 3km)
+    final int targetDistanceKm = 3;
 
     try {
       final _firestore = FirebaseFirestore.instance;
       final timestamp = FieldValue.serverTimestamp();
 
-      // 내 닉네임/프로필 가져오기
       final myUserDoc = await _firestore.collection("users").doc(_myEmail).get();
       final String myNickname = myUserDoc.data()?['nickname'] ?? "테스터";
       final String? myProfileUrl = myUserDoc.data()?['profileImageUrl'];
 
-      // 2. Cloud Function이 하는 일을 여기서 '수동'으로 재현
       final battleRef = _firestore.collection("friendBattles").doc();
       final battleId = battleRef.id;
 
       await battleRef.set({
-        'status': 'pending', // 👈 로비 화면이 이 'pending' 상태를 구독함
+        'status': 'pending',
         'challengerEmail': _myEmail,
         'challengerNickname': myNickname,
         'challengerProfileUrl': myProfileUrl,
-        'challengerStatus': 'ready', // 👈 나는 'ready'
-
+        'challengerStatus': 'ready',
         'opponentEmail': opponentEmail,
         'opponentNickname': opponentNickname,
         'opponentProfileUrl': opponentProfileUrl,
-        'opponentStatus': 'waiting', // 👈 디버그봇은 'waiting'
-
+        'opponentStatus': 'waiting',
         'targetDistanceKm': targetDistanceKm,
         'createdAt': timestamp,
-        'participants': [_myEmail, opponentEmail], // 👈 히스토리 탭 조회를 위해 추가
+        'participants': [_myEmail, opponentEmail],
       });
 
       setState(() => _isLoading = false);
 
-      // 3. 'friendBattles' 문서가 생성되었으므로,
-      //    이제 이 battleId를 가지고 로비 화면으로 이동
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => FriendBattleLobbyScreen(
             battleId: battleId,
-            isChallenger: true, // 👈 내가 도전자(true)로 입장
+            isChallenger: true,
           ),
         ),
       );
@@ -340,7 +300,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
       _showCustomSnackBar("디버그 대결 생성 실패: $e", isError: true);
     }
   }
-  // ▲▲▲▲▲ [ ⭐️ 디버그 기능 ⭐️ ] ▲▲▲▲▲
 
 
   @override
@@ -349,12 +308,9 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
       return Scaffold(body: Center(child: Text("로그인이 필요합니다.")));
     }
 
-    // ▼▼▼▼▼ [ ✅ 수정된 권한 체크 로직 ] ▼▼▼▼▼
-    // 'head_admin' 대신 'general_admin'으로 수정됨
     final bool isAnyAdmin =
         _userRole == 'admin' || _userRole == 'general_admin' || _userRole == 'super_admin';
     final bool isSuperAdmin = _userRole == 'super_admin';
-    // ▲▲▲▲▲ [ ✅ 수정된 권한 체크 로직 ] ▲▲▲▲▲
 
     return Stack(
       children: [
@@ -399,21 +355,17 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
             ],
           ),
 
-          // ▼▼▼▼▼ [ ⭐️ 디버그 및 잠금 버튼 (관리자 전용) ⭐️ ] ▼▼▼▼▼
-          // 관리자만 버튼을 볼 수 있음
           floatingActionButton: isAnyAdmin
               ? Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // 1. 잠금 토글 버튼 (슈퍼 관리자만 보임)
               if (isSuperAdmin)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0), // 버튼 사이 간격
+                  padding: const EdgeInsets.only(bottom: 8.0),
                   child: FloatingActionButton.small(
                     heroTag: 'lockBtn',
                     onPressed: _toggleSystemLock,
-                    // 잠겨있으면 빨간 자물쇠, 풀려있으면 초록 열린 자물쇠
                     backgroundColor: _isDebugLocked ? Colors.redAccent : Colors.green,
                     foregroundColor: Colors.white,
                     elevation: 2,
@@ -425,11 +377,10 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
                   ),
                 ),
 
-              // 2. 디버그 생성 버튼 (모든 관리자 보임)
               FloatingActionButton.small(
                 heroTag: 'debugBtn',
                 onPressed: _handleDebugPress,
-                backgroundColor: Colors.grey[300], // 심플한 회색
+                backgroundColor: Colors.grey[300],
                 foregroundColor: Colors.black87,
                 elevation: 2,
                 child: Icon(Icons.bug_report_rounded, size: 20),
@@ -438,10 +389,8 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
             ],
           )
               : null,
-          // ▲▲▲▲▲ [ ⭐️ 디버그 및 잠금 버튼 (관리자 전용) ⭐️ ] ▲▲▲▲▲
         ),
 
-        // (수정 없음) 전체 화면 로딩 오버레이
         if (_isLoading)
           Container(
             color: Colors.black.withOpacity(0.5),
@@ -455,8 +404,6 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
     );
   }
 
-  /// 1번 탭: 친구 목록 UI
-  // ▼▼▼▼▼ [ ✅ Part 10 수정 (ListTile -> FriendListTile) ] ▼▼▼▼▼
   Widget _buildFriendListTab(String myEmail) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -494,17 +441,13 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
 
             if (friendEmail.isEmpty) return SizedBox.shrink();
 
-            // [수정] ListTile 대신 FriendListTile 위젯 사용
             return FriendListTile(
-              key: Key(friendEmail), // 👈 고유 키
+              key: Key(friendEmail),
               friendEmail: friendEmail,
               friendNickname: friendNickname,
               friendProfileUrl: friendProfileUrl,
-              // '대결 요청' 버튼이 눌렸을 때 실행할 콜백 함수 전달
               onBattleRequestPressed: (email, nickname) async {
-                // 1. 거리 선택
                 final int? selectedKm = await _showDistanceSelectionDialog();
-                // 2. 거리가 선택되었으면 신청
                 if (selectedKm != null && mounted) {
                   _sendBattleRequest(email, nickname, selectedKm);
                 }
@@ -515,5 +458,4 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
       },
     );
   }
-// ▲▲▲▲▲ [ ✅ Part 10 수정 ] ▲▲▲▲▲
 }

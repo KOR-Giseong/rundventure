@@ -1,10 +1,3 @@
-//
-//  FriendBattleActivityAttributes.swift
-//  RundventureWidgetExtension
-//
-//  Created by (Your Name) on (Current Date).
-//
-
 import ActivityKit
 import Foundation
 

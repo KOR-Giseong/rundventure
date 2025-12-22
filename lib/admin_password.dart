@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
-import 'admin/admin_screen.dart'; // 실제 AdminScreen 경로로 수정하세요.
+import 'admin/admin_screen.dart';
 
 class AdminAuthScreen extends StatefulWidget {
   const AdminAuthScreen({Key? key}) : super(key: key);

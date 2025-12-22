@@ -16,7 +16,6 @@ class UserManagementTab extends StatefulWidget {
   final Stream<DatabaseEvent> onlineAdminsStream;
   final bool isSuperAdmin;
   final String currentUserRole;
-  // ✅ buildPanel 함수 타입 추가
   final Widget Function({required String title, required Widget child}) buildPanel;
 
   const UserManagementTab({
@@ -25,7 +24,7 @@ class UserManagementTab extends StatefulWidget {
     required this.onlineAdminsStream,
     required this.isSuperAdmin,
     required this.currentUserRole,
-    required this.buildPanel, // 생성자에 추가
+    required this.buildPanel,
   }) : super(key: key);
 
   @override
@@ -43,11 +42,9 @@ class _UserManagementTabState extends State<UserManagementTab>
   final String _superAdminEmail = 'ghdrltjd244142@gmail.com';
   Map<String, dynamic> _currentAdminPermissions = {};
 
-  static const Color primaryColor = Color(0xFF1E88E5); // Blue Accent
+  static const Color primaryColor = Color(0xFF1E88E5);
 
-  // ▼▼▼▼▼ [ ✨ 신규 추가 ✨ ] ▼▼▼▼▼
-  bool _isCleaningSessions = false; // 세션 정리 로딩 스피너용
-  // ▲▲▲▲▲ [ ✨ 신규 추가 ✨ ] ▲▲▲▲▲
+  bool _isCleaningSessions = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -56,11 +53,7 @@ class _UserManagementTabState extends State<UserManagementTab>
   void initState() {
     super.initState();
 
-    // ▼▼▼▼▼ [핵심 수정] ▼▼▼▼▼
-    // 관리자 탭이 로드될 때, 온라인 상태를 RTDB에 등록하고
-    // 비정상 종료 시 자동 삭제되도록 예약을 겁니다.
     _setAdminOnlineStatus();
-    // ▲▲▲▲▲ [핵심 수정] ▼▼▼▼▼
 
     if (widget.currentUserRole == 'admin') {
       _loadAdminPermissions();
@@ -70,9 +63,6 @@ class _UserManagementTabState extends State<UserManagementTab>
     });
   }
 
-  // ▼▼▼▼▼ [새로 추가된 함수] ▼▼▼▼▼
-  /// 관리자 세션 시작 시 RTDB에 온라인 상태를 설정하고,
-  /// 비정상 종료 시 자동 삭제되도록 onDisconnect 핸들러를 등록합니다.
   Future<void> _setAdminOnlineStatus() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     // currentUser가 null이거나 uid가 없으면 실행 중지
@@ -113,17 +103,13 @@ class _UserManagementTabState extends State<UserManagementTab>
         'lastSeen': ServerValue.timestamp, // RTDB 서버 시간
       });
 
-      // 4. [가장 중요] 연결이 끊어지면(강제종료, 크래시) RTDB가 자동으로 이 데이터를 삭제하도록 예약합니다.
-      // (이것이 "좀비 데이터" 문제를 해결합니다)
       await adminStatusRef.onDisconnect().remove();
       print("관리자 온라인 상태($nickname, $uid) 설정 및 onDisconnect 핸들러 등록 완료.");
 
     } catch (e) {
       print("RTDB onDisconnect 설정 실패: $e");
-      // 여기서는 스낵바를 띄우기 어려울 수 있으므로 콘솔 로그만 남깁니다.
     }
   }
-  // ▲▲▲▲▲ [새로 추가된 함수] ▲▲▲▲▲
 
   Future<void> _loadAdminPermissions() async {
     if (currentUser == null) return;
@@ -161,7 +147,6 @@ class _UserManagementTabState extends State<UserManagementTab>
 
   Future<void> _changePassword() async {
     if (_newPasswordController.text.trim().isEmpty) {
-      // ✅ [스낵바 수정] 붉은색 경고
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -191,7 +176,6 @@ class _UserManagementTabState extends State<UserManagementTab>
           .doc('admin_config')
           .set({'password': _newPasswordController.text.trim()});
 
-      // ✅ [스낵바 수정] 주황색 성공
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -216,7 +200,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       _newPasswordController.clear();
       FocusScope.of(context).unfocus();
     } catch (e) {
-      // ✅ [스낵바 수정] 붉은색 실패
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -241,7 +224,6 @@ class _UserManagementTabState extends State<UserManagementTab>
     }
   }
 
-  // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -251,12 +233,10 @@ class _UserManagementTabState extends State<UserManagementTab>
         // 실시간 접속 관리자 (모든 관리자 공통)
         widget.buildPanel(
             title: "실시간 접속 관리자",
-            child: Column( // ✅ Column으로 감싸서 리스트와 버튼을 넣음
+            child: Column(
               children: [
-                _buildOnlineAdminList(), // 기존 리스트
+                _buildOnlineAdminList(),
 
-                // ▼▼▼▼▼ [ ✨ 신규 추가된 버튼 ✨ ] ▼▼▼▼▼
-                // 슈퍼 관리자 또는 총괄 관리자에게만 보임
                 if (widget.isSuperAdmin || widget.currentUserRole == 'general_admin')
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -275,11 +255,9 @@ class _UserManagementTabState extends State<UserManagementTab>
                       onPressed: _runClearStaleSessions,
                     ),
                   ),
-                // ▲▲▲▲▲ [ ✨ 신규 추가된 버튼 ✨ ] ▲▲▲▲▲
               ],
             )
         ),
-        // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
 
         // 1:1 고객 문의 패널
         if (widget.currentUserRole == 'admin' ||
@@ -287,15 +265,13 @@ class _UserManagementTabState extends State<UserManagementTab>
             widget.isSuperAdmin)
           widget.buildPanel(
             title: "1:1 고객 문의",
-            // StreamBuilder로 감싸서 실시간 '읽지 않음' 여부 확인
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('supportChats')
-                  .where('isReadByAdmin', isEqualTo: false) // '읽지 않음' 상태
-                  .limit(1) // 1개라도 있는지 효율적으로 확인
+                  .where('isReadByAdmin', isEqualTo: false)
+                  .limit(1)
                   .snapshots(),
               builder: (context, snapshot) {
-                // '읽지 않음' 메시지가 1개 이상 있는지 여부
                 bool hasUnreadMessages =
                     snapshot.hasData && snapshot.data!.docs.isNotEmpty;
 
@@ -353,9 +329,8 @@ class _UserManagementTabState extends State<UserManagementTab>
         if (_hasPermission(AdminPermission.canSendNotifications))
           widget.buildPanel(
             title: "전체 알림 전송",
-            child: Column( // Column으로 감싸서 배너와 폼을 넣음
+            child: Column(
               children: [
-                // ▼▼▼▼▼ [신규 추가] 안내 문구 배너 (알림) ▼▼▼▼▼
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   margin: const EdgeInsets.only(bottom: 16.0), // 폼과의 간격
@@ -383,8 +358,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                     ],
                   ),
                 ),
-                // ▲▲▲▲▲ [신규 추가] 안내 문구 배너 (알림) ▲▲▲▲▲
-                _buildNotificationForm(), // 기존 폼
+                _buildNotificationForm(),
               ],
             ),
           ),
@@ -393,9 +367,8 @@ class _UserManagementTabState extends State<UserManagementTab>
         if (widget.isSuperAdmin)
           widget.buildPanel(
             title: "관리자 암호 변경",
-            child: Column( // Column으로 감싸서 배너와 폼을 넣음
+            child: Column(
               children: [
-                // ▼▼▼▼▼ [신규 추가] 안내 문구 배너 (보안) ▼▼▼▼▼
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   margin: const EdgeInsets.only(bottom: 16.0), // 폼과의 간격
@@ -423,8 +396,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                     ],
                   ),
                 ),
-                // ▲▲▲▲▲ [신규 추가] 안내 문구 배너 (보안) ▲▲▲▲▲
-                _buildPasswordChangeForm(), // 기존 폼
+                _buildPasswordChangeForm(),
               ],
             ),
           ),
@@ -434,9 +406,8 @@ class _UserManagementTabState extends State<UserManagementTab>
             _hasPermission(AdminPermission.canManageAdminRoles))
           widget.buildPanel(
             title: "등록된 사용자 관리",
-            child: Column( // Column으로 감싸서 배너와 폼을 넣음
+            child: Column(
               children: [
-                // ▼▼▼▼▼ [신규 추가] 안내 문구 배너 (개인정보) ▼▼▼▼▼
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   margin: const EdgeInsets.only(bottom: 16.0), // 폼과의 간격
@@ -464,8 +435,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                     ],
                   ),
                 ),
-                // ▲▲▲▲▲ [신규 추가] 안내 문구 배너 (개인정보) ▲▲▲▲▲
-                _buildUserManagementSection(), // 기존 폼
+                _buildUserManagementSection(),
               ],
             ),
           ),
@@ -618,7 +588,6 @@ class _UserManagementTabState extends State<UserManagementTab>
         ),
         const SizedBox(height: 12),
         Container(
-          // ✅ [수정] 사용자 목록 영역 디자인
             decoration: BoxDecoration(
                 color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(6),
@@ -665,7 +634,6 @@ class _UserManagementTabState extends State<UserManagementTab>
             final isCurrentUser = currentUser?.email == email;
             final isTargetSuperAdmin = email == _superAdminEmail;
 
-            // ✅ [수정] 정지 상태 확인
             final bool isSuspended = data['isSuspended'] ?? false;
 
             bool canManage = false;
@@ -693,7 +661,6 @@ class _UserManagementTabState extends State<UserManagementTab>
               roleIcon = Icons.person_outline;
             }
 
-            // ✅ [추가] 정지된 유저 시각적 표시
             if (isSuspended) {
               roleColor = Colors.red.shade400;
               roleIcon = Icons.block;
@@ -706,7 +673,6 @@ class _UserManagementTabState extends State<UserManagementTab>
                       BorderSide(color: Colors.grey.shade200, width: 0.5)),
                   color: Colors.white),
               child: ListTile(
-                // ✅ [수정] contentPadding을 조정하여 공간 확보
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: 10.0, vertical: 2.0),
                 leading: CircleAvatar(
@@ -716,22 +682,18 @@ class _UserManagementTabState extends State<UserManagementTab>
                 title: Text(nickname,
                     style: TextStyle(
                         fontWeight: FontWeight.bold, color: Colors.black87)),
-                // ✅ [핵심 수정] subtitle에 softWrap: false 및 maxLines: 1을 명시하여 강제적으로 한 줄 표시 및 오버플로우 방지
                 subtitle: Text(
                   email,
                   style: TextStyle(color: Colors.grey.shade600),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  softWrap:
-                  false, // 텍스트가 줄 바꿈되는 것을 방지하여 공간 관리를 단순화합니다.
+                  softWrap: false,
                 ),
-                // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▼▼▼▼▼
                 onTap: () => _showUserDetailsDialog(
                   context,
                   doc,
-                  _hasPermission(AdminPermission.canSendNotifications), // 👈 [수정] 알림 전송 권한 전달
+                  _hasPermission(AdminPermission.canSendNotifications),
                 ),
-                // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▲▲▲▲▲
                 trailing: canManage
                     ? Row(
                   mainAxisSize: MainAxisSize.min,
@@ -803,7 +765,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       );
     } else if (widget.currentUserRole == 'general_admin') {
       if (targetRole == 'super_admin' || targetRole == 'general_admin') {
-        // ✅ [스낵바 수정] 붉은색 경고
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -832,7 +793,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          // ✅ 심플한 디자인 적용
           backgroundColor: Colors.white,
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -887,7 +847,6 @@ class _UserManagementTabState extends State<UserManagementTab>
 
   Future<void> _demoteUser(String email) async {
     try {
-      // ✅ 리전을 'asia-northeast3'로 명시해야 서울 서버의 함수를 찾을 수 있음
       final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
           .httpsCallable('removeAdminRole');
 
@@ -904,7 +863,6 @@ class _UserManagementTabState extends State<UserManagementTab>
         'timestamp': FieldValue.serverTimestamp(),
       });
       if (mounted) {
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -929,7 +887,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       }
     } catch (e) {
       if (mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -960,7 +917,6 @@ class _UserManagementTabState extends State<UserManagementTab>
     final message = _messageController.text.trim();
     if (title.isEmpty || message.isEmpty) {
       if (mounted) {
-        // ✅ [스낵바 수정] 붉은색 경고
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -986,13 +942,11 @@ class _UserManagementTabState extends State<UserManagementTab>
       return;
     }
     try {
-      // ✅✅✅ [핵심 수정] Cloud Function 리전(region) 지정 ✅✅✅
       final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
           .httpsCallable('sendNotificationToAllUsers');
 
       await callable.call({'title': title, 'message': message});
       if (mounted) {
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1019,7 +973,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       _messageController.clear();
     } catch (e) {
       if (mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1045,17 +998,15 @@ class _UserManagementTabState extends State<UserManagementTab>
     }
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▼▼▼▼▼
   void _showUserDetailsDialog(BuildContext context, DocumentSnapshot doc, bool canSendNotifications) {
     showDialog(
       context: context,
       builder: (ctx) => UserDetailsDialog(
         userDoc: doc,
-        canSendNotifications: canSendNotifications, // 👈 [수정] 권한 전달
+        canSendNotifications: canSendNotifications,
       ),
     );
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   Future<void> _showDeleteConfirmation(
       BuildContext context, DocumentSnapshot doc, String email) async {
@@ -1066,30 +1017,25 @@ class _UserManagementTabState extends State<UserManagementTab>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        // ✅ 심플한 디자인 적용
         backgroundColor: Colors.white,
         shape:
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Row(children: [
           Icon(Icons.warning_amber_rounded, color: Colors.red),
           SizedBox(width: 8),
-          // 제목 스타일 변경
           Text("사용자 삭제 확인",
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                   fontSize: 18))
         ]),
-        // 내용 스타일 변경
         content: Text("정말 $email 사용자를 삭제하시겠어요?\n이 작업은 되돌릴 수 없습니다.",
             style: TextStyle(color: Colors.grey.shade700)),
         actions: [
-          // 취소 버튼 스타일
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text("취소", style: TextStyle(color: Colors.black54))),
 
-          // ✅ 삭제 버튼을 ElevatedButton으로 변경하여 위험 강조
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -1098,7 +1044,6 @@ class _UserManagementTabState extends State<UserManagementTab>
                 FirebaseFunctions.instance.httpsCallable('deleteUser');
                 await callable.call({'uid': doc.id});
                 if (mounted) {
-                  // ✅ [스낵바 수정] 주황색 성공
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
@@ -1123,7 +1068,6 @@ class _UserManagementTabState extends State<UserManagementTab>
                 }
               } catch (e) {
                 if (mounted) {
-                  // ✅ [스낵바 수정] 붉은색 실패
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
@@ -1148,7 +1092,6 @@ class _UserManagementTabState extends State<UserManagementTab>
                 }
               }
             },
-            // 버튼 디자인: 빨간색 배경, 흰색 글자
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -1162,8 +1105,6 @@ class _UserManagementTabState extends State<UserManagementTab>
     );
   }
 
-  // ▼▼▼▼▼ [ ✨ 신규 추가된 함수 ✨ ] ▼▼▼▼▼
-  /// 'clearStaleAdminSessions' Cloud Function을 호출합니다.
   Future<void> _runClearStaleSessions() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -1200,7 +1141,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       final message = result.data?['message'] ?? '세션 정리가 완료되었습니다.';
 
       if (mounted) {
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1225,7 +1165,6 @@ class _UserManagementTabState extends State<UserManagementTab>
       }
     } catch (e) {
       if (mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1252,5 +1191,4 @@ class _UserManagementTabState extends State<UserManagementTab>
       if (mounted) setState(() => _isCleaningSessions = false);
     }
   }
-// ▲▲▲▲▲ [ ✨ 신규 추가된 함수 ✨ ] ▲▲▲▲▲
 }

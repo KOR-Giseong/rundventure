@@ -6,14 +6,14 @@ class CenterButton extends StatelessWidget {
   final Animation<double> animation;
   final double deviceWidth;
   final MainScreenConstants constants;
-  final VoidCallback onTap; // ✅ 1. onTap 콜백을 받을 변수 추가
+  final VoidCallback onTap;
 
   const CenterButton({
     Key? key,
     required this.animation,
     required this.deviceWidth,
     required this.constants,
-    required this.onTap, // ✅ 2. 생성자에 onTap 추가
+    required this.onTap,
   }) : super(key: key);
 
   @override
@@ -31,7 +31,7 @@ class CenterButton extends StatelessWidget {
       bottom: constants.centerButtonHeight / 3,
       left: (deviceWidth - constants.centerButtonWidth) / 2,
       child: GestureDetector(
-        onTap: onTap, // ✅ 3. 기존의 직접 이동 로직을 onTap 콜백으로 변경
+        onTap: onTap,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -75,7 +75,7 @@ class CenterButton extends StatelessWidget {
           return Transform.scale(
             scale: animation.value,
             child: GestureDetector(
-              onTap: onTap, // ✅ 4. 커버 버튼도 onTap 콜백으로 변경
+              onTap: onTap,
               child: Container(
                 width: constants.buttonCoverWidth,
                 height: constants.buttonCoverHeight,
@@ -94,7 +94,4 @@ class CenterButton extends StatelessWidget {
       ),
     );
   }
-
-// ✅ 5. 버튼 자체의 페이지 이동 함수는 이제 불필요하므로 삭제합니다.
-// void _navigateToRunningPage(BuildContext context) { ... }
 }

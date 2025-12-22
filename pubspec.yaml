@@ -85,14 +85,14 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
-  flutter_native_splash: ^2.4.7 # 👈 [수정] 패키지 추가
+  flutter_native_splash: ^2.4.7
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
 
-# 👈 [수정] 런치스크린 설정 블록 추가
+# 런치스크린 설정 블록
 flutter_native_splash:
   color: "#FFE67B"
   image: assets/images/splash.png

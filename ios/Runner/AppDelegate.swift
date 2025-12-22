@@ -8,7 +8,6 @@ import CoreLocation
 import ActivityKit
 import CoreMotion
 
-// ✅ 1. 'watch_connectivity'를 import 합니다.
 import watch_connectivity
 
 @main
@@ -23,7 +22,7 @@ import watch_connectivity
     var ghostRecordActivity: Activity<GhostRunActivityAttributes>? = nil
     var ghostRaceActivity: Activity<GhostRaceActivityAttributes>? = nil
     
-    // ⭐️ [신규 추가] 대결용 액티비티
+    // 대결용 액티비티
     var asyncBattleActivity: Activity<AsyncBattleActivityAttributes>? = nil
     var friendBattleActivity: Activity<FriendBattleActivityAttributes>? = nil
     
@@ -37,9 +36,9 @@ import watch_connectivity
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
 
-        GeneratedPluginRegistrant.register(with: self) // ✅ 플러그인 등록
+        GeneratedPluginRegistrant.register(with: self) // 플러그인 등록
         
-        // ✅ [추가] App Intent가 보낸 알림을 여기서 듣습니다.
+        // App Intent가 보낸 알림을 여기서 듣습니다.
         self.setupDarwinNotificationListeners()
         
         locationManager.delegate = self
@@ -72,7 +71,7 @@ import watch_connectivity
                 case "stopLiveActivity":
                     self?.stopLiveActivity(type: type)
                     result(nil)
-                // ⚠️ Native -> Flutter 호출을 위한 핸들러는 Dart에서 설정합니다.
+                // ⚠️ Native -> Flutter 호출을 위한 핸들러는 Dart에서 설정
                 default:
                     result(FlutterMethodNotImplemented)
                 }
@@ -82,24 +81,24 @@ import watch_connectivity
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
     
-    // 🚨 [수정된 함수] C 포인터 오류 해결
+    // C 포인터 오류 해결
     private func setupDarwinNotificationListeners() {
-        // 'self'를 C 포인터로 변환합니다.
+        // 'self'를 C 포인터로 변환
         let observer = Unmanaged.passUnretained(self).toOpaque()
 
         // "일시정지" 알림 수신 설정
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
-            observer, // 👈 'self'의 포인터를 전달
+            observer, // 'self'의 포인터를 전달
             { (center, observer, name, object, userInfo) in
                 guard let observer = observer else { return }
                 
-                // 👈 전달받은 포인터를 다시 AppDelegate 인스턴스로 복원
+                // 전달받은 포인터를 다시 AppDelegate 인스턴스로 복원
                 let appDelegate = Unmanaged<AppDelegate>.fromOpaque(observer).takeUnretainedValue()
                 
                 print("🏃‍♂️ [AppDelegate] 'pause' 알림 수신! Flutter로 전달합니다.")
                 
-                // 👈 복원된 인스턴스를 통해 함수 호출
+                // 복원된 인스턴스를 통해 함수 호출
                 appDelegate.sendRunningCommandToFlutter("pauseRunning")
             },
             "com.rundventure.pause" as CFString,
@@ -110,16 +109,16 @@ import watch_connectivity
         // "재개" 알림 수신 설정
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
-            observer, // 👈 'self'의 포인터를 전달
+            observer, // 'self'의 포인터를 전달
             { (center, observer, name, object, userInfo) in
                 guard let observer = observer else { return }
 
-                // 👈 전달받은 포인터를 다시 AppDelegate 인스턴스로 복원
+                // 전달받은 포인터를 다시 AppDelegate 인스턴스로 복원
                 let appDelegate = Unmanaged<AppDelegate>.fromOpaque(observer).takeUnretainedValue()
 
                 print("🏃‍♂️ [AppDelegate] 'resume' 알림 수신! Flutter로 전달합니다.")
                 
-                // 👈 복원된 인스턴스를 통해 함수 호출
+                // 복원된 인스턴스를 통해 함수 호출
                 appDelegate.sendRunningCommandToFlutter("resumeRunning")
             },
             "com.rundventure.resume" as CFString,
@@ -128,12 +127,12 @@ import watch_connectivity
         )
     }
     
-    // ✅ [수정된 함수] Flutter로 명령을 전송하는 헬퍼
+    // Flutter로 명령을 전송하는 헬퍼
     private func sendRunningCommandToFlutter(_ command: String) {
         let message = ["command": command]
         
         // ⚠️ 'watch_connectivity'가 아니라, 이미 존재하는 'liveActivityChannel'을 사용해
-        // Flutter(Dart)의 메소드("handleLiveActivityCommand")를 직접 호출합니다.
+        // Flutter(Dart)의 메소드("handleLiveActivityCommand")를 직접 호출
         self.liveActivityChannel?.invokeMethod("handleLiveActivityCommand", arguments: message) { (result) in
             if let error = result as? FlutterError {
                 print("🚨 [AppDelegate] Flutter로 \(command) 전송 실패: \(error.message ?? "")")
@@ -144,13 +143,12 @@ import watch_connectivity
     }
 
 
-    // 🚨 [수정된 함수] startLiveActivity
+    // startLiveActivity
     func startLiveActivity(type: String, data: [String: Any]) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         if #available(iOS 16.2, *) {
             if type == "main" {
-                // ... (기존 "main" 코드 - 생략) ...
                 Task {
                     for activity in Activity<RunningLiveActivityAttributes>.activities {
                         await activity.end(nil, dismissalPolicy: .immediate)
@@ -167,7 +165,6 @@ import watch_connectivity
                 }
 
             } else if type == "ghost_record" {
-                // ... (기존 "ghost_record" 코드 - 생략) ...
                 Task {
                     for activity in Activity<GhostRunActivityAttributes>.activities {
                         await activity.end(nil, dismissalPolicy: .immediate)
@@ -184,7 +181,6 @@ import watch_connectivity
                 }
 
             } else if type == "ghost_race" {
-                // ... (기존 "ghost_race" 코드 - 생략) ...
                 Task {
                     for activity in Activity<GhostRaceActivityAttributes>.activities {
                         await activity.end(nil, dismissalPolicy: .immediate)
@@ -200,8 +196,7 @@ import watch_connectivity
                     } catch { print("❌ Ghost Race Start Error: \(error.localizedDescription)") }
                 }
             
-            // ⭐️ [신규 추가] 비동기 대결
-            // ⚠️ Dart에서 type: "async_battle"로 전송해야 합니다.
+            // 비동기 대결
             } else if type == "async_battle" {
                 Task {
                     // 1. 기존 액티비티 종료
@@ -209,7 +204,7 @@ import watch_connectivity
                         await activity.end(nil, dismissalPolicy: .immediate)
                     }
                     // 2. 새 액티비티 시작
-                    // ⭐️ [수정] Dart에서 보낸 targetDistanceKm 값을 attributes에 저장
+                    // Dart에서 보낸 targetDistanceKm 값을 attributes에 저장
                     let targetKm = data["targetDistanceKm"] as? Double ?? 0.0
                     let attributes = AsyncBattleActivityAttributes(targetDistanceKm: targetKm)
                     
@@ -225,8 +220,7 @@ import watch_connectivity
                 }
             }
             
-            // ⭐️ [신규 추가] 실시간 친구 대결
-            // ⚠️ Dart에서 type: "friend_battle"로 전송해야 합니다.
+            // 실시간 친구 대결
             else if type == "friend_battle" {
                 Task {
                     // 1. 기존 액티비티 종료
@@ -234,7 +228,7 @@ import watch_connectivity
                         await activity.end(nil, dismissalPolicy: .immediate)
                     }
                     // 2. 새 액티비티 시작
-                    // ⭐️ [수정] Dart에서 보낸 targetDistanceKm 값을 attributes에 저장
+                    // Dart에서 보낸 targetDistanceKm 값을 attributes에 저장
                     let targetKm = data["targetDistanceKm"] as? Double ?? 0.0
                     let attributes = FriendBattleActivityAttributes(targetDistanceKm: targetKm)
                     
@@ -266,29 +260,25 @@ import watch_connectivity
         Task {
             if #available(iOS 16.2, *) {
                 if type == "main" {
-                    // ... (기존 "main" 코드 - 생략) ...
                     if let km = data["kilometers"] as? Double, let sec = data["seconds"] as? Int, let pace = data["pace"] as? Double, let cal = data["calories"] as? Double, let isPaused = data["isPaused"] as? Bool {
                         let state = RunningLiveActivityAttributes.ContentState(kilometers: km, seconds: sec, pace: pace, calories: cal, isPaused: isPaused)
                         let content = ActivityContent(state: state, staleDate: nil)
                         await self.mainRunActivity?.update(content)
                     }
                 } else if type == "ghost_record" {
-                    // ... (기존 "ghost_record" 코드 - 생략) ...
                     if let time = data["time"] as? String, let dist = data["distance"] as? String, let pace = data["pace"] as? String, let isPaused = data["isPaused"] as? Bool {
                         let state = GhostRunActivityAttributes.ContentState(time: time, distance: dist, pace: pace, isPaused: isPaused)
                         let content = ActivityContent(state: state, staleDate: nil)
                         await self.ghostRecordActivity?.update(content)
                     }
                 } else if type == "ghost_race" {
-                    // ... (기존 "ghost_race" 코드 - 생략) ...
                     if let time = data["userTime"] as? String, let dist = data["userDistance"] as? String, let pace = data["userPace"] as? String, let status = data["raceStatus"] as? String, let isPaused = data["isPaused"] as? Bool {
                         let state = GhostRaceActivityAttributes.ContentState(userTime: time, userDistance: dist, userPace: pace, raceStatus: status, isPaused: isPaused)
                         let content = ActivityContent(state: state, staleDate: nil)
                         await self.ghostRaceActivity?.update(content)
                     }
                 
-                // ⭐️ [신규 추가] 비동기 대결
-                // ⚠️ Dart에서 type: "async_battle"로 전송해야 합니다.
+                // 비동기 대결
                 } else if type == "async_battle" {
                     // (Dart의 _updatePaceAndSpeed 키와 일치시킴)
                     if let km = data["kilometers"] as? Double,
@@ -305,14 +295,12 @@ import watch_connectivity
                         await self.asyncBattleActivity?.update(content)
                     }
                     
-                // ⭐️ [⭐️⭐️⭐️ 핵심 수정 ⭐️⭐️⭐️]
-                // ⭐️ [신규 추가] 실시간 친구 대결
-                // ⚠️ Dart에서 type: "friend_battle"로 전송해야 합니다.
+
+                // 실시간 친구 대결
                 } else if type == "friend_battle" {
-                    // ⭐️ [수정] Dart에서 "myKilometers", "mySeconds", "myPace" 키로 보내고 있으므로 수정합니다.
-                    if let myKm = data["myKilometers"] as? Double,      // ⚠️ 'myKilometers' 키 사용
-                       let mySec = data["mySeconds"] as? Int,          // ⚠️ 'mySeconds' 키 사용
-                       let myPace = data["myPace"] as? Double,         // ⚠️ 'myPace' 키 사용
+                    if let myKm = data["myKilometers"] as? Double,      // 'myKilometers' 키 사용
+                       let mySec = data["mySeconds"] as? Int,          // 'mySeconds' 키 사용
+                       let myPace = data["myPace"] as? Double,         // 'myPace' 키 사용
                        let isMyFinished = data["isMyRunFinished"] as? Bool,
                        let oppNick = data["opponentNickname"] as? String,
                        let oppDist = data["opponentDistance"] as? Double,
@@ -329,58 +317,51 @@ import watch_connectivity
                         )
                         let content = ActivityContent(state: state, staleDate: nil)
                         await self.friendBattleActivity?.update(content)
-                        
-                        // (디버깅) 업데이트 성공 로그
-                        // print("✅ Friend Battle Updated: \(myKm)km, \(oppDist)km")
+
                         
                     } else {
-                        // (디버깅) 업데이트 실패 로그
                          print("🚨 Friend Battle Update FAILED. Data received: \(data)")
                     }
                 }
-                // ⭐️ [⭐️⭐️⭐️ 수정 완료 ⭐️⭐️⭐️]
                 
             }
         }
     }
 
-    // ⭐️ [⭐️⭐️⭐️ 최종 수정 ⭐️⭐️⭐️] .end() 호출 구문 수정
     func stopLiveActivity(type: String) {
         Task {
             if #available(iOS 16.1, *) {
                 
                 if type == "main" {
-                    // ⭐️ [수정] nil의 타입을 명시적으로 지정
+                    // nil의 타입을 명시적으로 지정
                     let emptyContent: ActivityContent<RunningLiveActivityAttributes.ContentState>? = nil
                     await mainRunActivity?.end(emptyContent, dismissalPolicy: .immediate)
                     self.mainRunActivity = nil
                     print("✅ Main Run Live Activity Stopped")
                     
                 } else if type == "ghost_record" {
-                    // ⭐️ [수정] nil의 타입을 명시적으로 지정
+                    // nil의 타입을 명시적으로 지정
                     let emptyContent: ActivityContent<GhostRunActivityAttributes.ContentState>? = nil
                     await ghostRecordActivity?.end(emptyContent, dismissalPolicy: .immediate)
                     self.ghostRecordActivity = nil
                     print("✅ Ghost Record Live Activity Stopped")
                     
                 } else if type == "ghost_race" {
-                    // ⭐️ [수정] nil의 타입을 명시적으로 지정
+                    // nil의 타입을 명시적으로 지정
                     let emptyContent: ActivityContent<GhostRaceActivityAttributes.ContentState>? = nil
                     await ghostRaceActivity?.end(emptyContent, dismissalPolicy: .immediate)
                     self.ghostRaceActivity = nil
                     print("✅ Ghost Race Live Activity Stopped")
-                
-                // ⭐️ [신규 추가] 비동기 대결
+
                 } else if type == "async_battle" {
-                    // ⭐️ [수정] nil의 타입을 명시적으로 지정
+                    // nil의 타입을 명시적으로 지정
                     let emptyContent: ActivityContent<AsyncBattleActivityAttributes.ContentState>? = nil
                     await asyncBattleActivity?.end(emptyContent, dismissalPolicy: .immediate)
                     self.asyncBattleActivity = nil
                     print("✅ Async Battle Live Activity Stopped")
-                    
-                // ⭐️ [신규 추가] 실시간 친구 대결
+
                 } else if type == "friend_battle" {
-                    // ⭐️ [수정] nil의 타입을 명시적으로 지정
+                    // nil의 타입을 명시적으로 지정
                     let emptyContent: ActivityContent<FriendBattleActivityAttributes.ContentState>? = nil
                     await friendBattleActivity?.end(emptyContent, dismissalPolicy: .immediate)
                     self.friendBattleActivity = nil

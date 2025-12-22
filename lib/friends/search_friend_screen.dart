@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ [제거] 직접 쿼리 안 함
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -10,7 +9,6 @@ class SearchFriendScreen extends StatefulWidget {
   _SearchFriendScreenState createState() => _SearchFriendScreenState();
 }
 
-// ▼▼▼▼▼ [ 헬퍼 클래스: 검색 결과 모델 ] ▼▼▼▼▼
 class FriendSearchResult {
   final String email;
   final String nickname;
@@ -34,8 +32,6 @@ class FriendSearchResult {
     );
   }
 }
-// ▲▲▲▲▲ [ 헬퍼 클래스 끝 ] ▲▲▲▲▲
-
 
 class _SearchFriendScreenState extends State<SearchFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
@@ -85,7 +81,6 @@ class _SearchFriendScreenState extends State<SearchFriendScreen> {
     );
   }
 
-  /// ✅ [핵심] Cloud Function을 호출하여 사용자 검색
   Future<void> _searchUsers() async {
     final searchTerm = _searchController.text.trim();
     if (searchTerm.isEmpty) {
@@ -150,9 +145,6 @@ class _SearchFriendScreenState extends State<SearchFriendScreen> {
     }
   }
 
-
-  /// ✅ [핵심] 친구 신청 보내기
-  /// (Part 1에서 만든 서버 함수가 30명 제한에 걸리면 에러를 던지고, 여기서 그 에러 메시지를 띄웁니다)
   Future<void> _sendFriendRequest(String recipientEmail) async {
     if (_isProcessingRequest) return;
 
@@ -180,14 +172,13 @@ class _SearchFriendScreenState extends State<SearchFriendScreen> {
               email: _searchResults[index].email,
               nickname: _searchResults[index].nickname,
               profileImageUrl: _searchResults[index].profileImageUrl,
-              friendshipStatus: 'pending_sent', // 👈 상태 변경
+              friendshipStatus: 'pending_sent',
             );
           }
         });
       }
 
     } on FirebaseFunctionsException catch (e) {
-      // 🔥 [중요] 서버에서 "친구 정원(30명)을 초과하여..." 에러를 보내면 여기서 잡힙니다.
       print("Firebase Functions 오류 (sendFriendRequest): ${e.message}");
       // e.message가 그대로 스낵바에 표시됩니다.
       _showCustomSnackBar("오류: ${e.message ?? '알 수 없는 오류'}", isError: true);

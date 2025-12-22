@@ -1,13 +1,9 @@
-// [전체 코드] async_battle_running_screen.dart
-
 import 'dart:async';
-import 'dart:ui'; // FontFeature를 위해 추가
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
-// --- 러닝 로직 임포트 ---
 import 'package:geolocator/geolocator.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
@@ -16,11 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 import 'package:pedometer/pedometer.dart';
-
-// RouteDataPoint 클래스 임포트
 import 'package:rundventure/free_running/free_running_start.dart';
-
-// 스낵바 헬퍼 임포트
 import 'async_battle_list_screen.dart';
 
 
@@ -59,10 +51,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
   String _myStatus = 'running'; // 'running', 'paused', 'finished'
   double _myKilometers = 0.0;
   double _myPace = 0.0;
-
-  // ▼▼▼▼▼ [ ⭐️ 수정: 정밀 측정을 위해 double로 변경 ⭐️ ] ▼▼▼▼▼
-  double _mySeconds = 0.0; // 기존 int에서 double로 변경 (소수점 초 단위 저장)
-  // ▲▲▲▲▲ [ ⭐️ 수정: 정밀 측정을 위해 double로 변경 ⭐️ ] ▲▲▲▲▲
+  double _mySeconds = 0.0;
 
   double _myElevation = 0.0;
   double _myAverageSpeed = 0.0;
@@ -350,20 +339,17 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
     flutterTts = FlutterTts();
     await flutterTts.setLanguage("ko-KR");
     await flutterTts.setSpeechRate(0.5);
-
-    // ▼▼▼▼▼ [ 🔊 오디오 설정 강화 ] ▼▼▼▼▼
     await flutterTts.setIosAudioCategory(
-        IosTextToSpeechAudioCategory.playback, // 무음 모드에서도 재생
+        IosTextToSpeechAudioCategory.playback,
         [
           IosTextToSpeechAudioCategoryOptions.allowBluetooth,
           IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-          IosTextToSpeechAudioCategoryOptions.mixWithOthers, // 음악과 함께 재생
-          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker // 스피커 강제
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
         ],
         IosTextToSpeechAudioMode.voicePrompt
     );
     await flutterTts.setSharedInstance(true);
-    // ▲▲▲▲▲ [ 🔊 오디오 설정 강화 ] ▲▲▲▲▲
 
     // 2. Weight & Nickname
     await _loadUserData();
@@ -524,7 +510,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
 
     // 5. 서비스 시작
     _startLocationTracking();
-    _startTimer(); // 👈 정밀 타이머 시작
+    _startTimer();
     _startPedometer();
   }
 
@@ -635,7 +621,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
               _appleMapController!.animateCamera(CameraUpdate.newLatLng(newLocation));
             }
 
-            // ▼▼▼▼▼ [ 🔊 1km 음성 안내 로직 (안전하게 수정됨) ] ▼▼▼▼▼
             if (_myKilometers >= _nextKmTarget) {
               double safePace = _myPace;
               if (safePace.isInfinite || safePace.isNaN) safePace = 0.0;
@@ -646,9 +631,8 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
               print("🔊 음성 안내 실행: $_nextKmTarget km 달성! (페이스: $paceMin분 $paceSec초)");
               _speak('$_nextKmTarget 킬로미터. 현재 페이스는 $paceMin 분 $paceSec 초 입니다.');
 
-              _nextKmTarget++; // 다음 목표 설정 (1 -> 2 -> 3...)
+              _nextKmTarget++;
             }
-            // ▲▲▲▲▲ [ 🔊 수정 완료 ] ▲▲▲▲▲
 
             // 완주 확인
             if (_myKilometers >= _targetDistanceKm) {
@@ -667,10 +651,8 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
         });
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 수정: 정밀 타이머 로직 (0.05초 단위 갱신) ⭐️ ] ▼▼▼▼▼
   void _startTimer() {
     _initialStartTime = DateTime.now();
-    // 50ms (0.05초) 마다 UI 갱신 (기존 1초에서 변경)
     _timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -678,19 +660,14 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
       }
       if (!_isPaused && _initialStartTime != null && !_isMyRunFinished) {
         setState(() {
-          // 현재 시간 - 시작 시간 - 일시정지 시간 = 실제 달린 시간 (밀리초)
           int elapsedMillis = DateTime.now().difference(_initialStartTime!).inMilliseconds -
               _totalPausedDuration.inMilliseconds;
-
-          // 이를 초 단위(소수점 포함)로 변환하여 저장 (기존에는 inSeconds 사용)
           _mySeconds = elapsedMillis / 1000.0;
-
           _updatePaceAndSpeed();
         });
       }
     });
   }
-  // ▲▲▲▲▲ [ ⭐️ 수정: 정밀 타이머 로직 (0.05초 단위 갱신) ⭐️ ] ▲▲▲▲▲
 
   /// 만보계 시작
   void _startPedometer() {
@@ -889,7 +866,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
 
     // 6. Cloud Function 호출 (소수점 초 포함 전송)
     final Map<String, dynamic> runData = {
-      'seconds': _mySeconds, // 👈 [핵심] double 타입(소수점 포함)으로 전송
+      'seconds': _mySeconds,
       'pace': _myPace,
       'stepCount': _myStepCount,
       'elevation': _myElevation,
@@ -936,28 +913,18 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
   // 5. 헬퍼 함수 (Formatters) - 정밀 시간 포맷
   // ===================================================================
 
-  // ▼▼▼▼▼ [ ⭐️ 수정: 정밀 시간 표시 (분:초.백분초) ⭐️ ] ▼▼▼▼▼
   String _formatTime(double seconds) {
-    // 1. 전체 초를 정수로 변환 (분/초 계산용)
     final int totalSec = seconds.floor();
-
     final int hours = totalSec ~/ 3600;
     final int minutes = (totalSec % 3600) ~/ 60;
     final int secs = totalSec % 60;
-
-    // 2. 소수점 이하 2자리(백분초) 추출 (0.456 -> 45)
     final int centi = ((seconds - totalSec) * 100).floor();
-
-    // "00:00.00" 형식
     String timeStr = '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}.${centi.toString().padLeft(2, '0')}';
-
-    // 1시간 넘어가면 "00:00:00.00" 형식
     if (hours > 0) {
       timeStr = '${hours.toString().padLeft(2, '0')}:$timeStr';
     }
     return timeStr;
   }
-  // ▲▲▲▲▲ [ ⭐️ 수정: 정밀 시간 표시 (분:초.백분초) ⭐️ ] ▲▲▲▲▲
 
   String _formatPace(double pace) {
     if (pace.isInfinite || pace.isNaN || pace == 0) return '--:--';
@@ -1010,12 +977,10 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
             ] else ... [
               Icon(Icons.flag, color: Colors.white, size: 80),
               SizedBox(height: 20),
-              // ▼▼▼▼▼ [ ⭐️ 수정: 정밀 시간 표시 ⭐️ ] ▼▼▼▼▼
               Text(
                 _formatTime(_mySeconds),
                 style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
               ),
-              // ▲▲▲▲▲ [ ⭐️ 수정: 정밀 시간 표시 ⭐️ ] ▲▲▲▲▲
               Text(
                 '완주!',
                 style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
@@ -1195,9 +1160,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // ▼▼▼▼▼ [ ⭐️ 수정: 시간 표시에 정밀 포맷 적용 ⭐️ ] ▼▼▼▼▼
               _buildStatColumn('시간', _formatTime(_mySeconds)),
-              // ▲▲▲▲▲ [ ⭐️ 수정: 시간 표시에 정밀 포맷 적용 ⭐️ ] ▲▲▲▲▲
               _buildStatColumn('칼로리', '${_myCalories.toStringAsFixed(0)} kcal'),
             ],
           ),

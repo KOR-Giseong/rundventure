@@ -1,5 +1,3 @@
-// [전체 코드] friend_battle_result_screen.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -13,14 +11,9 @@ import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-// ▼▼▼▼▼ [경로 수정 필수] ▼▼▼▼▼
-// 1. RouteDataPoint 클래스를 가져오기 위해
 import 'package:rundventure/free_running/free_running_start.dart';
-// 2. 메인 화면 (홈으로 가기 등 필요 시)
 import 'package:rundventure/main_screens/main_screen.dart';
-// ▲▲▲▲▲ [경로 수정 필수] ▼▼▼▼▼
 
-// 친구 대결 목록 화면 임포트
 import 'friend_battle_list_screen.dart';
 
 
@@ -70,13 +63,11 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
   bool _isSaving = false;
   bool _isSharing = false;
   bool _isWinner = false; // 내가 이겼는지
-  bool _isDraw = false;   // 무승부인지
+  bool _isDraw = false;
   bool _isMeChallenger = false;
 
-  // ▼▼▼▼▼ [ ⭐️ 신규 추가: 취소 상태 변수 ⭐️ ] ▼▼▼▼▼
-  bool _isCancelled = false; // 대결이 중단되었는지
-  bool _didIQuit = false;    // 내가 중단했는지
-  // ▲▲▲▲▲ [ ⭐️ 신규 추가: 취소 상태 변수 ⭐️ ] ▲▲▲▲▲
+  bool _isCancelled = false;
+  bool _didIQuit = false;
 
   // 내 정보
   late Map<String, dynamic> _myInfo;
@@ -96,7 +87,6 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
     _updateMapDisplay();
   }
 
-  /// 1. [수정] 승/패 및 데이터 처리 (취소 상태 로직 추가)
   void _processBattleData() {
     if (_myEmail == null) return;
 
@@ -105,17 +95,14 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
 
     final targetDistanceKm = (data['targetDistanceKm'] as num).toDouble();
 
-    // ▼▼▼▼▼ [ ⭐️ 취소/기권 상태 확인 ⭐️ ] ▼▼▼▼▼
     final String status = data['status'] ?? 'finished';
     if (status == 'cancelled') {
       _isCancelled = true;
       final String? canceller = data['cancellerEmail'];
-      // canceller가 나면 내가 기권(패), 아니면 상대가 기권(승)
       _didIQuit = (canceller == _myEmail);
-      _isWinner = !_didIQuit; // 내가 안 나갔으면 승리
+      _isWinner = !_didIQuit;
       _isDraw = false;
     }
-    // ▲▲▲▲▲ [ ⭐️ 취소/기권 상태 확인 ⭐️ ] ▲▲▲▲▲
 
     // 1. 내 밀리초
     int myMs = widget.myFinalTimeMs ??
@@ -555,7 +542,6 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
     );
   }
 
-  /// (UI) 승/패/무승부/기권 헤더 [수정됨]
   Widget _buildResultHeader() {
     // 1. 취소(중단)된 경우 UI
     if (_isCancelled) {
@@ -756,7 +742,6 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
     );
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 공유 이미지 (기권/중단 텍스트 반영) ⭐️⭐️⭐️ ] ▼▼▼▼▼
   Widget _buildShareableCard(List<LatLng> latLngPoints) {
     final double distance = _myInfo['distance'];
     final String myTimeStr = formatTimeWithMs(_myInfo['timeMs']);
@@ -891,7 +876,6 @@ class _FriendBattleResultScreenState extends State<FriendBattleResultScreen> {
       ),
     );
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 공유 이미지 (기권/중단 텍스트 반영) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   Widget _buildLegend() {
     return Positioned(

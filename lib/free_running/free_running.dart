@@ -16,7 +16,7 @@ import 'package:location/location.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:rundventure/free_running/free_running_start.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ [수정 1] 패키지 추가
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FreeRunningPage extends StatefulWidget {
   final double kilometers;
@@ -61,13 +61,12 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
   final GlobalKey _shareBoundaryKey = GlobalKey();
   bool _isSharing = false;
 
-  // ✅ [수정 2] 워치 연동 설정 상태 변수 추가
   bool _watchSyncEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _loadWatchSyncSetting(); // ✅ [수정 3] 설정값 불러오기 호출
+    _loadWatchSyncSetting();
     _updatePolylines();
     _addEndMarker();
     _setupLocationService();
@@ -82,7 +81,6 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
     super.dispose();
   }
 
-  // ✅ [수정 4] SharedPreferences에서 설정값 로드 함수
   Future<void> _loadWatchSyncSetting() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -398,7 +396,6 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
 
       _showCustomSnackBar('러닝 기록이 저장되었습니다.');
 
-      // ✅ [수정 5] 설정이 켜져 있을 때만 워치와 통신 시도
       if (_watchSyncEnabled) {
         try {
           final message = {'command': 'resetToMainMenu'};
@@ -436,7 +433,6 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
     );
 
     if (result == true && mounted) {
-      // ✅ [수정 6] 설정이 켜져 있을 때만 워치와 통신 시도
       if (_watchSyncEnabled) {
         try {
           final message = {'command': 'resetToMainMenu'};
@@ -566,17 +562,15 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
                       zoomGesturesEnabled: true,
                       scrollGesturesEnabled: true,
                     ),
-                    // ▼▼▼▼▼ [ ⭐️ 디자인 수정: 4방향 선형 그라데이션 오버레이 (액자 형태) ] ▼▼▼▼▼
                     Positioned.fill(
-                      child: IgnorePointer( // 지도를 가려도 터치는 통과시킴
+                      child: IgnorePointer(
                         child: Stack(
                           children: [
-                            // 1. 상단 그라데이션 (위 -> 아래)
                             Positioned(
                               top: 0,
                               left: 0,
                               right: 0,
-                              height: 80, // 그라데이션 깊이
+                              height: 80,
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -590,12 +584,11 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
                                 ),
                               ),
                             ),
-                            // 2. 하단 그라데이션 (아래 -> 위)
                             Positioned(
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              height: 80, // 그라데이션 깊이
+                              height: 80,
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -609,12 +602,11 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
                                 ),
                               ),
                             ),
-                            // 3. 좌측 그라데이션 (왼쪽 -> 오른쪽)
                             Positioned(
                               top: 0,
                               bottom: 0,
                               left: 0,
-                              width: 60, // 그라데이션 너비
+                              width: 60,
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -628,12 +620,11 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
                                 ),
                               ),
                             ),
-                            // 4. 우측 그라데이션 (오른쪽 -> 왼쪽)
                             Positioned(
                               top: 0,
                               bottom: 0,
                               right: 0,
-                              width: 60, // 그라데이션 너비
+                              width: 60,
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -651,7 +642,6 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
                         ),
                       ),
                     ),
-                    // ▲▲▲▲▲ [ ⭐️ 디자인 수정 완료 ] ▲▲▲▲▲
                     _buildLegend(),
                   ],
                 ),

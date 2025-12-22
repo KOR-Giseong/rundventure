@@ -183,9 +183,7 @@ struct FriendBattleWatchView: View {
     
     // 격차 포맷 함수 (+120m, -30m, 0m)
     private func formatDifference(_ diff: Double) -> String {
-        // ▼▼▼▼▼ [ ✅ 여기!! 오류 수정 ] ▼▼▼▼▼
         if abs(diff) < 1 { return "0m" } // 1m 미만은 0 (diff.abs() -> abs(diff))
-        // ▲▲▲▲▲ [ ✅ 오류 수정 완료 ] ▲▲▲▲▲
         return String(format: "%@%.0fm", diff > 0 ? "+" : "", diff)
     }
     

@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'quest_data.dart'; // [파트 1]에서 수정한 파일
+import 'quest_data.dart';
 import 'package:rundventure/Achievement/exercise_service.dart';
 
 class QuestService {
@@ -20,7 +20,6 @@ class QuestService {
         .collection('activeQuests');
   }
 
-  // (1. getQuests 함수)
   Future<Map<QuestType, List<Quest>>> getQuests() async {
     if (_userEmail == null) return {};
     final now = DateTime.now();
@@ -54,7 +53,6 @@ class QuestService {
       activeQuests = updatedSnapshot.docs.map((doc) => Quest.fromFirestore(doc)).toList();
     }
 
-    // ✅ 진행도 갱신
     await _updateQuestsProgress(activeQuests);
 
     final finalSnapshot = await _questCollectionRef.get();
@@ -69,22 +67,18 @@ class QuestService {
     };
   }
 
-  // (2. _updateQuestsProgress 함수 - ✅ 대결 로직 추가됨)
   Future<void> _updateQuestsProgress(List<Quest> quests) async {
     if (_userEmail == null) return;
     if (quests.isEmpty) return;
 
-    // --- 0. 기간 계산 ---
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final startOfWeekDate = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(startOfWeekDate.year, startOfWeekDate.month, startOfWeekDate.day);
     final startOfMonth = DateTime(now.year, now.month, 1);
 
-    // --- 1. 데이터 불러오기 (Batch 처리를 위해) ---
     final batch = _firestore.batch();
 
-    // A. 기존 데이터 로딩
     final allRecords = await _exerciseService.getAllExerciseRecords();
 
     List<DocumentSnapshot> allGhostRuns = [];
@@ -129,22 +123,18 @@ class QuestService {
       allGoals = goalSnapshot.docs;
     } catch (e) { print("목표 설정 로딩 실패: $e"); }
 
-    // ▼▼▼▼▼ [ ✅✅✅ 신규 추가: 대결 데이터 로딩 ] ▼▼▼▼▼
-    // B. 실시간 대결 (Friend Battles)
     List<DocumentSnapshot> allFriendBattles = [];
     try {
       final fbSnapshot = await _firestore
           .collection('friendBattles')
           .where('participants', arrayContains: _userEmail)
           .get();
-      // 'finished' 상태만 필터링
       allFriendBattles = fbSnapshot.docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data['status'] == 'finished';
       }).toList();
     } catch (e) { print("실시간 대결 로딩 실패: $e"); }
 
-    // C. 오프라인 대결 (Async Battles) - 도전자일 때와 상대방일 때 모두 조회
     List<DocumentSnapshot> allAsyncBattles = [];
     try {
       final asyncChallenger = await _firestore
@@ -156,20 +146,15 @@ class QuestService {
           .where('opponentEmail', isEqualTo: _userEmail)
           .get();
 
-      // 두 리스트 병합 및 'finished' 상태 필터링
       final combined = [...asyncChallenger.docs, ...asyncOpponent.docs];
-      // 중복 제거 (ID 기준)
       final ids = <String>{};
       allAsyncBattles = combined.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        if (!ids.add(doc.id)) return false; // 이미 추가된 ID면 제외
+        if (!ids.add(doc.id)) return false;
         return data['status'] == 'finished';
       }).toList();
     } catch (e) { print("오프라인 대결 로딩 실패: $e"); }
-    // ▲▲▲▲▲ [ ✅✅✅ 신규 추가: 대결 데이터 로딩 ] ▲▲▲▲▲
 
-
-    // --- 2. 각 퀘스트별 진행도 계산 ---
     for (var quest in quests) {
       if (quest.isCompleted && quest.isClaimed) continue;
 
@@ -296,7 +281,6 @@ class QuestService {
             currentValue = totalChallengeDistance;
             break;
 
-        // ▼▼▼▼▼ [ ✅✅✅ 신규: 실시간 친구 대결 ] ▼▼▼▼▼
           case QuestMetric.friendBattlePlay:
             currentValue = allFriendBattles.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
@@ -306,9 +290,6 @@ class QuestService {
             break;
 
           case QuestMetric.friendBattleWin:
-          // *주의: 승리 여부는 'records' 서브컬렉션에 있습니다.
-          // 퀘스트 업데이트 시점에 매번 서브컬렉션을 조회하면 읽기 비용이 발생하지만,
-          // 승리 퀘스트가 있는 경우에만 조회하므로 허용 범위입니다.
             int winCount = 0;
             for (var doc in allFriendBattles) {
               final data = doc.data() as Map<String, dynamic>;
@@ -324,7 +305,6 @@ class QuestService {
             currentValue = winCount.toDouble();
             break;
 
-        // ▼▼▼▼▼ [ ✅✅✅ 신규: 오프라인 대결 ] ▼▼▼▼▼
           case QuestMetric.asyncBattlePlay:
             currentValue = allAsyncBattles.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
@@ -337,7 +317,6 @@ class QuestService {
             currentValue = allAsyncBattles.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
               final Timestamp? timestamp = data['createdAt'] as Timestamp?;
-              // AsyncBattle은 문서 자체에 winnerEmail이 있습니다.
               final String? winnerEmail = data['winnerEmail'] as String?;
               return timestamp != null &&
                   timestamp.toDate().isAfter(questStartTime) &&
@@ -362,7 +341,6 @@ class QuestService {
     }
   }
 
-  // (3. _generateQuests 함수 - ✅✅✅ 신규 퀘스트 추가됨)
   Future<void> _generateQuests(QuestType type, int count) async {
     final oldQuests = await _questCollectionRef.where('type', isEqualTo: type.name).get();
     final batch = _firestore.batch();
@@ -400,8 +378,6 @@ class QuestService {
           else if (metric == QuestMetric.ghostFirstRecord) { title = '고스트 첫 기록 측정'; targetValue = 1.0; rewardXp = 100; }
           else if (metric == QuestMetric.challengePostWrite) { title = '챌린지 생성'; targetValue = 1.0; rewardXp = 120; }
           else if (metric == QuestMetric.challengeCommentWrite) { title = '챌린지 댓글 작성'; targetValue = 1.0; rewardXp = 40; }
-
-          // ▼▼▼▼▼ [ ✅✅✅ 신규: 일일 대결 퀘스트 ] ▼▼▼▼▼
           else if (metric == QuestMetric.friendBattlePlay) { title = '실시간 대결 참여'; targetValue = 1.0; rewardXp = 100; }
           else if (metric == QuestMetric.friendBattleWin) { title = '실시간 대결 승리'; targetValue = 1.0; rewardXp = 150; }
           else if (metric == QuestMetric.asyncBattlePlay) { title = '오프라인 대결 참여'; targetValue = 1.0; rewardXp = 100; }
@@ -421,8 +397,6 @@ class QuestService {
           else if (metric == QuestMetric.ghostFirstRecord) { title = '주간 고스트 첫 기록 측정'; targetValue = 1.0; rewardXp = 100; }
           else if (metric == QuestMetric.challengePostWrite) { title = '주간 챌린지 생성'; targetValue = (1 + random.nextInt(2)).toDouble(); rewardXp = 400; }
           else if (metric == QuestMetric.challengeCommentWrite) { title = '주간 챌린지 댓글'; targetValue = (3 + random.nextInt(3)).toDouble(); rewardXp = 200; }
-
-          // ▼▼▼▼▼ [ ✅✅✅ 신규: 주간 대결 퀘스트 ] ▼▼▼▼▼
           else if (metric == QuestMetric.friendBattlePlay) { title = '주간 실시간 대결'; targetValue = (2 + random.nextInt(2)).toDouble(); rewardXp = 350; }
           else if (metric == QuestMetric.friendBattleWin) { title = '주간 실시간 대결 승리'; targetValue = (1 + random.nextInt(2)).toDouble(); rewardXp = 500; }
           else if (metric == QuestMetric.asyncBattlePlay) { title = '주간 오프라인 대결'; targetValue = (2 + random.nextInt(2)).toDouble(); rewardXp = 350; }
@@ -443,8 +417,6 @@ class QuestService {
           else if (metric == QuestMetric.challengePostWrite) { title = '월간 챌린지 생성'; targetValue = (3 + random.nextInt(3)).toDouble(); rewardXp = 1000; }
           else if (metric == QuestMetric.challengeCommentWrite) { title = '월간 챌린지 댓글'; targetValue = (10 + random.nextInt(6)).toDouble(); rewardXp = 500; }
           else if (metric == QuestMetric.challengeDistance) { title = '월간 챌린지 러닝'; targetValue = (50 + random.nextInt(51)).toDouble(); rewardXp = 1500; }
-
-          // ▼▼▼▼▼ [ ✅✅✅ 신규: 월간 대결 퀘스트 ] ▼▼▼▼▼
           else if (metric == QuestMetric.friendBattlePlay) { title = '월간 실시간 대결'; targetValue = (5 + random.nextInt(3)).toDouble(); rewardXp = 1000; }
           else if (metric == QuestMetric.friendBattleWin) { title = '월간 실시간 대결 승리'; targetValue = (3 + random.nextInt(3)).toDouble(); rewardXp = 1500; }
           else if (metric == QuestMetric.asyncBattlePlay) { title = '월간 오프라인 대결'; targetValue = (5 + random.nextInt(3)).toDouble(); rewardXp = 1000; }
@@ -474,7 +446,6 @@ class QuestService {
     await batch.commit();
   }
 
-  // (4. _getQuestDescription 함수 - ✅✅✅ 신규 설명 추가됨)
   String _getQuestDescription(QuestMetric metric, double targetValue) {
     final formatter = NumberFormat('#,###');
     switch (metric) {
@@ -491,8 +462,6 @@ class QuestService {
       case QuestMetric.challengePostWrite: return '챌린지 ${formatter.format(targetValue)}회 생성하기';
       case QuestMetric.challengeCommentWrite: return '챌린지 댓글 ${formatter.format(targetValue)}회 작성하기';
       case QuestMetric.challengeDistance: return '참여한 챌린지에서 총 ${formatter.format(targetValue)}km 달성하기';
-
-    // ▼▼▼▼▼ [ ✅✅✅ 신규: 설명 문구 ] ▼▼▼▼▼
       case QuestMetric.friendBattlePlay: return '실시간 대결 ${formatter.format(targetValue)}회 참여하기';
       case QuestMetric.friendBattleWin: return '실시간 대결 ${formatter.format(targetValue)}회 승리하기';
       case QuestMetric.asyncBattlePlay: return '오프라인 대결 ${formatter.format(targetValue)}회 참여하기';
@@ -502,7 +471,6 @@ class QuestService {
     }
   }
 
-  // (5. claimQuestReward 함수)
   Future<void> claimQuestReward(Quest quest) async {
     if (_userEmail == null) return;
     if (!quest.isCompleted) throw Exception('퀘스트가 완료되지 않았습니다.');

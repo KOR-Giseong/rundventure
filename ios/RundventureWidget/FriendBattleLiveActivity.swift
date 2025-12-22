@@ -1,10 +1,3 @@
-//
-//  FriendBattleLiveActivity.swift
-//  RundventureWidgetExtension
-//
-//  Created by (Your Name) on (Current Date).
-//
-
 import ActivityKit
 import WidgetKit
 import SwiftUI
@@ -40,7 +33,7 @@ struct FriendBattleLiveActivity: Widget {
         return String(format: "%.2f", dist)
     }
      
-    // ⭐️ [신규 추가] 리드/낙오 텍스트와 색상을 계산하는 헬퍼 함수
+    // 리드/낙오 텍스트와 색상을 계산하는 헬퍼 함수
     private func getDiffStatus(myKm: Double, oppKm: Double, isMyFinished: Bool) -> (text: String, color: Color) {
         if isMyFinished {
             return ("완주! 🏁", .green)
@@ -50,7 +43,7 @@ struct FriendBattleLiveActivity: Widget {
         let diffMeters = Int(abs(diff * 1000))
          
         if abs(diff) < 0.01 { // 10m 이내
-            return ("박빙!", .black) // ⭐️ [수정] 흰색 -> 검은색
+            return ("박빙!", .black)
         } else if diff > 0 {
             return ("+\(diffMeters)m 리드", .cyan)
         } else {
@@ -61,25 +54,22 @@ struct FriendBattleLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: FriendBattleActivityAttributes.self) { context in
              
-            // MARK: - 잠금화면 UI (Lock Screen) ⭐️ [수정됨]
-            // 👈 [수정] ZStack { Color.white ... } 제거
+
             VStack(spacing: 16) {
                    
                 // --- 1. 헤더 ---
                 HStack {
                     Image(systemName: "figure.run.circle.fill")
                         .font(.headline)
-                        .foregroundColor(.blue) // 친구 대결 테마 색상 (파랑)
+                        .foregroundColor(.blue)
                     Text("실시간 친구 대결")
-                        .font(.headline).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정] 흰색 -> 검은색
+                        .font(.headline).fontWeight(.bold).foregroundColor(.black)
                     Spacer()
-                    // ⭐️ [수정] 내 시간 표시
                     Text(formatTime(context.state.mySeconds))
-                        .font(.headline).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정] 흰색 -> 검은색
+                        .font(.headline).fontWeight(.bold).foregroundColor(.black)
                         .minimumScaleFactor(0.8) // 시간이 길어질 경우 대비
                 }
-                 
-                // --- 2. ⭐️ [신규] 거리 비교기 ---
+
                 VStack(spacing: 8) {
                        
                     // (1) 리드/낙오 텍스트
@@ -100,7 +90,7 @@ struct FriendBattleLiveActivity: Widget {
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             // 배경 바
-                            Capsule().frame(height: 10).foregroundColor(.gray.opacity(0.3)) // ⭐️ [수정] 투명도 변경
+                            Capsule().frame(height: 10).foregroundColor(.gray.opacity(0.3))
                              
                             // 상대방 바 (ZStack이므로 뒤에 그림)
                             Capsule().frame(width: max(0, oppProgress * geometry.size.width), height: 10)
@@ -122,17 +112,16 @@ struct FriendBattleLiveActivity: Widget {
                             .font(.caption2).foregroundColor(.gray)
                     }
                 }
-                 
-                // --- 3. ⭐️ [신규] 상세 스탯 (나 vs 상대방) ---
+
                 HStack(alignment: .top) {
                     // (나)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("나")
                             .font(.title3).fontWeight(.bold).foregroundColor(.cyan)
                         Text("\(formatDist(context.state.myKilometers)) km")
-                            .font(.title2).fontWeight(.semibold).foregroundColor(.black) // ⭐️ [수정]
+                            .font(.title2).fontWeight(.semibold).foregroundColor(.black)
                         Text(formatPace(context.state.myPace))
-                            .font(.title3).fontWeight(.medium).foregroundColor(.black) // ⭐️ [수정]
+                            .font(.title3).fontWeight(.medium).foregroundColor(.black)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                        
@@ -141,7 +130,7 @@ struct FriendBattleLiveActivity: Widget {
                         Text(context.state.opponentNickname)
                             .font(.title3).fontWeight(.bold).foregroundColor(.purple).lineLimit(1)
                         Text("\(formatDist(context.state.opponentDistance)) km")
-                            .font(.title2).fontWeight(.semibold).foregroundColor(.black) // ⭐️ [수정]
+                            .font(.title2).fontWeight(.semibold).foregroundColor(.black)
                          
                         if context.state.isOpponentFinished {
                             Text("완주! 🏁")
@@ -156,8 +145,7 @@ struct FriendBattleLiveActivity: Widget {
                 }
             }
             .padding(20)
-            .background(Color.white) // 👈 [수정] .background(Color.white) 수정자 사용
-            // 👈 [수정] ZStack 닫는 '}' 제거
+            .background(Color.white)
              
              
         } dynamicIsland: { context in
@@ -220,25 +208,20 @@ struct FriendBattleLiveActivity: Widget {
                 Image(systemName: "figure.run.circle.fill")
                     .foregroundColor(.blue)
             }
-            // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▼▼▼▼▼
             compactTrailing: {
-                // ⭐️ [수정] 공간 부족으로 잘리는(0...) 문제를 해결하기 위해
-                // getDiffStatus 헬퍼를 사용해 하나의 텍스트로 요약합니다.
                 let diffStatus = getDiffStatus(
                     myKm: context.state.myKilometers,
                     oppKm: context.state.opponentDistance,
                     isMyFinished: context.state.isMyRunFinished
                 )
-                
-                // ⭐️ .black는 어두운 DI에서 보이지 않으므로 .white로 변경
+
                 let statusColor = diffStatus.color == .black ? .white : diffStatus.color
                 
                 Text(diffStatus.text)
                     .font(.caption).fontWeight(.medium)
                     .foregroundColor(statusColor)
-                    .lineLimit(1) // 👈 만약을 위해 한 줄로 제한
+                    .lineLimit(1)
             }
-            // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▲▲▲▲▲
              
             // --- Minimal (AOD) ---
             minimal: {

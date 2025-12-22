@@ -141,7 +141,6 @@ class _StretchingPageBodyState extends State<StretchingPageBody>
               ),
             ),
 
-            // ✅ (1) 말풍선 애니메이션
             Positioned(
               top: MediaQuery.of(context).padding.top - 10,
               right: 10,
@@ -182,7 +181,6 @@ class _StretchingPageBodyState extends State<StretchingPageBody>
               ),
             ),
 
-            // ✅ (2) 뒤로가기 + 타이틀 + 아이콘 맨 위로 이동
             Positioned(
               top: MediaQuery.of(context).padding.top - 60,
               left: 0,

@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'sign_up_complete.dart'; // sign_up_complete 페이지 import
+import 'sign_up_complete.dart';
 
 class LoadingScreen extends StatefulWidget {
-  final String email; // 이전 입력한 이메일
-  final String password; // 이전 입력한 비밀번호
-  final String height; // 이전 입력한 키
-  final String weight; // 이전 입력한 몸무게
-  final String birthdate; // 이전 입력한 생년월일
-  final String gender; // 이전 입력한 성별
-  final String nickname; // 이전 입력한 닉네임
+  final String email;
+  final String password;
+  final String height;
+  final String weight;
+  final String birthdate;
+  final String gender;
+  final String nickname;
 
   const LoadingScreen({
     Key? key,
@@ -33,7 +33,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   void initState() {
     super.initState();
 
-    // BMI 계산
     double heightInMeters = double.parse(widget.height) / 100;
     double weightInKg = double.parse(widget.weight);
     double bmi = weightInKg / (heightInMeters * heightInMeters);
@@ -71,7 +70,7 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // ✅ 배경 흰색
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 90),
         child: Column(

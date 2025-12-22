@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'event_challenge_detail_screen.dart'; // 상세 페이지 재사용
-// ▼▼▼▼▼ [ ⭐️ 신규 추가 ⭐️ ] ▼▼▼▼▼
+import 'event_challenge_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rundventure/main_screens/main_screen.dart'; // 👈 홈 화면 임포트
-// ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
+import 'package:rundventure/main_screens/main_screen.dart';
 
-
-// ▼▼▼▼▼ [ ⭐️ 수정: StatefulWidget으로 변경 ⭐️ ] ▼▼▼▼▼
 class EndedEventChallengesScreen extends StatefulWidget {
   EndedEventChallengesScreen({Key? key}) : super(key: key);
 
@@ -19,15 +15,11 @@ class EndedEventChallengesScreen extends StatefulWidget {
 
 class _EndedEventChallengesScreenState
     extends State<EndedEventChallengesScreen> {
-  // ▲▲▲▲▲ [ ⭐️ 수정: StatefulWidget으로 변경 ⭐️ ] ▲▲▲▲▲
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // ▼▼▼▼▼ [ ⭐️ 신규 추가 ⭐️ ] ▼▼▼▼▼
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isAdmin = false;
-  // ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
 
-  // ▼▼▼▼▼ [ ⭐️ 신규 추가: 관리자 확인 로직 ⭐️ ] ▼▼▼▼▼
   @override
   void initState() {
     super.initState();
@@ -59,7 +51,6 @@ class _EndedEventChallengesScreenState
       print("관리자 권한 확인 오류(EndedEvent): $e");
     }
   }
-  // ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
 
   // 닉네임 마스킹 헬퍼 함수 (당첨자 표기용)
   String _maskNickname(String nickname) {
@@ -75,7 +66,6 @@ class _EndedEventChallengesScreenState
 
   @override
   Widget build(BuildContext context) {
-    // ▼▼▼▼▼ [ ⭐️ 신규 추가: 홈 버튼 위젯 ⭐️ ] ▼▼▼▼▼
     Widget homeButton = IconButton(
       icon: Icon(Icons.home_outlined, color: Colors.black),
       tooltip: '홈으로 이동',
@@ -89,7 +79,6 @@ class _EndedEventChallengesScreenState
       },
     );
 
-    // ⭐️ 관리자용 '...' 버튼 (현재 이 화면에서는 특별한 기능이 없으므로 비활성화된 메뉴 표시)
     Widget adminEllipsisButton = PopupMenuButton<String>(
       color: Colors.white,
       elevation: 2,
@@ -98,20 +87,18 @@ class _EndedEventChallengesScreenState
       itemBuilder: (BuildContext context) => [
         PopupMenuItem(
           value: 'info',
-          enabled: false, // 👈 기능이 없으므로 비활성화
+          enabled: false,
           child: Text('관리자 메뉴'),
         ),
       ],
     );
-    // ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
 
     return Scaffold(
-      backgroundColor: Colors.white, // 👈 배경 흰색으로 변경
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0, // 👈 그림자 제거
+        elevation: 0,
         centerTitle: true,
-        // 👈 뒤로가기 버튼
         leading: IconButton(
           icon: Image.asset('assets/images/Back-Navs.png', width: 60, height: 60),
           onPressed: () => Navigator.pop(context),
@@ -125,20 +112,15 @@ class _EndedEventChallengesScreenState
               color: Colors.black
           ),
         ),
-        // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
         actions: _isAdmin
             ? [
-          // 관리자: [홈 버튼] [ ... 버튼]
           homeButton,
           adminEllipsisButton,
         ]
             : [
-          // 일반 사용자: [ (... 버튼 자리) ] [홈 버튼]
-          // ... 버튼 자리를 빈 공간으로 채워 홈 버튼을 오른쪽 끝으로 민다.
-          SizedBox(width: 48), // IconButton의 기본 너비
+          SizedBox(width: 48),
           homeButton,
         ],
-        // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
@@ -192,7 +174,7 @@ class _EndedEventChallengesScreenState
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!) // 👈 옅은 테두리
+                    border: Border.all(color: Colors.grey[200]!)
                 ),
                 child: InkWell(
                   onTap: () {
@@ -232,7 +214,7 @@ class _EndedEventChallengesScreenState
                             ),
                           ],
                         ),
-                        Divider(height: 24, thickness: 0.5, color: Colors.grey[300]), // 👈 옅은 구분선
+                        Divider(height: 24, thickness: 0.5, color: Colors.grey[300]),
                         Text('🏆 1등: ${_maskNickname(topRunnerNickname)}',
                             style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w500)),

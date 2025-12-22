@@ -1,5 +1,5 @@
   import 'package:flutter/material.dart';
-  import 'package:intl/intl.dart'; // 날짜 형식 지정용
+  import 'package:intl/intl.dart';
 
   class ProfileForm extends StatefulWidget {
     final String? nickname;
@@ -34,7 +34,7 @@
     @override
     void initState() {
       super.initState();
-      _selectedGender = widget.gender ?? '남자'; // 기본 선택 성별
+      _selectedGender = widget.gender ?? '남자';
       _nicknameController.text = widget.nickname ?? '';
       _emailController.text = widget.email ?? '';
       _weightController.text = widget.weight ?? '';
@@ -51,10 +51,10 @@
         builder: (BuildContext context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
-              primaryColor: Colors.blue, // 선택된 날짜의 색상
-              colorScheme: ColorScheme.light(primary: Colors.blue), // 색상 스킴
-              buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary), // 버튼 색상
-              dialogBackgroundColor: Colors.white, // 배경색을 흰색으로 변경
+              primaryColor: Colors.blue,
+              colorScheme: ColorScheme.light(primary: Colors.blue),
+              buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+              dialogBackgroundColor: Colors.white,
             ),
             child: child!,
           );
@@ -63,7 +63,7 @@
 
       if (picked != null) {
         setState(() {
-          _birthdateController.text = DateFormat('yyyy-MM-dd').format(picked); // 날짜 형식 지정
+          _birthdateController.text = DateFormat('yyyy-MM-dd').format(picked);
         });
       }
     }
@@ -90,7 +90,7 @@
                 controller: _emailController,
                 width: double.infinity,
                 height: 60,
-                readOnly: true, // 이메일 수정 불가능하도록 설정
+                readOnly: true,
               ),
               const SizedBox(height: 16),
               Row(
@@ -126,14 +126,14 @@
               ),
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: () => _selectBirthdate(context), // 날짜 선택 시 호출
+                onTap: () => _selectBirthdate(context),
                 child: ProfileTextField(
                   label: '생년월일',
                   icon: Icons.calendar_today,
                   controller: _birthdateController,
                   width: double.infinity,
                   height: 60,
-                  readOnly: true, // 입력 방지
+                  readOnly: true,
                 ),
               ),
               const SizedBox(height: 16),
@@ -142,7 +142,7 @@
                   Expanded(
                     child: ProfileImageField(
                       label: '체중',
-                      imageAsset: 'assets/images/weight.png', // 체중 아이콘 이미지 경로 설정
+                      imageAsset: 'assets/images/weight.png',
                       controller: _weightController,
                       width: double.infinity,
                       height: 60,
@@ -162,7 +162,7 @@
                   Expanded(
                     child: ProfileImageField(
                       label: '키',
-                      imageAsset: 'assets/images/Height.png', // 키 아이콘 이미지 경로 설정
+                      imageAsset: 'assets/images/Height.png',
                       controller: _heightController,
                       width: double.infinity,
                       height: 60,

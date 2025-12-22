@@ -35,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _containsBadWords(String text) {
     const bannedWords = [
-      // ✅ 한국어 비속어/변형
       'ㅅ1발', 'ㅆ1발', '시1발', '씨1발', 'ㅅㅣ발', '시8', '십팔', '시바', '시방', '시빨',
       'ㅄ', '븅1신', '병1신', '븅신', 'ㅂ1신', '븅신아', '미1친', '미ㅊ', '미쳣', '미췬', '미췬놈', '미췬년',
       'ㅈㄴ', '존1나', '존내', '존니', '좆같', '좇같', '좃같', 'ㅈ같', 'ㅈ1같', '조온나', '조카', '조까',
@@ -51,29 +50,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       '좆물', '보지', '자지', '가슴', '유두', '유방', '젖', '페니스', 'vagina', 'penis', 'sex', 'fuck', 'suck', 'cum', 'anal', 'orgasm', 'rape', 'horny', 'pornhub', 'xx',
       '딸딸이', '딸침', '야짤', '야사', '변태', '에로틱',
 
-      // ✅ 혐오 / 차별 / 정치 / 종교
       '병신같', '틀딱', '한남', '김치녀', '된장녀', '맘충', '급식충', '정신병자', '홍어', '짱깨', '쪽바리', '메갈', '워마드', '일베', '패미',
       '게이', '레즈', '호모', '트젠', '트랜스', 'lgbt', 'nigger', 'nigga', 'jap', 'chink', 'gook',
       '대통령', '윤석열', '문재인', '민주당', '국민의힘', '정치', '정치인',
       '예수', '기독교', '교회', '불교', '이슬람', '알라', '하느님', '하나님', '신앙', '종교', '하렘',
 
-      // ✅ 변형 영어형 (기호/숫자 포함)
       'f*ck', 'f**k', 'f@ck', 'phuck', 'fcuk', 'f0ck',
       'sh*t', 'sh1t', 'b!tch', 'b1tch', 'bi7ch', 'sex', 'SEX' '@sshole', 'a55hole',
       'd1ck', 'd!ck', 'd1ldo', 'p0rn', 'p0rno', 'p*rn', 'b00bs', 'b0obs', 'c0ck',
       'p*ssy', 'p@ssy', 'pu55y', '5uck', '5ex', 's3x', 'c*nt', 'k1ll', 'k!ll',
 
-      // ✅ 은어 / 신조어형 욕설
       '짭새', '짭놈', '간나', '걸레', '잡놈', '잡년', '창녀', '창남', '빠구리', '빠굴', '빠구',
       '씹', '씹덕', '씹새', '씹년', '씹놈', '씹할', '씹치', '씹물', '씹선비', '씹덕후',
       'ㅅㅂㄹㅁ', 'ㅅㅂㅁ', 'ㅂㅅㄴ', 'ㅅㄲ', 'ㅅㄴ', 'ㅈ밥', 'ㅈ같', 'ㅂㅅ같', 'ㅂㅅ새끼',
       '존맛탱', '개존맛', '개쩔', '쩐다', '노답', '뇌절', '개극혐', '극혐', '더럽', '더러운년',
 
-      // ✅ 기타 공격성 단어
       '불태워', '칼로', '찌른다', '죽인다', '테러', '폭탄', '폭발', '살인', '총맞', '총쏴',
       '목따', '목자른다', '피범벅', '참수', '수류탄', '핵폭탄', 'nuke',
 
-      // ✅ 개인정보/홍보 관련
       'naver', 'gmail', 'daum', 'kakao', 'line', 'tiktok', 'instagram', 'facebook', 'twitter', 'youtube', '텔레그램', '카톡', '전화번호', '@', 'dot', 'com'
     ];
 
@@ -87,33 +81,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return bannedWords.any((word) => cleanedText.contains(word));
   }
 
-  // ✨✨✨ [핵심 수정] 닉네임 확인 로직을 'nicknames' 컬렉션을 사용하도록 변경 ✨✨✨
-// ✨✨✨ [핵심 수정] 닉네임 확인 로직을 'nicknames' 컬렉션을 사용하도록 변경 ✨✨✨
   Future<void> _checkNickname() async {
-    // 입력된 닉네임의 앞뒤 공백을 제거하고 소문자로 변환합니다.
-    String nickname = _nicknameController.text.trim().toLowerCase(); // ✨ .toLowerCase() 추가!
+    String nickname = _nicknameController.text.trim().toLowerCase();
 
     if (nickname.isEmpty) {
       _showDialog('경고', '닉네임을 입력해주세요.');
       return;
     }
 
-    // 욕설 필터링은 이미 소문자로 변환 후 검사하고 있으므로 그대로 둡니다.
     if (_containsBadWords(nickname)) {
       _showDialog('경고', '부적절한 닉네임은 사용할 수 없습니다.');
       return;
     }
 
     try {
-      // Firestore에서 확인할 때도 소문자로 변환된 닉네임을 사용합니다.
       final doc = await FirebaseFirestore.instance.collection('nicknames').doc(nickname).get();
 
       if (doc.exists) {
-        // 문서가 존재하면 이미 사용 중인 닉네임입니다.
         setState(() => _isNicknameChecked = false);
         _showDialog('중복 확인', '이미 사용 중인 닉네임입니다. 다른 닉네임을 사용해주세요.');
       } else {
-        // 문서가 존재하지 않으면 사용 가능한 닉네임입니다.
         setState(() => _isNicknameChecked = true);
         _showDialog('확인', '사용 가능한 닉네임입니다.');
       }
@@ -198,7 +185,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: TextField(
                       controller: _nicknameController,
                       onChanged: (value) {
-                        // 닉네임을 변경하면 다시 중복 확인을 하도록 상태를 초기화합니다.
                         if (_isNicknameChecked) {
                           setState(() {
                             _isNicknameChecked = false;
@@ -246,7 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 10),
 
-            // ✅ 안내 문구
             Text(
               '닉네임은 프로필 화면에서 변경 가능합니다.',
               style: TextStyle(color: Colors.red, fontSize: 12),

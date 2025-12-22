@@ -1,23 +1,19 @@
-// level_bar_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:rundventure/profile/leveling_service.dart';
-import 'package:intl/intl.dart'; // NumberFormat import
+import 'package:intl/intl.dart';
 
 class LevelBarWidget extends StatelessWidget {
   final LevelData? levelData;
   final bool isLoading;
-  // ✅ [추가] 다른 사용자 프로필인지 여부를 나타내는 플래그
   final bool isOtherUserProfile;
 
   const LevelBarWidget({
     Key? key,
     required this.levelData,
     required this.isLoading,
-    this.isOtherUserProfile = false, // 기본값은 false (내 프로필)
+    this.isOtherUserProfile = false,
   }) : super(key: key);
 
-  // 경험치 획득 정보 팝업 표시 함수 (내 프로필에서만 사용)
   void _showXpInfoDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -76,21 +72,18 @@ class LevelBarWidget extends StatelessWidget {
       );
     }
 
-    final formatter = NumberFormat('#,###'); // XP 표시에 필요
+    final formatter = NumberFormat('#,###');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 20.0),
       child: Column(
         children: [
-          // LV. 텍스트와 XP 텍스트 Row
           Row(
-            // ✅ isOtherUserProfile 값에 따라 정렬 방식 변경
             mainAxisAlignment: isOtherUserProfile
-                ? MainAxisAlignment.start // 다른 사용자 프로필: 레벨만 왼쪽에 표시
-                : MainAxisAlignment.spaceBetween, // 내 프로필: 레벨 왼쪽, XP 오른쪽
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // --- 레벨 표시 (항상 보임) ---
               Row(
                 children: [
                   Text(
@@ -101,7 +94,6 @@ class LevelBarWidget extends StatelessWidget {
                       color: Colors.black,
                     ),
                   ),
-                  // ✅ 내 프로필에서만 정보 아이콘 표시
                   if (!isOtherUserProfile) ...[
                     SizedBox(width: 4),
                     IconButton(
@@ -115,7 +107,6 @@ class LevelBarWidget extends StatelessWidget {
                 ],
               ),
 
-              // --- XP 표시 (내 프로필에서만 보임) ---
               if (!isOtherUserProfile)
                 Text(
                   '${formatter.format(levelData!.currentLevelXp)} / ${formatter.format(levelData!.requiredXp)} XP',
@@ -128,7 +119,6 @@ class LevelBarWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 1),
-          // XP 프로그레스 바 (항상 보임)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(

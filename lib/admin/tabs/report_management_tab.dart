@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:rundventure/admin/dialogs/user_details_dialog.dart'; // UserDetailsDialog 임포트
-import 'resolved_reports_screen.dart'; // ✅ [신규 추가] 처리된 내역 페이지 임포트
+import 'package:rundventure/admin/dialogs/user_details_dialog.dart';
+import 'resolved_reports_screen.dart';
 
 // -----------------------------------------------------------------------------
 // 탭 3: 신고 관리
@@ -29,10 +29,7 @@ class _ReportManagementTabState extends State<ReportManagementTab>
 
   static const Color primaryColor = Color(0xFF1E88E5);
 
-  // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-  // 누적 신고 횟수를 캐시하여 불필요한 DB 조회를 줄입니다.
   final Map<String, int> _reportCountCache = {};
-  // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
 
   @override
   bool get wantKeepAlive => true; // 탭 상태 유지
@@ -208,7 +205,7 @@ class _ReportManagementTabState extends State<ReportManagementTab>
               textAlign: TextAlign.end,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 14, // 👈 다이얼로그 내 폰트 크기
+                fontSize: 14,
                 color: valueColor ?? Colors.black87,
               ),
             ),
@@ -247,27 +244,20 @@ class _ReportManagementTabState extends State<ReportManagementTab>
     );
   }
 
-  // ▼▼▼▼▼ [수정된 함수] 누적 신고 횟수 가져오기 (캐시 적용) ▼▼▼▼▼
   Future<int> _getReportCount(String userEmail) async {
-    // 캐시에 이미 값이 있으면 DB 조회 없이 즉시 반환
     if (_reportCountCache.containsKey(userEmail)) {
       return _reportCountCache[userEmail]!;
     }
 
-    // 캐시에 없으면 DB 조회
     try {
-      // 'reports' 컬렉션에서 해당 이메일로 접수된 *모든* 신고를 조회
       final querySnapshot = await FirebaseFirestore.instance
           .collection('reports')
           .where('reportedUserEmail', isEqualTo: userEmail)
-          .count() // .get() 대신 .count()를 사용하여 효율적으로 개수만 가져옴
+          .count()
           .get();
 
-      // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-      final count = querySnapshot.count ?? 0; // 👈 null일 경우 0을 할당
-      // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
+      final count = querySnapshot.count ?? 0;
 
-      // 캐시에 저장
       if (mounted) {
         setState(() {
           _reportCountCache[userEmail] = count;
@@ -277,11 +267,9 @@ class _ReportManagementTabState extends State<ReportManagementTab>
 
     } catch (e) {
       print("신고 횟수 조회 오류 ($userEmail): $e");
-      return 0; // 오류 발생 시 0 반환
+      return 0;
     }
   }
-  // ▲▲▲▲▲ [수정된 함수] ▲▲▲▲▲
-
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +277,6 @@ class _ReportManagementTabState extends State<ReportManagementTab>
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        // ▼▼▼▼▼ [신규 추가] 안내 문구 배너 ▼▼▼▼▼
         Container(
           padding: const EdgeInsets.all(12.0),
           margin: const EdgeInsets.only(bottom: 16.0),
@@ -317,9 +304,7 @@ class _ReportManagementTabState extends State<ReportManagementTab>
             ],
           ),
         ),
-        // ▲▲▲▲▲ [신규 추가] 안내 문구 배너 ▲▲▲▲▲
 
-        // [기존] 미처리 신고
         widget.buildPanel(
           title: "접수된 신고 내역 (미처리)",
           child: StreamBuilder<QuerySnapshot>(
@@ -353,7 +338,7 @@ class _ReportManagementTabState extends State<ReportManagementTab>
                   final doc = reports[index];
                   final data = doc.data() as Map<String, dynamic>;
                   final nickname = data['reportedUserNickname'] ?? '알 수 없음';
-                  final email = data['reportedUserEmail'] ?? ''; // 👈 이메일 가져오기
+                  final email = data['reportedUserEmail'] ?? '';
                   final category = data['category'] ?? '기타';
                   final timestamp = data['timestamp'] as Timestamp?;
 
@@ -376,15 +361,12 @@ class _ReportManagementTabState extends State<ReportManagementTab>
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(width: 8),
-                          // 누적 신고 횟수를 FutureBuilder로 표시
                           FutureBuilder<int>(
-                            future: _getReportCount(email), // 👈 이메일로 신고 횟수 조회
+                            future: _getReportCount(email),
                             builder: (context, countSnapshot) {
                               if (countSnapshot.connectionState == ConnectionState.waiting || !countSnapshot.hasData || countSnapshot.data == 0) {
-                                // 로딩 중이거나 0회면 표시 안 함
                                 return SizedBox.shrink();
                               }
-                              // 1회 이상이면 뱃지 표시
                               return Container(
                                 padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
@@ -409,7 +391,7 @@ class _ReportManagementTabState extends State<ReportManagementTab>
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           height: 1.4,
-                          fontSize: 13, // 👈 [수정] 원하는 크기로 조절 (예: 13)
+                          fontSize: 13,
                         ),
                       ),
                       isThreeLine: true,
@@ -425,7 +407,6 @@ class _ReportManagementTabState extends State<ReportManagementTab>
           ),
         ),
 
-        // ▼▼▼▼▼ [신규 추가] 처리된 신고 패널 ▼▼▼▼▼
         const SizedBox(height: 16),
         widget.buildPanel(
           title: "접수된 신고 내역 (처리)",
@@ -450,7 +431,6 @@ class _ReportManagementTabState extends State<ReportManagementTab>
             },
           ),
         ),
-        // ▲▲▲▲▲ [신규 추가] 처리된 신고 패널 ▲▲▲▲▲
       ],
     );
   }

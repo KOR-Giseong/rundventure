@@ -1,5 +1,4 @@
 // =================================================================================================
-// [ triggers.js ] - Firestore 이벤트에 반응하는 함수 (Triggers) 모음
 // =================================================================================================
 
 // --- 1. 필요한 모듈 임포트 ---
@@ -16,12 +15,12 @@ const db = admin.firestore();
 // =================================================================================================
 
 /**
- * (5) [신규] 사용자가 새 러닝 기록을 생성했을 때, 참여 중인 '이벤트 챌린지'의 참여도를 업데이트합니다.
+ * (5) 사용자가 새 러닝 기록을 생성했을 때, 참여 중인 '이벤트 챌린지'의 참여도를 업데이트합니다.
  * 경로: /userRunningData/{userEmail}/workouts/{date}/records/{recordId}
  */
 const onNewRunningRecord = onDocumentWritten({
   document: "userRunningData/{userEmail}/workouts/{date}/records/{recordId}",
-  region: "asia-northeast3", // 👈 앱 리전과 동일하게 설정
+  region: "asia-northeast3",
 }, async (event) => {
   // '생성' 시에만 동작하도록 확인
   if (!event.data || !event.data.after.exists || event.data.before.exists) {
@@ -31,9 +30,9 @@ const onNewRunningRecord = onDocumentWritten({
 
   const recordData = event.data.after.data();
   const userEmail = event.params.userEmail;
-  // ❗️[중요] 'kilometers' 필드가 앱에서 저장하는 필드명과 일치해야 합니다.
+  // 'kilometers' 필드가 앱에서 저장하는 필드명과 일치해야 합니다.
   const distanceInKm = recordData.kilometers || 0.0;
-  // ❗️[수정] 러닝 기록 시간을 Firestore Timestamp 객체로 가져옵니다.
+  // 러닝 기록 시간을 Firestore Timestamp 객체로 가져옵니다.
   const recordTimestamp = recordData.date; // (이미 Timestamp 객체여야 함)
 
   if (distanceInKm <= 0) {
@@ -41,14 +40,14 @@ const onNewRunningRecord = onDocumentWritten({
     return null;
   }
 
-  // ❗️[수정] recordTimestamp가 유효한 Timestamp가 아니면 중단
+  // recordTimestamp가 유효한 Timestamp가 아니면 중단
   if (!recordTimestamp || typeof recordTimestamp.toDate !== 'function') {
      functions.logger.error(`[EventTrigger] ${userEmail} 유저의 러닝 기록 'date' 필드가 유효한 Timestamp가 아닙니다.`);
      return null;
   }
 
   try {
-    // 1. [로직 변경] 'eventChallenges' 컬렉션에서 'active' 상태인 모든 이벤트를 가져옵니다.
+    // 1. 'eventChallenges' 컬렉션에서 'active' 상태인 모든 이벤트를 가져옵니다.
     const activeEventsSnap = await db.collection("eventChallenges")
         .where("status", "==", "active")
         .get();
@@ -60,9 +59,9 @@ const onNewRunningRecord = onDocumentWritten({
 
     const batch = db.batch();
     let updatedCount = 0;
-    const recordDate = recordTimestamp.toDate(); // 👈 러닝 기록 날짜
+    const recordDate = recordTimestamp.toDate();
 
-    // 2. [로직 변경] 'active'인 이벤트를 순회하며, 내가 참여자인지 확인합니다.
+    // 2. 'active'인 이벤트를 순회하며, 내가 참여자인지 확인합니다.
     for (const eventDoc of activeEventsSnap.docs) {
       const eventId = eventDoc.id;
       const participantRef = db.doc(`eventChallenges/${eventId}/participants/${userEmail}`);
@@ -86,7 +85,7 @@ const onNewRunningRecord = onDocumentWritten({
 
       // 6. 모든 조건을 통과하면, 배치에 거리 업데이트를 추가합니다.
       functions.logger.log(`[EventTrigger] ${userEmail} 유저의 ${eventId} 이벤트 참여도 ${distanceInKm}km 추가 중...`);
-      batch.update(participantRef, { // 👈 eventRef가 아닌 participantRef를 업데이트
+      batch.update(participantRef, {
         "totalDistance": admin.firestore.FieldValue.increment(distanceInKm)
       });
       updatedCount++;
@@ -283,7 +282,6 @@ const onNewFreeTalkComment = onDocumentWritten({
 });
 
 
-// ▼▼▼▼▼ [ ⭐️ 신규 추가 ⭐️ ] 닉네임 변경 시 리더보드 자동 업데이트 트리거 ▼▼▼▼▼
 /**
  * (6) 사용자 프로필(닉네임)이 변경되면, 주간/월간 리더보드에 있는 닉네임도 동기화합니다.
  * 경로: /users/{userEmail}
@@ -346,7 +344,6 @@ const onUserInfoUpdated = onDocumentUpdated({
 
   return null;
 });
-// ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
 
 
 // --- 3. 정의한 모든 Trigger 함수들을 내보내기(export) ---
@@ -354,5 +351,5 @@ module.exports = {
   onNewChallengeComment,
   onNewFreeTalkComment,
   onNewRunningRecord,
-  onUserInfoUpdated, // 👈 [중요] 여기에 추가되었습니다.
+  onUserInfoUpdated,
 };

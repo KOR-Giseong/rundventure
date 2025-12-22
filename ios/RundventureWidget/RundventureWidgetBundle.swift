@@ -1,10 +1,3 @@
-//
-//  RundventureWidgetBundle.swift
-//  RundventureWidget
-//
-//  Created by (Your Name) on (Current Date).
-//
-
 import WidgetKit
 import SwiftUI
 
@@ -21,8 +14,7 @@ struct RundventureWidgetBundle: WidgetBundle {
         
         // 3. 고스트런 (대결)
         GhostRaceLiveActivity()
-        
-        // --- ⭐️ 신규 추가 ⭐️ ---
+
         
         // 4. 비동기/오프라인 대결 (AsyncBattleRunningScreen)
         AsyncBattleLiveActivity()
@@ -30,8 +22,7 @@ struct RundventureWidgetBundle: WidgetBundle {
         // 5. 실시간 친구 대결 (FriendBattleRunningScreen)
         FriendBattleLiveActivity()
         
-        
-        // (RundventureWidget()은 홈 화면 위젯이므로 여기서는 제외합니다.)
+
         // RundventureWidget()
     }
 }

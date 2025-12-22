@@ -123,9 +123,9 @@ class _WeightInputScreenState extends State<WeightInputScreen> {
                       child: TextField(
                         controller: _weightController,
                         keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done, // ✅ Done 버튼 활성화
+                        textInputAction: TextInputAction.done,
                         onEditingComplete: () =>
-                            FocusScope.of(context).unfocus(), // ✅ Done 누르면 키보드 닫기
+                            FocusScope.of(context).unfocus(),
                         decoration: InputDecoration(
                           hintText: '체중을 입력하세요',
                           hintStyle: TextStyle(

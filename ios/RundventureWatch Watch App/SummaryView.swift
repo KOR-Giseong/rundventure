@@ -56,12 +56,10 @@ struct SummaryView: View {
 
                 // 3. 상세 정보 그리드
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                    
-                    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 수정: 시간 표시 (밀리초 적용) ⭐️⭐️⭐️ ] ▼▼▼▼▼
+
                     // 밀리초 데이터가 없으면(0이면) 기존 초 데이터를 밀리초로 변환해서 표시
                     let totalMs = connector.milliseconds > 0 ? connector.milliseconds : (connector.seconds * 1000)
-                    SummaryGridItem(label: "시간", value: formatTimeWithMs(totalMs)) // 👈 신규 포맷터 사용
-                    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 수정: 시간 표시 (밀리초 적용) ⭐️⭐️⭐️ ] ▲▲▲▲▲
+                    SummaryGridItem(label: "시간", value: formatTimeWithMs(totalMs)) // 신규 포맷터 사용
                     
                     SummaryGridItem(label: "평균 페이스", value: formatPace(connector.pace))
                     
@@ -129,7 +127,6 @@ struct SummaryView: View {
 
     // --- Helper 함수들 ---
 
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가: 밀리초 포함 시간 포맷터 ⭐️⭐️⭐️ ] ▼▼▼▼▼
     private func formatTimeWithMs(_ totalMs: Int) -> String {
         let totalSeconds = totalMs / 1000
         let ms = (totalMs % 1000) / 10 // 2자리 (0~99)로 표시
@@ -145,7 +142,6 @@ struct SummaryView: View {
             return String(format: "%02d:%02d.%02d", minutes, seconds, ms)
         }
     }
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가: 밀리초 포함 시간 포맷터 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     // (기존) 단순 시간 포맷 (백업용 or 다른 곳 사용)
     private func formatTime(_ totalSeconds: Int) -> String {

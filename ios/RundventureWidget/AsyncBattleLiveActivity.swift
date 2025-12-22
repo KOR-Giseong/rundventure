@@ -1,10 +1,3 @@
-//
-//  AsyncBattleLiveActivity.swift
-//  RundventureWidgetExtension
-//
-//  Created by (Your Name) on (Current Date).
-//
-
 import ActivityKit
 import WidgetKit
 import SwiftUI
@@ -38,9 +31,7 @@ struct AsyncBattleLiveActivity: Widget {
      
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AsyncBattleActivityAttributes.self) { context in
-             
-            // MARK: - 잠금화면 UI (Lock Screen) ⭐️ [수정됨]
-            // 👈 [수정] ZStack { Color.white ... } 제거
+
             VStack(spacing: 16) {
                    
                 // --- 1. 상단: 헤더 ---
@@ -49,7 +40,7 @@ struct AsyncBattleLiveActivity: Widget {
                         .font(.headline)
                         .foregroundColor(.purple) // 비동기 대결 테마 색상 (보라)
                     Text("오프라인 대결")
-                        .font(.headline).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정] 흰색 -> 검은색
+                        .font(.headline).fontWeight(.bold).foregroundColor(.black)
                      
                     Spacer()
                        
@@ -103,7 +94,7 @@ struct AsyncBattleLiveActivity: Widget {
                          
                         Text("목표 달성률: \(String(format: "%.1f", myProgressPercent))%")
                             .font(.title3).fontWeight(.bold)
-                            .foregroundColor(.black) // ⭐️ [수정] 흰색 -> 검은색
+                            .foregroundColor(.black)
                          
                         // (2) 프로그레스 바
                         let myProgress = (targetKm > 0) ? (context.state.kilometers / targetKm) : 0.0
@@ -111,7 +102,7 @@ struct AsyncBattleLiveActivity: Widget {
                         GeometryReader { geometry in
                             ZStack(alignment: .leading) {
                                 // 배경 바
-                                Capsule().frame(height: 10).foregroundColor(.gray.opacity(0.3)) // ⭐️ [수정] 투명도 변경
+                                Capsule().frame(height: 10).foregroundColor(.gray.opacity(0.3)) // 투명도 변경
                                  
                                 // 내 바
                                 Capsule().frame(width: max(0, myProgress * geometry.size.width), height: 10)
@@ -132,25 +123,25 @@ struct AsyncBattleLiveActivity: Widget {
                         // (4) 상세 스탯
                         HStack(spacing: 20) {
                             VStack {
-                                Text("시간").font(.caption).foregroundColor(.gray) // ⭐️ [수정]
+                                Text("시간").font(.caption).foregroundColor(.gray)
                                 Text(formatTime(context.state.seconds))
-                                    .font(.title3).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정]
+                                    .font(.title3).fontWeight(.bold).foregroundColor(.black)
                                     .minimumScaleFactor(0.8)
                             }
                             .frame(maxWidth: .infinity)
                              
                             VStack {
-                                Text("거리").font(.caption).foregroundColor(.gray) // ⭐️ [수정]
+                                Text("거리").font(.caption).foregroundColor(.gray)
                                 Text("\(String(format: "%.2f", context.state.kilometers)) km")
-                                    .font(.title3).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정]
+                                    .font(.title3).fontWeight(.bold).foregroundColor(.black)
                                     .minimumScaleFactor(0.8)
                             }
                             .frame(maxWidth: .infinity)
                              
                             VStack {
-                                Text("페이스").font(.caption).foregroundColor(.gray) // ⭐️ [수정]
+                                Text("페이스").font(.caption).foregroundColor(.gray)
                                 Text(formatPace(context.state.pace))
-                                    .font(.title3).fontWeight(.bold).foregroundColor(.black) // ⭐️ [수정]
+                                    .font(.title3).fontWeight(.bold).foregroundColor(.black)
                                     .minimumScaleFactor(0.8)
                             }
                             .frame(maxWidth: .infinity)
@@ -160,9 +151,7 @@ struct AsyncBattleLiveActivity: Widget {
                 }
             }
             .padding(20)
-            .background(Color.white) // 👈 [수정] .background(Color.white) 수정자 사용
-            // 👈 [수정] ZStack 닫는 '}' 제거
-             
+            .background(Color.white)
              
         } dynamicIsland: { context in
              

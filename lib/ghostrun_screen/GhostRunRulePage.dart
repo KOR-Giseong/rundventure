@@ -10,9 +10,8 @@ class GhostRunRulePage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('고스트런 규칙 안내'),
-        // [수정] leading 속성을 삭제하고, 자동 뒤로가기 버튼 생성을 막습니다.
         automaticallyImplyLeading: false,
-        centerTitle: true, // 제목을 중앙에 배치하여 더 깔끔하게 보입니다.
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -39,7 +38,7 @@ class GhostRunRulePage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pop(), // [수정] 익명 함수로 변경
+              onPressed: () => Navigator.of(context).pop(),
               icon: Icon(Icons.check_circle_outline),
               label: const Text('확인'),
               style: ElevatedButton.styleFrom(

@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
 import 'package:cloud_functions/cloud_functions.dart';
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-// -----------------------------------------------------------------------------
-// 사용자 정보 수정 다이얼로그 (✅✅✅ 여기에 수정 사항이 적용되었습니다 ✅✅✅)
-// -----------------------------------------------------------------------------
 class UserDetailsDialog extends StatefulWidget {
   final DocumentSnapshot userDoc;
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  final bool canSendNotifications; // 👈 [신규] 알림 전송 권한 플래그
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
+  final bool canSendNotifications;
 
   const UserDetailsDialog({
     Key? key,
     required this.userDoc,
-    this.canSendNotifications = false, // 👈 [신규] 기본값 false
+    this.canSendNotifications = false,
   }) : super(key: key);
 
   @override
@@ -34,7 +27,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
     super.initState();
     _userData = widget.userDoc.data() as Map<String, dynamic>;
 
-    // ✅ [추가] 정지 관련 필드가 DB에 없더라도 기본값을 설정해줍니다.
     _userData.putIfAbsent('isSuspended', () => false);
     _userData.putIfAbsent('suspensionReason', () => null);
 
@@ -66,7 +58,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           _isEditing = false;
           _userData.addAll(updatedData);
         });
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -91,7 +82,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     } catch(e) {
       if(mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -117,7 +107,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
     }
   }
 
-  // ✅ [추가] 계정 정지/해제 관련 함수들
   Future<void> _toggleSuspension(bool isCurrentlySuspended) async {
     if (isCurrentlySuspended) {
       // 정지 해제 로직
@@ -139,7 +128,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           _userData['isSuspended'] = false;
           _userData['suspensionReason'] = null;
         });
-        // ✅ [스낵바 수정] 주황색 성공
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -164,7 +152,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     } catch (e) {
       if(mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -192,7 +179,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
 
   Future<void> _suspendUser(String reason) async {
     if (reason.isEmpty) {
-      // ✅ [스낵바 수정] 붉은색 경고
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -227,7 +213,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           _userData['isSuspended'] = true;
           _userData['suspensionReason'] = reason;
         });
-        // ✅ [스낵바 수정] 주황색 성공 (정지 '작업'이 성공했으므로)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -252,7 +237,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     } catch (e) {
       if(mounted) {
-        // ✅ [스낵바 수정] 붉은색 실패
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -320,7 +304,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       await _suspendUser(result);
     } else if (result != null && result.isEmpty) {
       if (mounted) {
-        // ✅ [스낵바 수정] 붉은색 경고
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -346,8 +329,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
     }
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  /// 개별 알림 전송 다이얼로그 표시
   Future<void> _showSendNotificationDialog() async {
     final titleController = TextEditingController();
     final messageController = TextEditingController();
@@ -392,7 +373,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           ElevatedButton(
             onPressed: () {
               if (titleController.text.trim().isEmpty || messageController.text.trim().isEmpty) {
-                // (다이얼로그 위에 스낵바를 띄우기 어려우므로, 간단한 print로 대체)
                 print("제목과 내용을 모두 입력해야 합니다.");
                 return;
               }
@@ -413,9 +393,7 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
     }
   }
 
-  /// 'sendNotificationToUser' Cloud Function 호출
   Future<void> _sendNotification(String targetEmail, String title, String message) async {
-    // (로딩 스낵바 표시)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -430,11 +408,11 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
             ),
           ],
         ),
-        backgroundColor: Colors.blueGrey, // 👈 로딩 색상
+        backgroundColor: Colors.blueGrey,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
-        duration: const Duration(seconds: 5), // 넉넉하게 5초
+        duration: const Duration(seconds: 5),
       ),
     );
 
@@ -449,8 +427,7 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar(); // 로딩 스낵바 제거
-        // ✅ [스낵바 수정] 주황색 성공
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -475,8 +452,7 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     } on FirebaseFunctionsException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar(); // 로딩 스낵바 제거
-        // ✅ [스낵바 수정] 붉은색 실패
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -501,7 +477,7 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar(); // 로딩 스낵바 제거
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('알 수 없는 오류 발생: $e'),
@@ -511,8 +487,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       }
     }
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가 ⭐️⭐️⭐️ ] ▲▲▲▲▲
-
 
   @override
   Widget build(BuildContext context) {
@@ -538,10 +512,8 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
         roleColor = Colors.grey;
     }
 
-    // ✅ [추가] 정지 상태 변수
     final bool isSuspended = _userData['isSuspended'] == true;
 
-    // ✅ [추가] 정지된 유저 시각적 표시
     if (isSuspended) {
       roleText = '정지된 계정 🚫';
       roleColor = Colors.red.shade400;
@@ -579,10 +551,8 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           children: _isEditing ? _buildEditingFields() : _buildDisplayFields(email, roleText),
         ),
       ),
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-      // ✅ [수정] 정지 버튼 및 개별 알림 버튼 추가
       actions: _isEditing
-          ? [ // --- [A] 수정 모드일 때 ---
+          ? [
         TextButton(onPressed: () {
           _controllers['nickname']!.text = _userData['nickname'] ?? '';
           _controllers['gender']!.text = _userData['gender'] ?? '';
@@ -597,9 +567,8 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
         ),
       ]
-          : [ // --- [B] 보기 모드일 때 ---
+          : [
 
-        // [신규] 개별 알림 전송 버튼 (권한이 있을 때만 보임)
         if (widget.canSendNotifications)
           TextButton(
             onPressed: _showSendNotificationDialog,
@@ -609,7 +578,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
             ),
           ),
 
-        // [기존] 계정 정지/해제 버튼
         TextButton(
           onPressed: () => _toggleSuspension(isSuspended),
           child: Text(
@@ -618,13 +586,10 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
           ),
         ),
 
-        // [기존] 수정 버튼
         TextButton(onPressed: () => setState(() => _isEditing = true), child: Text('수정', style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.bold))),
 
-        // [기존] 닫기 버튼
         TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('닫기', style: TextStyle(color: Colors.black54))),
       ],
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 여기가 수정된 부분입니다 ⭐️⭐️⭐️ ] ▲▲▲▲▲
     );
   }
 
@@ -651,7 +616,6 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       _buildDetailRow("몸무게", _userData['weight']?.toString(), unit: ' kg'),
       _buildDetailRow("BMI", bmiValue),
 
-      // ✅ [추가] 계정 정지 상태 및 사유 표시
       _buildDetailRow(
         "계정 상태",
         _userData['isSuspended'] == true ? "정지됨" : "활성",
@@ -697,10 +661,8 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
     );
   }
 
-  // ✅ [수정] _buildDetailRow에 valueColor 파라미터 추가
   Widget _buildDetailRow(String title, String? value, {String unit = '', Color? valueColor}) {
     final TextStyle titleStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87);
-    // ✅ valueColor가 있으면 사용, 없으면 기본 primaryColor
     final TextStyle valueStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: valueColor ?? primaryColor);
 
     return Padding(

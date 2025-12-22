@@ -11,7 +11,6 @@ struct RunningView: View {
             VStack {
                 // 상단: 현재 런 모드 표시 (아이콘 + 텍스트)
                 HStack {
-                    // ✅⬇️ 아이콘 표시 로직 수정 ⬇️✅
                     // getRunIconName() 결과에 따라 시스템 아이콘 또는 커스텀 이미지 표시
                     if getRunIconName() == "ghostlogo" {
                         Image("ghostlogo") // 에셋 카탈로그의 이미지 사용
@@ -23,7 +22,6 @@ struct RunningView: View {
                         Image(systemName: getRunIconName()) // 시스템 아이콘 사용 (figure.run)
                             .foregroundColor(getRunIconColor()) // .cyan
                     }
-                    // ✅⬆️ 아이콘 표시 로직 수정 완료 ⬆️✅
 
                     Text(getRunModeTitle())
                         .font(.caption2)

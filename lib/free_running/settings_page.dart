@@ -177,7 +177,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: DropdownButton<loc.LocationAccuracy>(
                   value: selectedAccuracy,
                   isExpanded: true,
-                  dropdownColor: Colors.white, // ✨ [수정] 드롭다운 메뉴 배경색 추가
+                  dropdownColor: Colors.white,
                   onChanged: (value) {
                     if (value != null) {
                       setState(() {

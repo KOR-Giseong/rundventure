@@ -1,6 +1,3 @@
-// [Part 1] 내 프로필 설정 화면
-// 파일명: profile_screen.dart
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -51,7 +48,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _hideBirthdate = false;
   bool _hideProfile = false;
 
-  // ✅ [Part 1 신규 추가] 대결 기록 비공개 상태 변수
   bool _hideBattleStats = false;
 
   String? _userUid;
@@ -160,7 +156,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _hideBirthdate = userData?['hideBirthdate'] ?? false;
               _hideProfile = userData?['hideProfile'] ?? false;
 
-              // ✅ [Part 1 신규 추가] 대결 기록 비공개 설정 불러오기
               _hideBattleStats = userData?['hideBattleStats'] ?? false;
 
               _battleWins = userData?['battleWins'] as int? ?? 0;
@@ -606,7 +601,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'hideWeight': _hideWeight,
         'hideBirthdate': _hideBirthdate,
         'hideProfile': _hideProfile,
-        // ✅ [Part 1 신규 추가] 대결 기록 비공개 설정 저장
         'hideBattleStats': _hideBattleStats,
       };
 
@@ -730,8 +724,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Text("개별 항목 공개 설정", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[700])),
             const SizedBox(height: 8),
-
-            // ❌ [제거됨] 여기서 대결 기록 비공개 체크박스를 삭제했습니다.
 
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -1101,10 +1093,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: Colors.grey[100],
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              // ✅ [수정됨] 기존 Row를 Column으로 변경하여 하단에 비공개 체크박스 추가
                               child: Column(
                                 children: [
-                                  // 1. 기존 대결 기록 (W/L) UI
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                                     children: [
@@ -1114,9 +1104,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 12),
-                                  const Divider(height: 1, thickness: 0.5), // 구분선
+                                  const Divider(height: 1, thickness: 0.5),
 
-                                  // 2. [Part 1 이동됨] 대결 기록 비공개 설정 (우측 정렬)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [

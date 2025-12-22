@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 [수정] (이미 import 되어 있음)
+import 'package:shared_preferences/shared_preferences.dart';
 import '../admin/admin_screen.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../admin_password.dart'; // Admin 비밀번호 관련 페이지 import
@@ -23,16 +23,10 @@ import 'constants/main_screen_constants.dart'; // 메인 화면 상수 import
 import 'package:rundventure/main.dart'; // 메인 앱 파일 import (GameSelectionPage 위함)
 import 'package:intl/intl.dart'; // 날짜 포맷팅 import
 
-import 'game_running/game_running_section.dart'; // 게임 러닝 섹션 import (GameSelectionPage 위함)
-
-// ▼▼▼▼▼ [친구 기능] 1. 새로운 친구 섹션 import ▼▼▼▼▼
+import 'game_running/game_running_section.dart';
 import 'components/friends_section.dart';
-// ▲▲▲▲▲ [친구 기능] 1. 새로운 친구 섹션 import ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ✨ 추가된 import ✨ ] ▼▼▼▼▼
-import 'package:rundventure/Achievement/quest_service.dart'; // ✅ QuestService 임포트
-import 'package:upgrader/upgrader.dart'; // 👈 🚀 [업데이트 팝업] 패키지 import
-// ▲▲▲▲▲ [ ✨ 추가된 import ✨ ] ▲▲▲▲▲
+import 'package:rundventure/Achievement/quest_service.dart';
+import 'package:upgrader/upgrader.dart';
 
 class MainScreen extends StatefulWidget {
   final MainScreenConstants constants;
@@ -425,22 +419,17 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     print("✅ [DART-MainScreen] Watch connectivity listener initialized.");
   }
 
-  // ▼▼▼▼▼ [ ✨ 1. 수정된 함수 ✨ ] ▼▼▼▼▼
-  /// (수정) Apple Watch 연동 다이얼로그 대신 SharedPreferences에서 설정값을 읽어옵니다.
-  void _showUseWatchDialog(BuildContext context) async { // 👈 async로 변경
+  void _showUseWatchDialog(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    // 'watchSyncEnabled' 키로 저장된 값을 읽어오며, 없으면 false(끄기)를 기본값으로 합니다.
     final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
-    if (!mounted) return; // 비동기 작업 후 context 유효성 검사
+    if (!mounted) return;
 
-    // 설정값(withWatch)에 따라 바로 해당 페이지로 이동합니다.
     Navigator.of(context).push(
       MaterialPageRoute(
           builder: (context) => RunningPage(withWatch: withWatch)),
     );
   }
-  // ▲▲▲▲▲ [ ✨ 1. 수정된 함수 ✨ ] ▲▲▲▲▲
 
   // (수정 없음)
   void _initializeAnimation() {
@@ -734,7 +723,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   animation: _animation,
                   deviceWidth: deviceWidth,
                   constants: widget.constants,
-                  onTap: () => _showUseWatchDialog(context), // 👈 ✨ [수정] 수정된 함수 호출
+                  onTap: () => _showUseWatchDialog(context),
                 ),
                 // (수정 없음) 환영 메시지
                 if (_showWelcomeMessage &&

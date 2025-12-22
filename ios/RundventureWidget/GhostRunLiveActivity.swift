@@ -1,20 +1,18 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
-import AppIntents // ✅ [추가] AppIntents 임포트
+import AppIntents
 
 struct GhostRunLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: GhostRunActivityAttributes.self) { context in
-            // ✅ ZStack을 사용해 iOS 16과 호환되는 배경 설정
             ZStack {
-                // 배경색을 가장 아래에 깔아줍니다.
                 Color.black.opacity(0.9)
                 
                 // MARK: 잠금화면 UI (고스트 첫 기록 측정 디자인)
                 VStack(alignment: .center, spacing: 15) { // 중앙 정렬 및 간격 조정
                     
-                    // ✅ [수정] 상단 HStack: 로고 + Spacer + 버튼
+                    // 상단 HStack: 로고 + Spacer + 버튼
                     HStack(alignment: .center, spacing: 8) { // 아이콘과 텍스트 중앙 정렬
                         Image(systemName: "figure.walk.motion") // 기록 측정에 어울리는 아이콘
                             .font(.title2)
@@ -26,7 +24,7 @@ struct GhostRunLiveActivity: Widget {
                         
                         Spacer() // 중간을 밀어냄
                         
-                        // ✅ [수정] 우측 상단 아이콘 버튼 (배경 없음)
+                        // 우측 상단 아이콘 버튼 (배경 없음)
                         if context.state.isPaused {
                             Button(intent: ResumeRunningIntent()) {
                                 Image(systemName: "play.fill") // 재개 아이콘
@@ -70,13 +68,12 @@ struct GhostRunLiveActivity: Widget {
                         }
                     }
                     .padding(.horizontal, 10)
-                    
-                    // ✅ [삭제] 기존의 하단 버튼 HStack은 삭제됨
+
+
                     
                 }
                 .padding(20)
             }
-            // ✅ .background와 .widgetBackground modifier는 제거합니다.
             
         } dynamicIsland: { context in
             DynamicIsland {
@@ -99,8 +96,7 @@ struct GhostRunLiveActivity: Widget {
                             .foregroundColor(.purple)
                         Text(context.state.time)
                         Spacer()
-                        
-                        // ✅ [수정] 다이나믹 아일랜드 버튼: Link -> Button(intent: ...)
+
                         if context.state.isPaused {
                             Button(intent: ResumeRunningIntent()) {
                                 Image(systemName: "play.fill")

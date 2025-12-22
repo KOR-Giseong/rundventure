@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // [추가]
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../login_screens/login_screen.dart';
 import 'package:rundventure/sign_up/sign_up_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,13 +15,12 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
 
-  double _pageOpacity = 0.0; // [추가] 화면 전체 투명도를 위한 변수
+  double _pageOpacity = 0.0;
 
   @override
   void initState() {
     super.initState();
 
-    // [추가] Home_screen의 기능들
     FirebaseMessaging.instance.subscribeToTopic('all');
     _hideSystemUI();
     // 화면 진입 후 100ms 뒤에 전체 화면이 부드럽게 나타나도록 설정
@@ -50,7 +49,6 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
     );
   }
 
-  // [추가] Home_screen에서 가져온 함수
   void _hideSystemUI() {
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
@@ -85,7 +83,6 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // [수정] 화면 전체를 GestureDetector와 AnimatedOpacity로 감싸기
     return GestureDetector(
       onTap: _hideSystemUI, // 화면 탭 시에도 UI 숨김 유지
       behavior: HitTestBehavior.opaque,

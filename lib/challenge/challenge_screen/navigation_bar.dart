@@ -6,32 +6,21 @@ import 'package:rundventure/challenge/challenge.dart';
 import 'package:rundventure/challenge/challenge_screen.dart';
 import 'package:rundventure/main_screens/main_screen.dart';
 import 'package:rundventure/challenge/challenge_setup_screen.dart';
-
-// ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-// 1. 관리자용 이벤트 챌린지 생성 폼 임포트
 import 'package:rundventure/challenge/admin/event_challenge_form.dart';
-// ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
-
 import '../ranking/ranking_screen.dart';
 
 class NavigationBar extends StatelessWidget {
   final List<Widget>? actions;
-  // ✅ 1. 챌린지 게시판 잠금 상태를 받을 변수 추가
   final bool isChallengeBoardLocked;
-  // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-  // 2. 관리자 여부 플래그 추가
   final bool isAdmin;
-  // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
 
   const NavigationBar({
     Key? key,
     this.actions,
-    this.isChallengeBoardLocked = false, // 기본값은 false (잠기지 않음)
-    this.isAdmin = false, // ▼ [신규 추가] (기본값 false)
+    this.isChallengeBoardLocked = false,
+    this.isAdmin = false,
   }) : super(key: key);
 
-  // ▼▼▼▼▼ [신규 추가] ▼▼▼▼▼
-  // 3. 관리자용 챌린지 생성 선택 BottomSheet
   void _showCreateChallengeChoice(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -87,7 +76,7 @@ class NavigationBar extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              EventChallengeForm()), // 👈 새 폼으로 이동
+                              EventChallengeForm()),
                     );
                   },
                 ),
@@ -99,11 +88,9 @@ class NavigationBar extends StatelessWidget {
       },
     );
   }
-  // ▲▲▲▲▲ [신규 추가] ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
-    // ✅✅✅ [수정] OtherUserProfileScreen과 유사한 AppBar 레이아웃으로 변경 ✅✅✅
     return Stack(
       alignment: Alignment.center, // 텍스트를 중앙에 배치
       children: [
@@ -130,7 +117,6 @@ class NavigationBar extends StatelessWidget {
                   ),
                 ),
               ),
-              // ✅ 2. 간격 수정
               const SizedBox(width: 25),
               GestureDetector(
                 onTap: () {
@@ -159,11 +145,9 @@ class NavigationBar extends StatelessWidget {
                   ),
                 ),
               ),
-              // ✅ 3. 랭킹 탭 추가 (비활성)
               const SizedBox(width: 25),
               GestureDetector(
                 onTap: () {
-                  // ✅ 4. 랭킹 스크린으로 이동
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => const RankingScreen()));
                 },
@@ -224,7 +208,6 @@ class NavigationBar extends StatelessWidget {
                       width: 45,
                       height: 45,
                     ),
-                    // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
                     onPressed: () {
                       if (isChallengeBoardLocked) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -249,7 +232,6 @@ class NavigationBar extends StatelessWidget {
                         }
                       }
                     },
-                    // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
                   ),
                 ),
               ],

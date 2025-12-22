@@ -1,5 +1,3 @@
-// [전체 코드] user_notification_page.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,9 +14,7 @@ import '../friends/friend_management_screen.dart';
 import 'package:rundventure/game_selection/friend_battle_lobby_screen.dart';
 import 'package:rundventure/game_selection/async_battle_list_screen.dart';
 
-// ▼▼▼▼▼ [ 스낵바 타입 Enum ] ▼▼▼▼▼
 enum SnackBarType { info, success, error }
-// ▲▲▲▲▲ [ 스낵바 타입 Enum ] ▲▲▲▲▲
 
 class UserNotificationPage extends StatefulWidget {
   @override
@@ -26,15 +22,13 @@ class UserNotificationPage extends StatefulWidget {
 }
 
 class _UserNotificationPageState extends State<UserNotificationPage>
-    with SingleTickerProviderStateMixin { // 👈 탭 컨트롤러 사용을 위한 Mixin 추가
+    with SingleTickerProviderStateMixin {
 
   List<DocumentSnapshot> notifications = [];
   StreamSubscription? _subscription;
   bool _isAdmin = false;
 
-  // ▼▼▼▼▼ [ 탭 컨트롤러 ] ▼▼▼▼▼
   late TabController _tabController;
-  // ▲▲▲▲▲ [ 탭 컨트롤러 ] ▲▲▲▲▲
 
   @override
   void initState() {
@@ -93,7 +87,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
     });
   }
 
-  // --- [ 헬퍼: 알림 분류 로직 ] ---
   bool _isSocialNotification(String type) {
     // 활동 알림(댓글, 친구, 대결 등)인지 확인
     return [
@@ -128,7 +121,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
   List<DocumentSnapshot> get _currentTabList {
     return _tabController.index == 0 ? _generalList : _socialList;
   }
-  // --- [ 헬퍼 끝 ] ---
 
   void _markAsRead(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -157,7 +149,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
     }
   }
 
-  // [수정] 현재 탭의 목록만 모두 읽음 처리
   void _markAllAsRead() async {
     final targetList = _currentTabList;
     if (targetList.isEmpty) return;
@@ -172,7 +163,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
     await batch.commit();
   }
 
-  // [수정] 현재 탭의 목록만 전체 삭제
   void _deleteAllNotifications() async {
     final targetList = _currentTabList;
     if (targetList.isEmpty) return;
@@ -259,21 +249,16 @@ class _UserNotificationPageState extends State<UserNotificationPage>
         child: Column(
           children: [
             _buildHeader(),
-            // ▼▼▼▼▼ [ 탭 내용 (TabBarView) ] ▼▼▼▼▼
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // 1. 일반 알림 리스트
                   _buildNotificationList(_generalList, "📭 일반 알림이 없습니다"),
-                  // 2. 활동 알림 리스트
                   _buildNotificationList(_socialList, "📭 활동 알림이 없습니다"),
                 ],
               ),
             ),
-            // ▲▲▲▲▲ [ 탭 내용 (TabBarView) ] ▲▲▲▲▲
 
-            // [수정] 현재 탭 리스트가 비어있지 않을 때만 '모두 읽음' 표시
             if (_currentTabList.isNotEmpty) _buildMarkAllAsReadButton(),
           ],
         ),
@@ -281,7 +266,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
     );
   }
 
-  // [신규] 리스트 빌더 분리
   Widget _buildNotificationList(List<DocumentSnapshot> list, String emptyMsg) {
     if (list.isEmpty) {
       return Center(child: Text(emptyMsg));
@@ -330,10 +314,9 @@ class _UserNotificationPageState extends State<UserNotificationPage>
                 const Center(
                   child: Text(
                     '알림',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold                    ),
                   ),
                 ),
-                // [수정] 현재 탭 리스트가 있을 때만 삭제 버튼 표시
                 if (_currentTabList.isNotEmpty)
                   Align(
                     alignment: Alignment.centerRight,
@@ -393,9 +376,6 @@ class _UserNotificationPageState extends State<UserNotificationPage>
   }
 }
 
-// ===================================================================================
-// ▼▼▼▼▼ [ NotificationCard 위젯 (디자인 유지) ] ▼▼▼▼▼
-// ===================================================================================
 class NotificationCard extends StatefulWidget {
   final BuildContext parentContext;
   final DocumentSnapshot notification;

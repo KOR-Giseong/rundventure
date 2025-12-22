@@ -10,10 +10,8 @@ import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'ghostrun_ready.dart'; // GhostRunReadyPage가 있는 파일
-// ✅ [추가] 워치 커넥티비티 임포트
+import 'ghostrun_ready.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
-// ✅ [추가] GhostRunPage 임포트 (기록 다이얼로그에서 사용)
 import 'ghostrunpage.dart';
 
 
@@ -369,7 +367,6 @@ class _GhostRunResultScreenState extends State<GhostRunResultScreen> {
   List<Map<String, dynamic>> _allRecords = [];
   bool _isLoading = true;
 
-  // ✅ [추가] 워치 커넥티비티 변수
   final _watch = WatchConnectivity();
   StreamSubscription<Map<String, dynamic>>? _watchMessageSubscription;
 
@@ -377,11 +374,9 @@ class _GhostRunResultScreenState extends State<GhostRunResultScreen> {
   void initState() {
     super.initState();
     _loadAllUserRecords();
-    // ✅ [추가] 워치 리스너 초기화 호출
     _initializeWatchConnectivity();
   }
 
-  // ✅ [추가] 워치 리스너 초기화 함수
   void _initializeWatchConnectivity() {
     _watchMessageSubscription?.cancel();
     _watchMessageSubscription = _watch.messageStream.listen((message) {
@@ -407,7 +402,6 @@ class _GhostRunResultScreenState extends State<GhostRunResultScreen> {
 
   @override
   void dispose() {
-    // ✅ [추가] 워치 구독 취소
     _watchMessageSubscription?.cancel();
     super.dispose();
   }

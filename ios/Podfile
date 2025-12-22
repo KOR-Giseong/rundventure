@@ -31,7 +31,6 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks! :linkage => :static
 
-  # ✅ 이 위치로 이동했습니다.
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   pod 'KakaoSDKCommon'
@@ -47,7 +46,6 @@ target 'RundventureWatch Watch App' do
   platform :watchos, '10.6'
   use_frameworks!
 
-  # ✅ 지금은 내부에 추가할 Pod이 없음 (비어있는 것이 정상)
 end
 
 post_install do |installer|
@@ -55,8 +53,7 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
 
     target.build_configurations.each do |config|
-      
-      # ⬇️⬇️⬇️ gRPC-Core (C++) 디버그 빌드 에러 해결을 위해 이 줄을 추가했습니다. ⬇️⬇️⬇️
+
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
 
       if target.platform_name == :ios

@@ -65,18 +65,16 @@ class _GhostRunSettingsPageState extends State<GhostRunSettingsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
-        // ✨ [수정] leading 속성을 사용하여 커스텀 뒤로가기 버튼 추가
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5.0),
             child: Image.asset('assets/images/Back-Navs.png',
-              width: 40,  // 너비 추가
+              width: 40,
               height: 40,
             ),
           ),
         ),
-        // ✨ 기본 뒤로가기 버튼이 자동으로 생성되지 않도록 설정
         automaticallyImplyLeading: false,
         title: const Text(
           '고스트런 설정',

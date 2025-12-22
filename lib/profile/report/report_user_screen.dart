@@ -1,9 +1,9 @@
-import 'dart:io'; // 👈 [필수] File 클래스
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // 👈 [필수] Firebase Storage
-import 'package:image_picker/image_picker.dart'; // 👈 [필수] Image Picker
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ReportUserScreen extends StatefulWidget {
   final String reportedUserEmail;
@@ -24,7 +24,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
   final _detailsController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  // 신고 사유 목록
   final List<String> _reportReasons = [
     '욕설 / 비방 / 혐오 발언',
     '부적절한 프로필 (사진/닉네임)',
@@ -42,7 +41,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
     super.dispose();
   }
 
-  /// 스낵바 표시 (OtherUserProfileScreen과 동일)
   void _showCustomSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -71,12 +69,11 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
     );
   }
 
-  /// 이미지 선택 (갤러리)
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 80, // 용량 절약을 위해 품질 압축
+        imageQuality: 80,
       );
       if (image != null) {
         setState(() {
@@ -88,17 +85,15 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
     }
   }
 
-  /// 신고 제출
   Future<void> _submitReport() async {
     if (_isLoading) return;
 
-    // 1. 유효성 검사
     if (_selectedReason == null) {
       _showCustomSnackBar("신고 사유를 선택해주세요.", isError: true);
       return;
     }
     if (!_formKey.currentState!.validate()) {
-      return; // 상세 사유가 비어있는 경우
+      return;
     }
 
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -112,33 +107,27 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
     String? uploadedImageUrl;
 
     try {
-      // 2. (선택) 이미지 업로드
       if (_pickedImage != null) {
-
-        // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
-        // 저장 경로를 신고 '대상'이 아닌 신고 '자'의 UID로 변경 (보안 규칙 적용)
         final storageRef = FirebaseStorage.instance
             .ref()
             .child('reports')
-            .child(currentUser.uid) // 👈 widget.reportedUserEmail에서 변경
+            .child(currentUser.uid)
             .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-        // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
 
         UploadTask uploadTask = storageRef.putFile(_pickedImage!);
         TaskSnapshot snapshot = await uploadTask;
         uploadedImageUrl = await snapshot.ref.getDownloadURL();
       }
 
-      // 3. Firestore에 신고 데이터 저장
       await FirebaseFirestore.instance.collection('reports').add({
         'reporterEmail': currentUser.email,
         'reportedUserEmail': widget.reportedUserEmail,
         'reportedUserNickname': widget.reportedUserNickname,
         'category': _selectedReason,
         'details': _detailsController.text.trim(),
-        'imageUrl': uploadedImageUrl, // 이미지가 있으면 URL, 없으면 null
+        'imageUrl': uploadedImageUrl,
         'timestamp': FieldValue.serverTimestamp(),
-        'status': 'pending', // 👈 [중요] 관리자가 처리할 수 있도록 'pending' 상태로
+        'status': 'pending',
       });
 
       _showCustomSnackBar("신고가 정상적으로 접수되었습니다.");
@@ -165,7 +154,7 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
           child: Padding(
             padding: const EdgeInsets.all(4.0),
             child: Image.asset(
-              'assets/images/Back-Navs.png', // TODO: 뒤로가기 버튼 경로 확인
+              'assets/images/Back-Navs.png',
               width: 50,
               height: 50,
             ),
@@ -181,7 +170,7 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
         centerTitle: true,
       ),
       body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(), // 배경 탭 시 키보드 닫기
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -191,7 +180,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- 신고 대상 ---
                     Text(
                       '신고 대상',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[600]),
@@ -211,15 +199,14 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
                     ),
                     SizedBox(height: 24),
 
-                    // --- 신고 사유 (ChoiceChip) ---
                     Text(
                       '신고 사유 (필수)',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[600]),
                     ),
                     SizedBox(height: 12),
                     Wrap(
-                      spacing: 8.0, // 좌우 간격
-                      runSpacing: 8.0, // 상하 간격
+                      spacing: 8.0,
+                      runSpacing: 8.0,
                       children: _reportReasons.map((reason) {
                         final isSelected = _selectedReason == reason;
                         return ChoiceChip(
@@ -248,7 +235,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
                     ),
                     SizedBox(height: 24),
 
-                    // --- 상세 사유 (TextFormField) ---
                     Text(
                       '상세 내용 (필수)',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[600]),
@@ -280,16 +266,14 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
                     ),
                     SizedBox(height: 24),
 
-                    // --- 이미지 첨부 ---
                     Text(
                       '증거 자료 (선택)',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[600]),
                     ),
                     SizedBox(height: 12),
-                    _buildImagePicker(),
+                    _buildImagePicker(                    ),
                     SizedBox(height: 32),
 
-                    // --- 제출 버튼 ---
                     ElevatedButton(
                       onPressed: _submitReport,
                       child: Text(
@@ -309,7 +293,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
                 ),
               ),
             ),
-            // --- 전체 로딩 오버레이 ---
             if (_isLoading)
               Container(
                 color: Colors.white.withOpacity(0.7),
@@ -321,10 +304,8 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
     );
   }
 
-  /// 이미지 피커 및 미리보기 위젯
   Widget _buildImagePicker() {
     if (_pickedImage == null) {
-      // 이미지가 없을 때: [ + 사진 첨부 ] 버튼
       return InkWell(
         onTap: _pickImage,
         borderRadius: BorderRadius.circular(12),
@@ -347,11 +328,9 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
         ),
       );
     } else {
-      // 이미지가 있을 때: 미리보기 및 삭제 버튼
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          // 이미지 미리보기
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.file(
@@ -361,7 +340,6 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          // 삭제(X) 버튼
           Positioned(
             top: -10,
             right: -10,

@@ -4,14 +4,14 @@ class CustomTextField extends StatelessWidget {
   final String hintText;
   final bool isPassword;
   final Widget? prefixIcon;
-  final TextEditingController? controller; // 추가된 부분
+  final TextEditingController? controller;
 
   const CustomTextField({
     Key? key,
     required this.hintText,
     this.isPassword = false,
     this.prefixIcon,
-    this.controller, // 추가된 부분
+    this.controller,
   }) : super(key: key);
 
   @override
@@ -26,12 +26,12 @@ class CustomTextField extends StatelessWidget {
       child: Row(
         children: [
           if (prefixIcon != null) ...[
-            prefixIcon!, // 아이콘이 있을 경우 표시
+            prefixIcon!,
             const SizedBox(width: 10),
           ],
           Expanded(
             child: TextFormField(
-              controller: controller, // 추가된 부분
+              controller: controller,
               obscureText: isPassword,
               decoration: InputDecoration(
                 hintText: hintText,

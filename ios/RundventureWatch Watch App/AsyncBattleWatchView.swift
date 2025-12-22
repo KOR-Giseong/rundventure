@@ -82,13 +82,12 @@ struct AsyncBattleWatchView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .tint(.orange) // 👈 오프라인 대결 테마 색상
+                .tint(.orange)
                 .frame(width: 80, height: 80)
                 .background(Color.white.opacity(0.1))
                 .clipShape(Circle())
 
-                // 🚨 [핵심] 오프라인 대결은 목표 거리 도달 시 자동 종료되므로,
-                // 수동 '종료' 버튼이 없습니다.
+
                 Spacer().frame(height: 80)
                 
             } // VStack End

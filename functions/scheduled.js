@@ -1,5 +1,4 @@
 // =================================================================================================
-// [ scheduled.js ] - 정해진 시간에 자동 실행되는 함수 (onSchedule) 모음
 // =================================================================================================
 
 // --- 1. 필요한 모듈 임포트 ---
@@ -11,7 +10,7 @@ const functions = require("firebase-functions");
 const {
   sendPushNotificationOnly,
   deleteDocumentsInBatch, // (필요 시 사용)
-  deleteCollection,       // ⭐️ 하위 컬렉션 삭제를 위해 필수
+  deleteCollection,
 } = require("./helpers.js");
 
 // --- 3. 전역 인스턴스 ---
@@ -23,7 +22,7 @@ const db = admin.firestore();
 // =================================================================================================
 // (주의: 여기서는 'exports.'를 붙이지 않고, 맨 마지막에 module.exports로 한번에 내보냅니다.)
 
-// (1) 10분마다 이메일 미인증 사용자 삭제 (10분 유예) + ⭐️ 연관 데이터 완전 삭제 추가
+// (1) 10분마다 이메일 미인증 사용자 삭제 (10분 유예) + 연관 데이터 완전 삭제 추가
 const deleteUnverifiedUsers = onSchedule("every 10 minutes", async (event) => {
   const now = Date.now();
   const tenMinutesInMillis = 10 * 60 * 1000;
@@ -78,7 +77,7 @@ const deleteUnverifiedUsers = onSchedule("every 10 minutes", async (event) => {
           // (C) 하위 컬렉션 및 연관 데이터 삭제 (callable.js 로직과 동일하게 적용)
           // 1. 하위 컬렉션 경로들
           const subCollectionsPaths = [
-            `users/${email}/activeQuests`,        // 👈 질문하신 퀘스트 목록
+            `users/${email}/activeQuests`,
             `users/${email}/completedQuestsLog`,
             `users/${email}/friends`,
             `users/${email}/friendRequests`,
@@ -133,7 +132,7 @@ const deleteUnverifiedUsers = onSchedule("every 10 minutes", async (event) => {
   }
 });
 
-// (2) 10분마다 가입 미완료 소셜 계정 삭제 + ⭐️ 연관 데이터 완전 삭제 추가
+// (2) 10분마다 가입 미완료 소셜 계정 삭제 + 연관 데이터 완전 삭제 추가
 const deleteIncompleteSocialUsers = onSchedule({
   schedule: "every 10 minutes",
   timeZone: "Asia/Seoul",
@@ -443,12 +442,10 @@ const weeklyRankingReset = onSchedule({
       functions.logger.info(`사용자 ${usersSnapshot.size}명 조회 완료 (총 ${totalUsersProcessed}명)...`);
     }
 
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 핵심 수정: 리셋 후, 전시용 랭킹판 삭제 ⭐️⭐️⭐️ ] ▼▼▼▼▼
     // 유저들의 점수가 0이 되었으므로, 00:00에 생성된 '지난주 점수 기반 랭킹판'을 삭제해야 합니다.
     functions.logger.info("리셋 완료. 전시용 주간 리더보드(weeklyLeaderboard) 초기화(삭제) 시작...");
     await deleteCollection(db, "weeklyLeaderboard/current/users", batchSize);
     functions.logger.info("전시용 주간 리더보드 삭제 완료.");
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 핵심 수정 끝 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     functions.logger.info(`주간 랭킹 리셋 작업 성공 완료 (총 ${totalUsersProcessed}명 조회).`);
 
@@ -569,12 +566,10 @@ const monthlyRankingReset = onSchedule({
       functions.logger.info(`사용자 ${usersSnapshot.size}명 조회 완료 (총 ${totalUsersProcessed}명)...`);
     }
 
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 핵심 수정: 리셋 후, 전시용 랭킹판 삭제 ⭐️⭐️⭐️ ] ▼▼▼▼▼
     // 유저들의 점수가 0이 되었으므로, 00:00에 생성된 '지난달 점수 기반 랭킹판'을 삭제해야 합니다.
     functions.logger.info("리셋 완료. 전시용 월간 리더보드(monthlyLeaderboard) 초기화(삭제) 시작...");
     await deleteCollection(db, "monthlyLeaderboard/current/users", batchSize);
     functions.logger.info("전시용 월간 리더보드 삭제 완료.");
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 핵심 수정 끝 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     functions.logger.info(`월간 랭킹 리셋 및 집계 작업 성공 완료 (총 ${totalUsersProcessed}명 조회).`);
 
@@ -709,7 +704,7 @@ const checkEventChallengesCompletion = onSchedule({
 });
 
 
-// (10) 매일 아침 9시 생일자 확인 및 축하 알림 발송 [🔥 신규 추가됨 🔥]
+// (10) 매일 아침 9시 생일자 확인 및 축하 알림 발송
 const checkDailyBirthdays = onSchedule({
   schedule: "0 9 * * *", // 매일 아침 9시 실행
   timeZone: "Asia/Seoul",
@@ -817,5 +812,5 @@ module.exports = {
   weeklyRankingReset,
   monthlyRankingReset,
   checkEventChallengesCompletion,
-  checkDailyBirthdays, // ⭐️ 신규 추가됨
+  checkDailyBirthdays,
 };

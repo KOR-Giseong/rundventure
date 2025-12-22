@@ -10,12 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
-import 'package:pedometer/pedometer.dart'; // ✅ 1. 만보계 플러그인 임포트
-// ▼▼▼▼▼ [ 오프라인 대결 신규 추가 ] ▼▼▼▼▼
-import 'package:cloud_functions/cloud_functions.dart'; // 👈 [수정] cloud_functions로 변경
-// ▲▲▲▲▲ [ 오프라인 대결 신규 추가 ] ▲▲▲▲▲
+import 'package:pedometer/pedometer.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
-// ▼▼▼▼▼ [ ✅ 여기가 수정된 클래스입니다 ] ▼▼▼▼▼
 class RouteDataPoint {
   final LatLng point;
   final double speed;
@@ -31,8 +28,6 @@ class RouteDataPoint {
     };
   }
 
-  // 2. 불러올 때 쓰는 함수 (fromMap) - ✨[신규 추가]✨
-  // FriendBattleHistoryTab의 빨간 줄을 해결합니다.
   factory RouteDataPoint.fromMap(Map<String, dynamic> map) {
     return RouteDataPoint(
       point: LatLng(
@@ -43,20 +38,13 @@ class RouteDataPoint {
     );
   }
 }
-// ▲▲▲▲▲ [ ✅ 수정 완료 ] ▲▲▲▲▲
-
 
 class RunningPage extends StatefulWidget {
-  // ✅ [수정] 'withWatch' 라는 변수를 추가합니다.
   final bool withWatch;
+  final String runType;
+  final double? targetDistanceKm;
+  final String? battleId;
 
-  // ▼▼▼▼▼ [ 오프라인 대결 신규 추가 ] ▼▼▼▼▼
-  final String runType; // 'free', 'live_battle', 'async_battle'
-  final double? targetDistanceKm; // 오프라인 대결 목표 거리
-  final String? battleId; // 'live_battle' 또는 'async_battle'의 ID
-  // ▲▲▲▲▲ [ 오프라인 대결 신규 추가 ] ▲▲▲▲▲
-
-  // ✅ [수정] 생성자에서 withWatch 값을 받도록 수정합니다.
   const RunningPage({
     Key? key,
     required this.withWatch,
@@ -110,7 +98,6 @@ class _RunningPageState extends State<RunningPage>
   late FlutterTts flutterTts;
   int _nextKmTarget = 1;
 
-  // ✅ 2. 만보계 스트림 및 초기값 변수 추가
   StreamSubscription<StepCount>? _pedometerStream;
   int _initialStepCount = -1; // 트래킹 시작 시점의 총 걸음수
 
@@ -120,7 +107,6 @@ class _RunningPageState extends State<RunningPage>
     WidgetsBinding.instance.addObserver(this);
     _initializeWatchConnectivity();
 
-    // ✅ [수정 1/2] Native(Swift)의 App Intent 호출을 수신할 핸들러 설정
     _liveActivityChannel.setMethodCallHandler(_handleNativeMethodCall);
 
     _initTts();
@@ -134,7 +120,6 @@ class _RunningPageState extends State<RunningPage>
     _startCountdown();
   }
 
-  // ✅ [수정 2/2] Native(Swift)에서 "handleLiveActivityCommand" 호출 시 실행될 함수
   Future<dynamic> _handleNativeMethodCall(MethodCall call) async {
     if (!mounted) return; // 위젯이 화면에 없으면 무시
 
@@ -146,11 +131,11 @@ class _RunningPageState extends State<RunningPage>
 
         if (command == 'pauseRunning') {
           print("⏸️ [DART] Live Activity로부터 '일시정지' 명령 실행");
-          if (!_isPaused) _pauseRunning(); // 👈 기존 함수 호출
+          if (!_isPaused) _pauseRunning();
 
         } else if (command == 'resumeRunning') {
           print("▶️ [DART] Live Activity로부터 '재개' 명령 실행");
-          if (_isPaused) _resumeRunning(); // 👈 기존 함수 호출
+          if (_isPaused) _resumeRunning();
         }
       } catch (e) {
         print("🚨 [DART] _handleNativeMethodCall Error: $e");
@@ -215,14 +200,11 @@ class _RunningPageState extends State<RunningPage>
     print("✅ [DART] Watch connectivity listeners are now active.");
   }
 
-
-  // ✅ [수정 1] 소리 설정 강화
   Future<void> _initTts() async {
     flutterTts = FlutterTts();
     await flutterTts.setLanguage("ko-KR");
     await flutterTts.setSpeechRate(0.5);
 
-    // ✅ 무음 모드 무시 + 스피커 강제 + 음악 믹스
     await flutterTts.setIosAudioCategory(
         IosTextToSpeechAudioCategory.playback,
         [
@@ -234,7 +216,6 @@ class _RunningPageState extends State<RunningPage>
         IosTextToSpeechAudioMode.voicePrompt
     );
 
-    // ✅ 공유 인스턴스 설정
     await flutterTts.setSharedInstance(true);
   }
 
@@ -244,15 +225,12 @@ class _RunningPageState extends State<RunningPage>
     }
   }
 
-  // ▼▼▼▼▼ [ ✨ 여기가 1번째 수정된 함수입니다 ✨ ] ▼▼▼▼▼
   Future<void> _initSharedPreferences() async {
     prefs = await SharedPreferences.getInstance();
-    // SettingsPage와 동일한 기본 키 '가장 높음 (High)'로 수정
     if (!prefs.containsKey('accuracy')) await prefs.setString('accuracy', '가장 높음 (High)');
     if (!prefs.containsKey('distanceFilter')) await prefs.setDouble('distanceFilter', 5.0);
     if (!prefs.containsKey('interval')) await prefs.setInt('interval', 1000);
   }
-  // ▲▲▲▲▲ [ ✨ 1번째 수정 완료 ✨ ] ▲▲▲▲▲
 
 
   String _formatPace(double pace) {
@@ -325,7 +303,6 @@ class _RunningPageState extends State<RunningPage>
   void _startCountdown() async {
     if (!mounted) return;
 
-    // ✅ [수정] 'withWatch'가 true일 때만 워치에 신호를 보냅니다.
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'showWarmup'});
     }
@@ -344,7 +321,6 @@ class _RunningPageState extends State<RunningPage>
     for (int i = 3; i > 0; i--) {
       if (!mounted) return;
 
-      // ✅ [수정] 'withWatch'가 true일 때만 워치에 신호를 보냅니다.
       if (widget.withWatch) {
         _watch.sendMessage({'command': 'countdown', 'value': i});
       }
@@ -358,7 +334,6 @@ class _RunningPageState extends State<RunningPage>
 
     if (!mounted) return;
 
-    // ✅ [수정] 'withWatch'가 true일 때만 워치에 신호를 보냅니다.
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'startRunningUI'});
 
@@ -373,12 +348,10 @@ class _RunningPageState extends State<RunningPage>
     _initializeTracking();
   }
 
-
-  // ✅ [수정] '순간이동' 버그를 막기 위해 _lastLocation을 null로 초기화
   Future<void> _initializeTracking() async {
     _liveActivityChannel.invokeMethod('startLiveActivity', {
       'type': 'main',
-      'isPaused': false, // ✅ [추가] 초기 상태는 false
+      'isPaused': false,
     });
 
     bool serviceEnabled = await location.serviceEnabled();
@@ -399,16 +372,13 @@ class _RunningPageState extends State<RunningPage>
         interval: _getInterval(),
         distanceFilter: _getDistanceFilter());
 
-    // ✅ [수정] 트래킹 시작 직전 _lastLocation을 null로 초기화합니다.
-    // 이렇게 하면 _startLocationTracking의 첫 번째 위치가 0m로 설정됩니다.
     _lastLocation = null;
 
     _startLocationTracking();
     _startTimer();
-    _startPedometer(); // ✅ 4. 만보계 시작 함수 호출
+    _startPedometer();
   }
 
-  // ✅ 5. 만보계 시작 함수 (신규)
   void _startPedometer() {
     _pedometerStream = Pedometer.stepCountStream.listen(
           (StepCount event) {
@@ -434,7 +404,6 @@ class _RunningPageState extends State<RunningPage>
     );
   }
 
-  // ✅ [수정 2] 1km 알림 로직 강화 및 안전장치 추가
   void _startLocationTracking() {
     _locationSubscription =
         location.onLocationChanged.listen((loc.LocationData currentLocation) {
@@ -555,24 +524,19 @@ class _RunningPageState extends State<RunningPage>
                   .animateCamera(CameraUpdate.newLatLng(newLocation));
             }
 
-            // ▼▼▼▼▼ [ 🔊 1km 음성 안내 (수정됨) ] ▼▼▼▼▼
-            // setState 밖에서 처리하여 로직 분리
             if (_kilometers >= _nextKmTarget) {
-              // 페이스값 안전장치 (무한대거나 NaN이면 0으로 처리)
               double safePace = _pace;
               if (safePace.isInfinite || safePace.isNaN) safePace = 0.0;
 
               final int paceMin = safePace.floor();
               final int paceSec = ((safePace - paceMin) * 60).round();
 
-              // 디버깅용 로그 (콘솔에서 확인 가능)
               print("🔊 음성 안내 실행: $_nextKmTarget km 달성! (페이스: $paceMin분 $paceSec초)");
 
               _speak('$_nextKmTarget 킬로미터. 현재 페이스는 $paceMin 분 $paceSec 초 입니다.');
 
-              _nextKmTarget++; // 다음 목표 설정 (1 -> 2 -> 3...)
+              _nextKmTarget++;
             }
-            // ▲▲▲▲▲ [ 🔊 수정 완료 ] ▲▲▲▲▲
 
             // 오프라인 대결 목표 달성 시 종료
             if (widget.runType == 'async_battle' &&
@@ -633,17 +597,13 @@ class _RunningPageState extends State<RunningPage>
               _totalPausedDuration.inSeconds;
           _updatePaceAndSpeed();
 
-          // ▼▼▼▼▼ [ 오프라인 대결 신규 추가: 목표 거리 도달 시 자동 종료 ] ▼▼▼▼▼
           if (widget.runType == 'async_battle' && widget.targetDistanceKm != null) {
-            // 목표 거리 도달 체크 (0.01km 정도의 여유를 줌)
             if (_kilometers >= widget.targetDistanceKm!) {
-              // 목표 거리 도달!
               print("오프라인 대결 목표 거리(${widget.targetDistanceKm}km) 도달. 자동 종료합니다.");
-              _stopRunning(); // 👈 기존 종료 함수 호출 (내부 로직이 분기 처리)
-              timer.cancel(); // 👈 타이머 즉시 중지
+              _stopRunning();
+              timer.cancel();
             }
           }
-          // ▲▲▲▲▲ [ 오프라인 대결 신규 추가 ] ▲▲▲▲▲
         });
       }
     });
@@ -688,10 +648,8 @@ class _RunningPageState extends State<RunningPage>
 
   void _updateCalories() {}
 
-  // ✅ [수정] 'isAuto' 파라미터를 받아서 TTS 멘트를 분기 처리
   Future<void> _pauseRunning({bool isAuto = false}) async {
     if (!mounted) return;
-    // ✅ [수정] 이미 일시정지 상태라면 중복 실행 방지
     if (_isPaused) return;
 
     setState(() {
@@ -702,7 +660,6 @@ class _RunningPageState extends State<RunningPage>
       _watch.sendMessage({'command': 'pauseFromPhone'});
     }
 
-    // ✅ [수정] isAuto 값에 따라 다른 음성 출력
     String ttsMessage = isAuto ? "움직임이 없어 일시정지합니다" : "일시정지";
     await flutterTts.speak(ttsMessage);
 
@@ -718,7 +675,6 @@ class _RunningPageState extends State<RunningPage>
 
   Future<void> _resumeRunning() async {
     if (!mounted) return;
-    // ✅ [수정] 이미 실행 중이라면 중복 실행 방지
     if (!_isPaused) return;
 
     setState(() {
@@ -727,7 +683,7 @@ class _RunningPageState extends State<RunningPage>
         _totalPausedDuration += pauseDuration;
       }
       _isPaused = false;
-      _dialogShownRecently = false; // ✅ [추가] 자동 일시정지 플래그 리셋
+      _dialogShownRecently = false;
     });
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'resumeFromPhone'});
@@ -744,8 +700,6 @@ class _RunningPageState extends State<RunningPage>
     });
   }
 
-  // ▼▼▼▼▼ [ 오프라인 대결 신규 추가: 종료 로직 수정 ] ▼▼▼▼▼
-  // ✅ [수정 3] 워치 종료 안전장치 추가
   Future<void> _stopRunning() async {
     // 1. (기존) 타이머, 구독, TTS 중지
     _timer?.cancel();
@@ -770,8 +724,6 @@ class _RunningPageState extends State<RunningPage>
 
     if (!mounted) return;
 
-    // 4. [수정] 종료 로직 분기
-
     // 4-A. 오프라인 대결('async_battle')인 경우
     if (widget.runType == 'async_battle' && widget.battleId != null) {
       _showLoadingDialog("대결 결과 집계 중..."); // 로딩 다이얼로그 표시
@@ -788,10 +740,6 @@ class _RunningPageState extends State<RunningPage>
             'calories': _calories,
             'elevation': _elevation,
             'stepCount': _stepCount,
-            // ❗️[수정] FieldValue.serverTimestamp()는 Dart에서 직접 못쓰므로 null로 보내거나,
-            // Cloud Function에서 FieldValue.serverTimestamp()를 찍도록 해야 합니다.
-            // 여기서는 Cloud Function에서 처리하도록 키를 제거합니다.
-            // 'recordedAt': FieldValue.serverTimestamp(), // 👈 이것 대신 맵을 보냄
             'routePoints': _routePointsWithSpeed.map((dp) => dp.toMap()).toList(),
           }
         };
@@ -843,7 +791,6 @@ class _RunningPageState extends State<RunningPage>
       );
     }
   }
-  // ▲▲▲▲▲ [ 오프라인 대결 신규 추가 ] ▲▲▲▲▲
 
   @override
   void dispose() {
@@ -875,8 +822,6 @@ class _RunningPageState extends State<RunningPage>
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
-  // ▼▼▼▼▼ [ 오프라인 대결 신규 추가: 로딩 다이얼로그 ] ▼▼▼▼▼
-  /// 로딩 다이얼로그 표시 헬퍼 함수
   void _showLoadingDialog(String message) {
     if (!mounted) return;
     showDialog(
@@ -896,12 +841,9 @@ class _RunningPageState extends State<RunningPage>
       },
     );
   }
-  // ▲▲▲▲▲ [ 오프라인 대결 신규 추가 ] ▲▲▲▲▲
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가 (Part 10) ⭐️⭐️⭐️ ] ▼▼▼▼▼
-  // (profile_screen.dart 또는 async_battle_create_screen.dart에서 복사)
   void _showCustomSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // Check mounted
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -919,15 +861,14 @@ class _RunningPageState extends State<RunningPage>
             ),
           ],
         ),
-        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.blueAccent, // 성공/오류 색상
+        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.blueAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
-        duration: Duration(seconds: isError ? 4 : 2), // Longer duration for errors
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가 (Part 10) ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
@@ -992,7 +933,6 @@ class _RunningPageState extends State<RunningPage>
             bottom: MediaQuery.of(context).padding.bottom,
             child: Center(
               child: _showStartMessage
-              // ▼▼▼▼▼ [ ⭐️ (요청) 수정: '준비하세요!'에도 동일 애니메이션 적용 ⭐️ ] ▼▼▼▼▼
                   ? AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 transitionBuilder: (Widget child, Animation<double> animation) {
@@ -1003,9 +943,9 @@ class _RunningPageState extends State<RunningPage>
                 },
                 child: Text(
                   '준비하세요!',
-                  key: ValueKey<String>('ready'), // 키 추가
+                  key: ValueKey<String>('ready'),
                   style: TextStyle(
-                    fontSize: 40, // ⭐️ 텍스트 길이를 고려하여 크기 조정
+                    fontSize: 40,
                     fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -1016,13 +956,10 @@ class _RunningPageState extends State<RunningPage>
                   ),
                 ),
               )
-              // ▲▲▲▲▲ [ ⭐️ 수정 완료 ⭐️ ] ▲▲▲▲▲
                   : _countdown > 0
-              // ▼▼▼▼▼ [ ⭐️ (요청) 수정: 친구 대결 스타일 바운스 애니메이션 적용 ⭐️ ] ▼▼▼▼▼
                   ? AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 transitionBuilder: (Widget child, Animation<double> animation) {
-                  // 튕기는 효과 (ElasticOut)
                   final offsetAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
                     CurvedAnimation(parent: animation, curve: Curves.elasticOut),
                   );
@@ -1030,21 +967,19 @@ class _RunningPageState extends State<RunningPage>
                 },
                 child: Text(
                   '$_countdown',
-                  key: ValueKey<int>(_countdown), // 숫자가 바뀔 때마다 애니메이션 트리거
+                  key: ValueKey<int>(_countdown),
                   style: TextStyle(
-                    fontSize: 120, // ⭐️ 더 크게!
-                    fontStyle: FontStyle.italic, // 속도감
+                    fontSize: 120,
+                    fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     shadows: [
-                      // ⭐️ 친구 대결 스타일 그림자
                       Shadow(offset: Offset(2, 2), blurRadius: 10.0, color: Colors.black.withOpacity(0.8)),
                       Shadow(offset: Offset(-2, -2), blurRadius: 10.0, color: Colors.black.withOpacity(0.8)),
                     ],
                   ),
                 ),
               )
-              // ▲▲▲▲▲ [ ⭐️ (요청) 수정 완료 ⭐️ ] ▲▲▲▲▲
                   : _buildRunningPageContent(),
             ),
           ),
@@ -1133,8 +1068,6 @@ class _RunningPageState extends State<RunningPage>
                   child: IconButton(
                     icon: Icon(Icons.pause, color: Colors.white),
                     iconSize: 30,
-                    // ✅ [수정] 수동으로 누를 때는 _pauseRunning()을 파라미터 없이 호출
-                    // 이렇게 하면 isAuto가 false(기본값)로 전달됩니다.
                     onPressed: _pauseRunning,
                   ),
                 ),
@@ -1160,12 +1093,7 @@ class _RunningPageState extends State<RunningPage>
     );
   }
 
-  // ✅ [수정] 다이얼로그 함수가 더 이상 호출되지 않음
-  // void _showInactivityDialog() { ... }
-
-  // ▼▼▼▼▼ [ ✨ 여기가 2번째 수정된 함수입니다 ✨ ] ▼▼▼▼▼
   loc.LocationAccuracy _getLocationAccuracy() {
-    // SettingsPage에서 저장한 한글 키를 읽어오도록 수정
     String accuracyStr = prefs.getString('accuracy') ?? '가장 높음 (High)';
     switch (accuracyStr) {
       case '균형 (Balanced)':
@@ -1179,21 +1107,12 @@ class _RunningPageState extends State<RunningPage>
         return loc.LocationAccuracy.high;
     }
   }
-  // ▲▲▲▲▲ [ ✨ 2번째 수정 완료 ✨ ] ▲▲▲▲▲
 
-
-  // ▼▼▼▼▼ [ ✨ 여기가 3번째 수정된 함수입니다 ✨ ] ▼▼▼▼▼
   int _getInterval() {
-    // SharedPreferences에 저장된 값을 읽어오도록 수정
     return prefs.getInt('interval') ?? 1000;
   }
-  // ▲▲▲▲▲ [ ✨ 3번째 수정 완료 ✨ ] ▲▲▲▲▲
 
-
-  // ▼▼▼▼▼ [ ✨ 여기가 4번째 수정된 함수입니다 ✨ ] ▼▼▼▼▼
   double _getDistanceFilter() {
-    // SharedPreferences에 저장된 값을 읽어오도록 수정
     return prefs.getDouble('distanceFilter') ?? 5.0;
   }
-// ▲▲▲▲▲ [ ✨ 4번째 수정 완료 ✨ ] ▲▲▲▲▲
 }

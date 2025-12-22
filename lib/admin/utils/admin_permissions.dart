@@ -1,4 +1,3 @@
-// [추가] 권한 종류를 관리하기 위한 Enum
 enum AdminPermission {
   canSendNotifications,
   canManageUsers,
@@ -8,7 +7,6 @@ enum AdminPermission {
   canManageAdminRoles
 }
 
-// [추가] Enum에 따른 한글 레이블
 const Map<AdminPermission, String> permissionLabels = {
   AdminPermission.canSendNotifications: '알림 전송',
   AdminPermission.canManageUsers: '사용자 정보 수정/삭제',

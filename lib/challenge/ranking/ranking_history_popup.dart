@@ -29,7 +29,6 @@ class _RankingHistoryPopupState extends State<RankingHistoryPopup> {
     _loadAllHistory();
   }
 
-  // ✅✅✅ [수정됨] _loadAllHistory 함수 ✅✅✅
   Future<void> _loadAllHistory() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -54,19 +53,15 @@ class _RankingHistoryPopupState extends State<RankingHistoryPopup> {
 
       // --- 1. 지난주 Top 3 처리 ---
       final weekDoc = results[0] as DocumentSnapshot;
-      // ✅ [수정] data()를 Map 타입으로 명시적으로 변환
       final weekData = weekDoc.data() as Map<String, dynamic>?;
       if (weekData != null && weekData.containsKey('winners') && weekData['winners'] is List) {
-        // ✅ [수정] 타입 변환된 weekData 변수 사용
         _previousWeekWinners = List<Map<String, dynamic>>.from(weekData['winners']);
       }
 
       // --- 2. 지난달 Top 3 처리 ---
       final monthDoc = results[1] as DocumentSnapshot;
-      // ✅ [수정] data()를 Map 타입으로 명시적으로 변환
       final monthData = monthDoc.data() as Map<String, dynamic>?;
       if (monthData != null && monthData.containsKey('winners') && monthData['winners'] is List) {
-        // ✅ [수정] 타입 변환된 monthData 변수 사용
         _previousMonthWinners = List<Map<String, dynamic>>.from(monthData['winners']);
       }
 

@@ -1,16 +1,15 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
-import AppIntents // ✅ [추가] AppIntents 임포트
+import AppIntents
 
 struct RundventureWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        // ActivityAttributes를 우리가 만든 공유 파일로 지정합니다.
         ActivityConfiguration(for: RunningLiveActivityAttributes.self) { context in
             // --- 잠금화면 UI ---
             VStack(alignment: .leading, spacing: 8) {
                 
-                // ✅ [수정] 상단 HStack: 로고 + Spacer + 버튼
+                // 상단 HStack: 로고 + Spacer + 버튼
                 HStack {
                     // 좌측 로고
                     Image(systemName: "figure.run")
@@ -23,7 +22,7 @@ struct RundventureWidgetLiveActivity: Widget {
                     
                     Spacer() // 중간을 밀어냄
                     
-                    // ✅ [수정] 우측 상단 아이콘 버튼 (배경 없음)
+                    // 우측 상단 아이콘 버튼 (배경 없음)
                     if context.state.isPaused {
                         Button(intent: ResumeRunningIntent()) {
                             Image(systemName: "play.fill") // 재개 아이콘
@@ -79,9 +78,7 @@ struct RundventureWidgetLiveActivity: Widget {
                         .font(.subheadline)
                         .foregroundColor(.orange)
                 }
-                
-                // ✅ [삭제] 기존의 하단 버튼 HStack은 삭제됨
-                
+
             }
             .padding(16)
             .background(Color.white)
@@ -134,7 +131,7 @@ struct RundventureWidgetLiveActivity: Widget {
                         
                         Spacer()
 
-                        // ✅ [수정] 다이나믹 아일랜드 버튼: Link -> Button(intent: ...)
+
                         if context.state.isPaused {
                             Button(intent: ResumeRunningIntent()) {
                                 Image(systemName: "play.fill")

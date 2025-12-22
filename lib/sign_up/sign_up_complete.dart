@@ -10,7 +10,7 @@ class SignUpCompleteScreen extends StatelessWidget {
   final String weight;
   final String birthdate;
   final String gender;
-  final String nickname; // 예: 사용자가 'Nick' 이라고 입력했다면, 이 값은 'Nick' 입니다.
+  final String nickname;
   final String bmi;
 
   const SignUpCompleteScreen({
@@ -25,7 +25,6 @@ class SignUpCompleteScreen extends StatelessWidget {
     required this.bmi,
   }) : super(key: key);
 
-  // 회원가입의 모든 과정을 처리하고 오류 발생 시 롤백하는 함수
   Future<void> _processSignUp(BuildContext context) async {
     UserCredential? userCredential;
     User? user;
@@ -37,7 +36,6 @@ class SignUpCompleteScreen extends StatelessWidget {
     );
 
     try {
-      // password 변수에 값이 있을 때만 (이메일 가입일 때만) Auth 계정 생성
       if (password.isNotEmpty) {
         userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: email,
@@ -45,7 +43,6 @@ class SignUpCompleteScreen extends StatelessWidget {
         );
         user = userCredential.user;
       } else {
-        // 소셜 가입일 경우, 이미 Auth 계정이 생성된 상태이므로 현재 유저 정보를 가져옵니다.
         user = FirebaseAuth.instance.currentUser;
       }
 
@@ -53,20 +50,14 @@ class SignUpCompleteScreen extends StatelessWidget {
         throw Exception("User is null. Auth process failed or user not found.");
       }
 
-      // =========================================================================
-      // ✨✨✨ 바로 이 부분이 핵심 수정 사항입니다 ✨✨✨
-      // =========================================================================
-
-      // ✨ 1. 원본 닉네임에서 소문자 버전을 만듭니다 (중복 체크용).
-      // 예: nickname이 'Nick' 이라면, lowercaseNickname은 'nick'이 됩니다.
+      // 닉네임 중복 체크를 위해 소문자 버전 생성
       final String lowercaseNickname = nickname.toLowerCase();
 
-      // 2. Firestore에 모든 정보 일괄 저장
       final batch = FirebaseFirestore.instance.batch();
       final userRef = FirebaseFirestore.instance.collection('users').doc(email);
 
       batch.set(userRef, {
-        // ✨ 'users' 컬렉션에는 화면에 보여줄 '원본' 닉네임을 그대로 저장합니다.
+        // users 컬렉션에는 원본 닉네임 저장 (화면 표시용)
         'nickname': nickname,
         'gender': gender,
         'birthdate': birthdate,
@@ -76,21 +67,17 @@ class SignUpCompleteScreen extends StatelessWidget {
         'email': email,
         'role': 'user',
         'createdAt': FieldValue.serverTimestamp(),
-        // ✨ [추가] 요청하신 대로 사용자의 가입일을 기록하기 위한 필드를 추가합니다.
         'joinDate': FieldValue.serverTimestamp(),
 
-        // ▼▼▼▼▼ [✅ 수정된 부분] 초기 가입 시 '모두 공개(false)'로 명확하게 저장 ▼▼▼▼▼
-        // 이렇게 저장해야 가입 직후에도 정보가 비공개로 뜨지 않습니다.
+        // 초기 가입 시 모든 정보 공개로 설정
         'hideGender': false,
         'hideHeight': false,
         'hideWeight': false,
         'hideBirthdate': false,
         'hideProfile': false,
-        // ▲▲▲▲▲ [✅ 수정 완료] ▲▲▲▲▲
       });
 
-      // ✨ 3. 'nicknames' 컬렉션에는 '반드시' 소문자 닉네임을 문서 ID로 사용합니다.
-      // 이렇게 해야 나중에 ProfileScreen에서 대소문자 구분 없이 중복을 확인할 수 있습니다.
+      // nicknames 컬렉션에는 소문자 닉네임을 문서 ID로 사용 (중복 체크용)
       final nicknameRef = FirebaseFirestore.instance.collection('nicknames').doc(lowercaseNickname);
       batch.set(nicknameRef, {'email': email});
 
@@ -105,9 +92,8 @@ class SignUpCompleteScreen extends StatelessWidget {
       await batch.commit();
       print('User info saved to Firestore successfully.');
 
-      // 4. 모든 과정이 성공하면 로그인 화면으로 이동
       if (context.mounted) {
-        Navigator.of(context).pop(); // 로딩 인디케이터 닫기
+        Navigator.of(context).pop();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -117,15 +103,13 @@ class SignUpCompleteScreen extends StatelessWidget {
     } catch (e) {
       print("Sign up process failed: $e");
 
-      // 롤백(삭제)도 이메일 가입 실패 시에만 실행되도록 수정
       if (password.isNotEmpty && userCredential?.user != null) {
         await userCredential!.user!.delete();
         print("Rolled back (deleted) the created Auth user due to an error.");
       }
 
-      // 사용자에게 오류 알림
       if (context.mounted) {
-        Navigator.of(context).pop(); // 로딩 인디케이터 닫기
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."))
         );
@@ -239,7 +223,6 @@ class SignUpCompleteScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  // 수정된 함수를 호출합니다.
                   await _processSignUp(context);
                 },
                 style: ElevatedButton.styleFrom(

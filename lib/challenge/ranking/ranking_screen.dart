@@ -3,14 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-// ✅ [신규] SharedPreferences import
 import 'package:shared_preferences/shared_preferences.dart';
-// ✅ [신규] 명예의 전당 팝업 import (알림 팝업에서 사용)
 import 'ranking_history_popup.dart';
 import 'ranking_header.dart';
-// ▼▼▼▼▼ [ ⭐️ 신규 추가 ⭐️ ] ▼▼▼▼▼
-import 'monthly_ranking_info_screen.dart'; // 👈 월간 랭킹 보상 안내 페이지
-// ▲▲▲▲▲ [ ⭐️ 신규 추가 ⭐️ ] ▲▲▲▲▲
+import 'monthly_ranking_info_screen.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({Key? key}) : super(key: key);
@@ -21,7 +17,6 @@ class RankingScreen extends StatefulWidget {
 
 class _RankingScreenState extends State<RankingScreen> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // ✅✅✅ [오류 수정] .aRundventure -> .instance ✅✅✅
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final NumberFormat _formatter = NumberFormat('#,###');
 
@@ -40,36 +35,27 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController?.addListener(() {
-      if (_tabController!.indexIsChanging || !_tabController!.indexIsChanging) { // 👈 탭 변경 시 setState 호출
+      if (_tabController!.indexIsChanging || !_tabController!.indexIsChanging) {
         setState(() {});
       }
     });
 
     _currentUserEmail = _auth.currentUser?.email;
 
-    // ✅✅✅ [수정됨] ✅✅✅
-    // 'users' 컬렉션 대신 'weeklyLeaderboard' 컬렉션을 읽도록 변경
-    // 보안 규칙에서 이 컬렉션은 "allow read: if isSignedIn()"이므로 모든 사용자가 접근 가능
     _weeklyRankingStream = _firestore
-        .collection('weeklyLeaderboard/current/users') // 👈 경로 변경
-    // ✅✅✅ [오류 수정] ascending: true -> descending: false ✅✅✅
-        .orderBy('rank', descending: false) // 👈 'rank' 필드로 오름차순 정렬
+        .collection('weeklyLeaderboard/current/users')
+        .orderBy('rank', descending: false)
         .limit(30)
         .snapshots();
 
-    // ✅✅✅ [수정됨] ✅✅✅
-    // 월간 랭킹도 동일한 구조를 가진다고 가정하고 'monthlyLeaderboard'를 읽도록 변경
-    // (참고: 'scheduled.js'에서 이 컬렉션을 생성하는 로직이 필요합니다)
     _monthlyRankingStream = _firestore
-        .collection('monthlyLeaderboard/current/users') // 👈 경로 변경
-    // ✅✅✅ [오류 수정] ascending: true -> descending: false ✅✅✅
-        .orderBy('rank', descending: false) // 👈 'rank' 필드로 오름차순 정렬
+        .collection('monthlyLeaderboard/current/users')
+        .orderBy('rank', descending: false)
         .limit(30)
         .snapshots();
 
-    _fetchMyRank(); // 내 순위 가져오기
+    _fetchMyRank();
 
-    // ✅ [신규] 랭킹 리셋 팝업 확인 로직 호출
     _checkRankingReset();
   }
 
@@ -172,15 +158,13 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
       );
       // 팝업이 닫힌 후, SharedPreferences에 "확인 완료" 타임스탬프 저장
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(prefsKey, newValue);
+      await prefs.setString(prefsKey, newValue      );
     });
   }
-  // ✅✅✅ [신규 함수 끝] ✅✅✅
-
 
   @override
   void dispose() {
-    _tabController?.removeListener(() {}); // 👈 리스너 정리
+    _tabController?.removeListener(() {});
     _tabController?.dispose();
     super.dispose();
   }
@@ -270,14 +254,11 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ▼▼▼▼▼ [ ⭐️ 여기가 수정된 부분입니다 ⭐️ ] ▼▼▼▼▼
           Container(
             color: Colors.white,
-            // 1. Stack을 사용하여 TabBar와 IconButton을 겹치게 함
             child: Stack(
-              alignment: Alignment.centerRight, // 👈 아이콘을 오른쪽 중앙에 정렬
+              alignment: Alignment.centerRight,
               children: [
-                // 2. TabBar는 전체 너비를 차지
                 TabBar(
                   controller: _tabController,
                   labelColor: Color(0xFFFF9F80),
@@ -290,11 +271,9 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
                     Tab(text: '월간 랭킹'),
                   ],
                 ),
-                // 3. 월간 랭킹 탭일 때만 오른쪽에 아이콘 버튼 표시
-                // Visibility 위젯을 사용해 탭 인덱스에 따라 아이콘을 끄고 켬
                 Visibility(
-                  visible: _tabController?.index == 1, // 👈 월간 랭킹 탭(index 1)일 때만 보임
-                  maintainSize: true, // 👈 공간은 항상 차지 (레이아웃 밀림 방지)
+                  visible: _tabController?.index == 1,
+                  maintainSize: true,
                   maintainAnimation: true,
                   maintainState: true,
                   child: Padding(
@@ -303,7 +282,6 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
                       icon: Icon(Icons.card_giftcard_outlined, color: Colors.blueAccent),
                       tooltip: '월간 랭킹 보상 안내',
                       onPressed: () {
-                        // 👈 [신규] 새 페이지로 이동
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -317,10 +295,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
               ],
             ),
           ),
-          // ▲▲▲▲▲ [ ⭐️ 여기가 수정된 부분입니다 ⭐️ ] ▲▲▲▲▲
 
-          // --- 내 순위 표시 (선택된 탭 기준) ---
-          // (수정 없음)
           _buildMyRankCard(),
 
           // --- Top 30 랭킹 리스트 (탭뷰) --- (수정 없음)
@@ -410,8 +385,6 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
         }
         if (snapshot.hasError) {
           print("랭킹 스트림 오류 ($expField): ${snapshot.error}");
-          // ❗️[수정] .count() 쿼리가 아니므로 'permission-denied' 오류는 여기서 발생하면 안 됨
-          // ❗️'monthlyLeaderboard/current/users' 컬렉션이 없는 경우 오류가 날 수 있음
           if (snapshot.error.toString().contains('permission-denied')) {
             return Center(child: Text('랭킹을 불러오는 중 오류가 발생했습니다.\n(보안 규칙 확인)'));
           } else if (snapshot.error.toString().contains('not found') || snapshot.error.toString().contains('NOT_FOUND')) {
@@ -420,8 +393,6 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
           return Center(child: Text('랭킹을 불러오는 중 오류가 발생했습니다.'));
         }
 
-        // ✅ [수정됨] leaderboard 컬렉션은 'exp > 0'인 사용자만 저장한다고 가정함.
-        // ✅ 만약 0 EXP 유저도 포함된다면 이전 로직(where)을 다시 사용해야 함.
         final participatingUsers = snapshot.data?.docs;
 
         if (participatingUsers == null || participatingUsers.isEmpty) {
@@ -437,17 +408,6 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
               )
           );
         }
-
-        // ✅ [수정됨] 랭킹 리스트는 Cloud Function이 이미 'rank' 기준으로 정렬해서 줌.
-        // ✅ 'weeklyLeaderboard'는 'rank' 필드를 포함해야 함.
-        // ✅ [주의] 동점자 처리가 Cloud Function에서 이미 계산되었다고 가정함.
-        // ✅ 만약 Cloud Function이 동점자 처리를 안했다면, 'exp'로 다시 정렬해야 함.
-        // ✅ 지금 코드는 Cloud Function이 'rank'를 완벽히 계산했다고 가정함.
-
-        // ❗️❗️❗️ [자체 수정]
-        // ❗️ 'expField'가 여전히 필요함. leaderboard 문서에도 'weeklyExp'/'monthlyExp'가 저장되어야 함.
-        // ❗️ 'scheduled.js'에서 'weeklyExp'를 저장하고 있으므로 'expField'는 유효함.
-        // ❗️ 'doc.id'가 userEmail이므로 'isCurrentUser' 로직도 유효함.
 
         return RefreshIndicator(
           onRefresh: _fetchMyRank,

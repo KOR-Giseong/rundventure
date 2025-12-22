@@ -20,7 +20,6 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
   final FirebaseAuth _auth = FirebaseAuth.instance;
   VideoPlayerController? _videoController;
 
-  // ✨ 1. 로딩 상태 관리를 위한 변수 추가
   bool _isLoading = true;
   String _loadingMessage = "앱을 실행하고 있습니다...";
 
@@ -47,30 +46,24 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
       setState(() {});
     });
 
-    // ✨ 2. UI가 준비되면 모든 초기화 작업을 시작하는 함수 호출
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
   }
 
-  /// ✨ 3. 모든 초기화 작업을 순서대로 관리하는 함수
   Future<void> _initializeApp() async {
-    // 작업 1: 자동 로그인 시도
     setState(() {
       _loadingMessage = "사용자 정보를 확인 중입니다...";
     });
     bool isLoggedIn = await _performAutoLoginCheck();
 
-    // 로그인에 성공했다면 MainScreen으로 이미 이동했으므로 여기서 함수를 종료합니다.
     if (isLoggedIn) return;
 
-    // 작업 2: (로그인 안된 경우) 필수 리소스 다운로드 (예시)
     setState(() {
       _loadingMessage = "필수 데이터를 준비 중입니다...";
     });
-    await _downloadInitialData(); // 실제 다운로드 로직이 들어갈 함수
+    await _downloadInitialData();
 
-    // 모든 준비가 끝나면 로딩 상태를 false로 변경하여 버튼들을 보여줍니다.
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -78,13 +71,12 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
     }
   }
 
-  /// 자동 로그인 함수 (로그인 성공 시 true, 실패 시 false 반환하도록 수정)
   Future<bool> _performAutoLoginCheck() async {
     final prefs = await SharedPreferences.getInstance();
     final isAutoLogin = prefs.getBool('autoLogin') ?? false;
 
     if (!isAutoLogin) {
-      return false; // 자동 로그인 설정이 안되어 있으므로 실패
+      return false;
     }
 
     final email = prefs.getString('email') ?? '';
@@ -110,24 +102,21 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
               MaterialPageRoute(builder: (context) => MainScreen(showWelcomeMessage: false)),
             );
           }
-          return true; // 로그인 성공
+          return true;
         } else {
           await _auth.signOut();
-          return false; // 사용자 정보가 DB에 없으므로 실패
+          return false;
         }
       } else {
-        return false; // 로그인 정보가 없으므로 실패
+        return false;
       }
     } catch (e) {
       print("자동 로그인 실패: $e");
-      return false; // 에러 발생 시 실패
+      return false;
     }
   }
 
-  /// 리소스/데이터 다운로드를 시뮬레이션하는 예제 함수
   Future<void> _downloadInitialData() async {
-    // 실제로는 여기서 서버와 통신하여 데이터를 다운로드합니다.
-    // 예시로 2초간 딜레이를 줍니다.
     await Future.delayed(Duration(seconds: 2));
   }
 
@@ -183,9 +172,7 @@ class _Home_screen2State extends State<Home_screen2> with SingleTickerProviderSt
               ),
             ),
 
-            // ✨ 4. _isLoading 값에 따라 UI 분기 처리
             if (_isLoading)
-            // 로딩 중일 때 보여줄 UI
               Positioned.fill(
                 child: Container(
                   color: Colors.black.withOpacity(0.5),

@@ -47,9 +47,7 @@ class ChallengeHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // ✅ 2. 간격 수정
                   const SizedBox(width: 25),
-                  // 🔸 사담 텍스트 (비활성 스타일)
                   GestureDetector(
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const ChallengeScreen()));
@@ -64,11 +62,9 @@ class ChallengeHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // ✅ 3. 랭킹 탭 추가 (비활성)
                   const SizedBox(width: 25),
                   GestureDetector(
                     onTap: () {
-                      // ✅ 4. 랭킹 스크린으로 이동
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const RankingScreen()));
                     },
                     child: Text( // 비활성 스타일
@@ -89,12 +85,9 @@ class ChallengeHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // [LEFT] 뒤로 가기 버튼: ✅ NavigationBar와 동일한 IconButton + all(3.0) 패딩
                 Padding(
-                  // NavigationBar와 동일하게 all(3.0) 패딩을 적용
                   padding: const EdgeInsets.all(0.0),
                   child: IconButton(
-                    // IconButton 사용 시 내부 패딩을 0으로 설정해도 터치 영역 때문에 여백이 남음
                     padding: EdgeInsets.zero,
                     icon: Image.asset(
                       'assets/images/Back-Navs.png',
@@ -110,13 +103,10 @@ class ChallengeHeader extends StatelessWidget {
                   ),
                 ),
 
-                // [RIGHT] 빈 공간: NavigationBar의 오른쪽 버튼(만들기 버튼) 공간에 맞게 대칭 유지
-                // NavigationBar의 오른쪽 공간: Padding(right: 8.0) + IconButton(45x45)
                 const Padding(
-                  // 오른쪽 패딩 8.0에 맞추고
                   padding: EdgeInsets.only(right: 8.0),
                   child: SizedBox(
-                    width: 45, // 만들기 버튼 크기 45에 맞춥니다.
+                    width: 45,
                     height: 45,
                   ),
                 ),

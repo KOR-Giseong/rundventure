@@ -6,10 +6,7 @@ import 'package:flutter/material.dart';
 import '../../game_selection/friend_battle_intro_screen.dart';
 import '../../ghostrun_screen/ghostrun_ready.dart';
 import '../../ghostrun_screen/ghostrun_stretching.dart';
-
-// ▼▼▼▼▼ [ ✨ 추가된 import ✨ ] ▼▼▼▼▼
 import 'package:rundventure/challenge/chat_room_screen.dart';
-// ▲▲▲▲▲ [ ✨ 추가된 import ✨ ] ▲▲▲▲▲
 
 class ContentCardSection extends StatelessWidget {
   final PageController pageController;
@@ -37,13 +34,9 @@ class ContentCardSection extends StatelessWidget {
             controller: pageController,
             onPageChanged: onPageChanged,
             children: [
-              // ✅ 친구 대결 카드
               _buildFriendBattleCard(context, cardHeight),
-              // ✅ BMI 카드
               _buildBMICard(cardHeight),
-              // ✅ 운동 기록 카드
               _buildRunningScheduleCard(cardHeight),
-              // ✅ 챌린지 카드
               _buildChallengeCard(cardHeight),
             ],
           ),
@@ -53,20 +46,18 @@ class ContentCardSection extends StatelessWidget {
     );
   }
 
-  // ✅ 친구 대결 카드
   Widget _buildFriendBattleCard(BuildContext context, double cardHeight) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            // 실제 FriendBattleIntroScreen 클래스를 호출합니다. (import 필요)
             builder: (context) => FriendBattleIntroScreen(),
           ),
         );
       },
       child: Card(
-        clipBehavior: Clip.antiAlias, // ✅ 둥근 모서리에 맞춰 이미지 자르기
+        clipBehavior: Clip.antiAlias,
         color: Colors.black,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -79,19 +70,16 @@ class ContentCardSection extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. 배경 이미지
             Image.asset(
               'assets/images/friendbattle.png',
               fit: BoxFit.cover,
             ),
-            // 2. 텍스트 영역
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // NEW OPEN 버튼
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -133,7 +121,6 @@ class ContentCardSection extends StatelessWidget {
     );
   }
 
-  // ✅ BMI 카드 (메인)
   Widget _buildBMICard(double cardHeight) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(userEmail).get(),
@@ -164,13 +151,12 @@ class ContentCardSection extends StatelessWidget {
           description: '현재 BMI는 $bmi ($category) 입니다.',
           cardHeight: cardHeight,
           backgroundColor: Colors.white,
-          trailing: _buildBMIGraph(bmiValue), // ✅ 여기서 함수 호출
+          trailing: _buildBMIGraph(bmiValue),
         );
       },
     );
   }
 
-  // ✅ 운동 기록 카드
   Widget _buildRunningScheduleCard(double cardHeight) {
     final today = DateTime.now();
     final todayFormatted =
@@ -312,7 +298,6 @@ class ContentCardSection extends StatelessWidget {
     );
   }
 
-  // ✅ [수정됨] 함수 이름을 _buildBMIGraph로 복구
   Widget _buildBMIGraph(double bmi) {
     return SizedBox(
       width: 70,

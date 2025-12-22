@@ -1,22 +1,16 @@
-// [전체 코드] async_battle_list_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:intl/intl.dart'; // 날짜 포맷을 위해 추가
-import 'dart:async'; // StreamGroup.merge 및 StreamTransformer를 위해 추가
-import 'package:async/async.dart' as async; // 👈 [유지] 별명 사용
-
-// ▼▼▼▼▼ [ ⭐️ 신규: 카운트다운 및 설정 로드용 임포트 ⭐️ ] ▼▼▼▼▼
+import 'package:intl/intl.dart';
+import 'dart:async';
+import 'package:async/async.dart' as async;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/services.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// ▲▲▲▲▲ [ ⭐️ 신규: 카운트다운 및 설정 로드용 임포트 ⭐️ ] ▲▲▲▲▲
-
-import 'async_battle_running_screen.dart'; // 👈 오프라인 대결 전용 러닝 페이지
-import 'async_battle_detail_screen.dart'; // 👈 상세 페이지 임포트
+import 'async_battle_running_screen.dart';
+import 'async_battle_detail_screen.dart';
 
 
 class AsyncBattleListScreen extends StatefulWidget {
@@ -49,25 +43,21 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     }
   }
 
-  // (로직 함수 - 수정됨)
   void _setupStream() {
     if (_currentUserEmail == null) return;
 
-    // 1. 내가 도전자(challenger)인 대결 스트림
     Stream<QuerySnapshot> stream1 = _firestore
         .collection('asyncBattles')
         .where('challengerEmail', isEqualTo: _currentUserEmail)
         .orderBy('createdAt', descending: true)
         .snapshots();
 
-    // 2. 내가 상대방(opponent)인 대결 스트림
     Stream<QuerySnapshot> stream2 = _firestore
         .collection('asyncBattles')
         .where('opponentEmail', isEqualTo: _currentUserEmail)
         .orderBy('createdAt', descending: true)
         .snapshots();
 
-    // 3. StreamGroup.merge + StreamTransformer
     _battlesStream = async.StreamGroup.merge([stream1, stream2])
         .transform(StreamTransformer.fromHandlers(
       handleData: (data, sink) async {
@@ -77,25 +67,21 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
         }
 
         try {
-          // 1. 도전자 쿼리 (수동 .get())
           final challengerFuture = _firestore
               .collection('asyncBattles')
               .where('challengerEmail', isEqualTo: _currentUserEmail)
               .get();
 
-          // 2. 상대방 쿼리 (수동 .get())
           final opponentFuture = _firestore
               .collection('asyncBattles')
               .where('opponentEmail', isEqualTo: _currentUserEmail)
               .get();
 
-          // 3. 두 쿼리를 동시에 실행
           final results = await Future.wait([challengerFuture, opponentFuture]);
 
           final List<QueryDocumentSnapshot> challengerDocs = results[0].docs;
           final List<QueryDocumentSnapshot> opponentDocs = results[1].docs;
 
-          // 4. 두 목록을 Map을 사용해 병합 (중복 제거)
           final allDocsMap = <String, QueryDocumentSnapshot>{};
 
           for (var doc in challengerDocs) {
@@ -105,7 +91,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
             allDocsMap[doc.id] = doc;
           }
 
-          // 5. 결합된 목록을 스트림으로 전달
           sink.add(allDocsMap.values.toList());
 
         } catch (e) {
@@ -120,7 +105,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
   }
 
 
-  // (로직 함수 - 수정 없음)
   Future<void> _cancelBattle(String battleId) async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
@@ -131,7 +115,7 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
       final result = await callable.call({'battleId': battleId});
 
       if (!mounted) return;
-      Navigator.pop(context); // 로딩 닫기
+      Navigator.pop(context);
 
       if (result.data['success'] == true) {
         _showCustomSnackBar("대결이 취소되었습니다.");
@@ -141,7 +125,7 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     } catch (e) {
       print("cancelAsyncBattle 호출 오류: $e");
       if (mounted) {
-        Navigator.pop(context); // 로딩 닫기
+        Navigator.pop(context);
         _showCustomSnackBar("대결 취소 중 오류가 발생했습니다.", isError: true);
       }
     } finally {
@@ -151,25 +135,19 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     }
   }
 
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 수정: 카운트다운 적용된 시작 함수 ⭐️⭐️⭐️ ] ▼▼▼▼▼
   Future<void> _startRun(String battleId, double targetDistanceKm) async {
     if (_isProcessing) return;
-    // setState(() => _isProcessing = true); // 필요 시 활성화
 
-    // 1. SharedPreferences 로드 (워치 설정 확인)
     final prefs = await SharedPreferences.getInstance();
     final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
     if (!mounted) return;
 
-    // 2. 카운트다운 다이얼로그 표시
     showDialog(
       context: context,
       barrierDismissible: false,
-      // ⭐️ [수정] withWatch 값을 전달
       builder: (context) => CountdownDialog(withWatch: withWatch),
     ).then((_) {
-      // 3. 다이얼로그 종료(3초 후) -> 러닝 화면으로 이동
       if (mounted) {
         Navigator.push(
           context,
@@ -177,16 +155,14 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
             builder: (context) => AsyncBattleRunningScreen(
               targetDistanceKm: targetDistanceKm,
               battleId: battleId,
-              withWatch: withWatch, // 👈 설정값 전달
+              withWatch: withWatch,
             ),
           ),
         );
       }
     });
   }
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 수정: 카운트다운 적용된 시작 함수 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
-  // (UI 함수 - 수정 없음)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -228,7 +204,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
 
           final allBattles = snapshot.data!;
 
-          // (정렬 로직)
           allBattles.sort((a, b) {
             final aData = a.data() as Map<String, dynamic>;
             final bData = b.data() as Map<String, dynamic>;
@@ -241,7 +216,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
             return bTime.compareTo(aTime);
           });
 
-          // (목록 분류 로직)
           final List<QueryDocumentSnapshot> myTurnBattles = [];
           final List<QueryDocumentSnapshot> waitingBattles = [];
           final List<QueryDocumentSnapshot> completedBattles = [];
@@ -268,21 +242,17 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
             }
           }
 
-          // (UI 렌더링)
           return ListView(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
-              // --- 내 차례 섹션 ---
               if (myTurnBattles.isNotEmpty)
                 _buildSectionTitle("🔥 내 차례인 대결", myTurnBattles.length),
               ...myTurnBattles.map((doc) => _buildBattleCard(doc)).toList(),
 
-              // --- 대기 중 섹션 ---
               if (waitingBattles.isNotEmpty)
                 _buildSectionTitle("⏳ 대기 중인 대결", waitingBattles.length),
               ...waitingBattles.map((doc) => _buildBattleCard(doc)).toList(),
 
-              // --- 완료/취소 섹션 ---
               if (completedBattles.isNotEmpty)
                 _buildSectionTitle("🗓️ 완료 / 취소된 대결", completedBattles.length),
               ...completedBattles.map((doc) => _buildBattleCard(doc)).toList(),
@@ -293,7 +263,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     );
   }
 
-  // (UI 헬퍼)
   Widget _buildSectionTitle(String title, int count) {
     return Padding(
       padding: const EdgeInsets.only(top: 16.0, bottom: 8.0, left: 4.0),
@@ -320,21 +289,18 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     );
   }
 
-  // (UI 헬퍼)
   Widget _buildBattleCard(QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final battleId = doc.id;
 
     final bool amIChallenger = data['challengerEmail'] == _currentUserEmail;
 
-    // 상대방 정보
     final String opponentNickname = amIChallenger ? data['opponentNickname'] : data['challengerNickname'];
     final String? opponentProfileUrl = amIChallenger ? data['opponentProfileUrl'] : data['challengerProfileUrl'];
 
     final double targetKm = (data['targetDistanceKm'] as num).toDouble();
     final String status = data['status'];
 
-    // "내 차례" 여부
     final bool isOpponentMyTurn = !amIChallenger &&
         status == 'running' &&
         data['opponentRunData'] == null;
@@ -342,8 +308,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
         status == 'pending';
     final bool isMyTurn = isOpponentMyTurn || isChallengerMyTurn;
 
-
-    // 상태 텍스트/색상/액션 결정
     String statusText = "";
     Color statusColor = Colors.grey;
     Widget? actionWidget;
@@ -389,12 +353,11 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
       statusColor = Colors.orangeAccent;
 
     } else if (status == 'finished') {
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 파트 2 수정: 무승부 UI 처리 ⭐️⭐️⭐️ ] ▼▼▼▼▼
-      final bool isDraw = data['isDraw'] == true; // 무승부 여부 체크
+      final bool isDraw = data['isDraw'] == true;
 
       if (isDraw) {
         statusText = "🤝 무승부";
-        statusColor = Colors.indigo; // 무승부는 남색 등으로 구별
+        statusColor = Colors.indigo;
       } else {
         final String winnerEmail = data['winnerEmail'] ?? '';
         if (winnerEmail == _currentUserEmail) {
@@ -405,7 +368,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
           statusColor = Colors.red;
         }
       }
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 파트 2 수정: 무승부 UI 처리 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     } else if (status == 'cancelled') {
       statusText = "❌ 취소됨";
@@ -464,7 +426,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     );
   }
 
-  // (헬퍼 함수 - 수정 없음)
   String _formatTime(int seconds) {
     final hours = seconds ~/ 3600;
     final minutes = (seconds % 3600) ~/ 60;
@@ -476,7 +437,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     }
   }
 
-  // (헬퍼 함수 - 수정 없음)
   void _showCancelConfirmDialog(String battleId) {
     if (!mounted) return;
     showDialog(
@@ -505,7 +465,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     );
   }
 
-  // (헬퍼 함수 - 수정 없음)
   void _showCustomSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -533,7 +492,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
     );
   }
 
-  // (헬퍼 함수 - 수정 없음)
   void _showLoadingDialog(String message) {
     if (!mounted) return;
     showDialog(
@@ -555,9 +513,7 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
   }
 }
 
-// ▼▼▼▼▼ [ ⭐️ 신규 추가: 카운트다운 다이얼로그 ⭐️ ] ▼▼▼▼▼
 class CountdownDialog extends StatefulWidget {
-  // ⭐️ [수정] withWatch 변수 추가
   final bool withWatch;
   const CountdownDialog({Key? key, required this.withWatch}) : super(key: key);
 
@@ -599,10 +555,8 @@ class _CountdownDialogState extends State<CountdownDialog> {
   }
 
   void _startTimer() {
-    // 1. 시작 시 3초 음성 및 워치 전송
     if (_countdown > 0) {
-      _speak(_countdown.toString()); // "3"
-      // ⭐️ [수정] withWatch 체크 후 전송
+      _speak(_countdown.toString());
       if (widget.withWatch) {
         try {
           _watch.sendMessage({'command': 'showWarmup'});
@@ -621,13 +575,10 @@ class _CountdownDialogState extends State<CountdownDialog> {
 
       if (_countdown == 1) {
         timer.cancel();
-        setState(() => _countdown = 0); // "START!"로 변경
+        setState(() => _countdown = 0);
 
-        // ▼▼▼▼▼ [ ⭐️ 수정: START 화면과 함께 음성 출력 ⭐️ ] ▼▼▼▼▼
         _speak("대결을 시작합니다!");
-        // ▲▲▲▲▲ [ ⭐️ 수정: START 화면과 함께 음성 출력 ⭐️ ] ▲▲▲▲▲
 
-        // ⭐️ [수정] withWatch 체크 후 전송
         if (widget.withWatch) {
           try {
             _watch.sendMessage({'command': 'startRunningUI'});
@@ -645,8 +596,7 @@ class _CountdownDialogState extends State<CountdownDialog> {
         });
 
         if (_countdown > 0) {
-          _speak(_countdown.toString()); // "2", "1"
-          // ⭐️ [수정] withWatch 체크 후 전송
+          _speak(_countdown.toString());
           if (widget.withWatch) {
             try {
               _watch.sendMessage({'command': 'countdown', 'value': _countdown});
@@ -696,4 +646,3 @@ class _CountdownDialogState extends State<CountdownDialog> {
     );
   }
 }
-// ▲▲▲▲▲ [ ⭐️ 신규 추가: 카운트다운 다이얼로그 ⭐️ ] ▲▲▲▲▲

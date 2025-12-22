@@ -1,14 +1,8 @@
-// [Part 2] 상대방 프로필 화면
-// 파일명: other_user_profile_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-
-// ▼▼▼▼▼ [친구 기능] 1. Auth, Functions 패키지 임포트 ▼▼▼▼▼
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-// ▲▲▲▲▲ [친구 기능] 1. Auth, Functions 패키지 임포트 ▲▲▲▲▲
 
 import 'package:rundventure/profile/leveling_service.dart';
 import 'package:rundventure/profile/report/report_user_screen.dart';
@@ -52,7 +46,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   bool hideWeight = true;
   bool hideBirthdate = true;
 
-  // ✅ [Part 2 신규 추가] 대결 기록 비공개 상태
   bool hideBattleStats = true;
 
   bool _isLoadingProfile = true;
@@ -272,9 +265,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
         final bool userHideSetting = data['hideProfile'] ?? false;
         final bool shouldHide = userHideSetting && !widget.isAdminViewing;
 
-        // ✅ [Part 2 수정] 대결 기록 비공개 설정 로드
         final bool userHideBattleStats = data['hideBattleStats'] ?? false;
-        // 관리자가 보고 있다면 숨김 설정을 무시하고 보여줌 (선택 사항)
         final bool shouldHideBattleStats = userHideBattleStats && !widget.isAdminViewing;
 
         if (mounted) {
@@ -282,7 +273,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
             nickname = data['nickname'] ?? '알 수 없음';
             _profileIsHidden = shouldHide;
 
-            // ✅ [Part 2 수정] 상태 변수에 저장
             hideBattleStats = shouldHideBattleStats;
 
             _battleWins = data['battleWins'] as int? ?? 0;
@@ -501,8 +491,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     }
   }
 
-
-  // [친구 기능] 6. 친구 상태 확인 로직
   Future<void> _checkFriendshipStatus() async {
     if (_myEmail == null) {
       setState(() => _friendshipStatus = 'none');
@@ -559,9 +547,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     }
   }
 
-  // [친구 기능] 7. Cloud Functions 호출 로직
-
-  // 7-1. 친구 요청 보내기
   Future<void> _sendFriendRequest() async {
     if (_isProcessingFriendAction) return;
     setState(() => _isProcessingFriendAction = true);
@@ -805,8 +790,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                     isOtherUserProfile: true,
                   ),
 
-                  // ▼▼▼▼▼ [ ✅ Part 2 수정 (W/L UI 조건 추가) ] ▼▼▼▼▼
-                  // hideBattleStats가 false일 때만 대결 기록을 표시합니다.
                   if (!_isLoadingProfile && !_profileIsHidden && !_userNotFound && !hideBattleStats)
                     Padding(
                       padding: const EdgeInsets.only(top: 16.0),
@@ -833,7 +816,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                         ),
                       ),
                     ),
-                  // ▲▲▲▲▲ [ ✅ Part 2 수정 (W/L UI 조건 추가) ] ▲▲▲▲▲
 
                   if (!_userNotFound) _buildFriendshipButton(),
 
@@ -1429,7 +1411,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     return 'assets/badges/50000Kcal.png';
   }
 
-  // ✅ [Part 2 수정] 걸음수 포맷팅 함수 (1.5만보 등 소수점 처리)
   String _formatSteps(double steps) {
     final formatter = NumberFormat('#,###');
 

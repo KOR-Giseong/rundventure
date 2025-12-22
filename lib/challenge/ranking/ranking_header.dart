@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rundventure/challenge/challenge.dart';
 import 'package:rundventure/challenge/challenge_screen.dart';
 import 'package:rundventure/main_screens/main_screen.dart';
-// ✅ 1. [추가] 생성한 랭킹 설명 팝업 파일 import
 import 'ranking_info_popup.dart';
-// ✅ 2. [신규 추가] 명예의 전당 팝업 파일 import
 import 'ranking_history_popup.dart';
 
 
@@ -81,12 +79,10 @@ class RankingHeader extends StatelessWidget {
                   ),
                 ),
 
-                // ✅ [수정] 오른쪽에 2개의 아이콘 버튼을 Row로 감쌈
                 Padding(
                   padding: const EdgeInsets.only(right: 12.0),
                   child: Row(
                     children: [
-                      // --- 명예의 전당 버튼 (신규) ---
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: BoxConstraints(),
@@ -104,9 +100,8 @@ class RankingHeader extends StatelessWidget {
                           );
                         },
                       ),
-                      const SizedBox(width: 1), // 버튼 사이 간격
+                      const SizedBox(width: 1),
 
-                      // --- 랭킹 안내 버튼 (기존) ---
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: BoxConstraints(),

@@ -9,10 +9,8 @@ import '../admin/admin_screen.dart';
 import 'package:uuid/uuid.dart';
 
 import '../admin/utils/admin_permissions.dart';
-import '../profile/other_user_profile.dart'; // TODO: other_user_profile.dart 경로 확인
-import 'package:rundventure/achievement/exercise_data.dart'; // TODO: exercise_data.dart 경로 확인
-
-// ✅ 챌린지 방으로 이동하기 위해 임포트 (UserNotificationPage에서 사용)
+import '../profile/other_user_profile.dart';
+import 'package:rundventure/achievement/exercise_data.dart';
 import 'package:rundventure/challenge/chat_room_screen.dart';
 
 
@@ -30,11 +28,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final picker = ImagePicker();
   final uuid = Uuid();
 
-  // ✅ Firestore/Auth 인스턴스 추가
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // ✅ FocusNode 관련 변수들 (댓글 삭제 시 키보드 문제 해결용)
   final FocusNode _commentFocusNode = FocusNode();
   final FocusNode _dummyFocusNode = FocusNode();
 
@@ -45,7 +41,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   File? _selectedImage;
   Map<String, Map<String, dynamic>> _userCache = {};
 
-  bool _isProcessingParticipation = false; // ✅ 참여/취소 중복 클릭 방지 변수
+  bool _isProcessingParticipation = false;
 
   @override
   void initState() {
@@ -53,7 +49,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _checkCurrentUserPermissions();
   }
 
-  // ✅ FocusNode 메모리 해제
   @override
   void dispose() {
     _messageController.dispose();
@@ -63,9 +58,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     super.dispose();
   }
 
-  // (수정 없음)
   Future<void> _checkCurrentUserPermissions() async {
-    final user = _auth.currentUser; // ✅ _auth 인스턴스 사용
+    final user = _auth.currentUser;
     if (user == null || user.email == null) return;
 
     if (user.email == 'ghdrltjd244142@gmail.com') {
@@ -74,7 +68,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
 
     try {
-      final userDoc = await _firestore.collection('users').doc(user.email!).get(); // ✅ _firestore 인스턴스 사용
+      final userDoc = await _firestore.collection('users').doc(user.email!).get();
       if (userDoc.exists && userDoc.data() != null) {
         final data = userDoc.data()!;
         if (mounted) {
@@ -91,15 +85,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  // (수정 없음)
   Future<Map<String, dynamic>> _getUserDetails(String email) async {
     if (_userCache.containsKey(email)) {
       return _userCache[email]!;
     }
     try {
-      final doc = await _firestore.collection('users').doc(email).get(); // ✅ _firestore 인스턴스 사용
+      final doc = await _firestore.collection('users').doc(email).get();
       if (doc.exists && doc.data() != null) {
-        final data = doc.data() as Map<String, dynamic>; // ✅ [수정] Map 캐스팅
+        final data = doc.data() as Map<String, dynamic>;
         if (mounted) {
           setState(() {
             _userCache[email] = {
@@ -119,28 +112,24 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     };
   }
 
-  // (수정 없음)
   bool _hasPermission(AdminPermission permission) {
     if (_isSuperAdmin || _currentUserRole == 'general_admin') return true;
     return _currentAdminPermissions[permission.name] ?? false;
   }
 
-  // (수정 없음)
   String decodeEmail(String encodedEmail) {
     return encodedEmail.replaceAll('_at_', '@').replaceAll('_dot_', '.');
   }
 
-  // (수정 없음)
   Future<void> _pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null && mounted) { // mounted 확인
+    if (pickedFile != null && mounted) {
       setState(() {
         _selectedImage = File(pickedFile.path);
       });
     }
   }
 
-  // (수정 없음)
   void _sendMessage() {
     final message = _messageController.text.trim();
     final imageFile = _selectedImage;
@@ -156,8 +145,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _performSendInBackground(message, imageFile);
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 부분 ✨✨✨ ] ▼▼▼▼▼
-  // 다른 사용자에게 알림을 보내는 로직(규칙 위반)을 제거합니다.
+  // 메시지 전송 - 보안 규칙 위반으로 인해 알림 로직 제거, 단일 set 사용
   Future<void> _performSendInBackground(String message, File? imageFile) async {
     try {
       final user = _auth.currentUser;
@@ -170,22 +158,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
       final challengeDocRef = _firestore.collection('challenges').doc(widget.challengeId);
 
-      // (주석 처리 - 알림 전송 로직이 제거되어 챌린지 정보 조회가 불필요)
-      // final challengeDoc = await challengeDocRef.get();
-      // if (!challengeDoc.exists || challengeDoc.data() == null) {
-      //   print("챌린지가 존재하지 않아 메시지를 보낼 수 없습니다.");
-      //   return;
-      // }
-      // final challengeData = challengeDoc.data() as Map<String, dynamic>;
-      // final List<String> participants = List<String>.from(challengeData['participants'] ?? []);
-      // final String creatorEmail = decodeEmail(challengeData['userEmail'] ?? '');
-      // final String challengeName = challengeData['name'] ?? '챌린지';
-      //
-      // final Set<String> usersToNotify = Set<String>.from(participants);
-      // if (creatorEmail.isNotEmpty) {
-      //   usersToNotify.add(creatorEmail);
-      // }
-
       String imageUrl = '';
       if (imageFile != null) {
         final ref = FirebaseStorage.instance.ref().child('chat_images').child('$docId.jpg');
@@ -193,15 +165,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         imageUrl = await ref.getDownloadURL();
       }
 
-      // (주석 처리 - 배치 쓰기 대신 단일 쓰기(set)를 사용합니다)
-      // final batch = _firestore.batch();
-
       final commentRef = challengeDocRef.collection('comments').doc(docId);
 
-      // (주석 처리 - 배치 대신 set 사용)
-      // batch.set(commentRef, { ... });
-
-      // ✅ 배치 대신 단일 .set()을 사용하여 댓글만 생성합니다.
       await commentRef.set({
         'comment': message,
         'timestamp': FieldValue.serverTimestamp(),
@@ -209,32 +174,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         'userEmail': userEmail,
         'imageUrl': imageUrl,
       });
-
-      // (주석 처리 - 다른 사용자에게 알림을 쓰는 로직은 보안 규칙 위반으로 제거)
-      // for (String emailToNotify in usersToNotify) {
-      //   if (emailToNotify == userEmail) continue;
-      //
-      //   final notificationRef = _firestore
-      //       .collection('notifications')
-      //       .doc(emailToNotify) // <-- 이 부분이 보안 규칙 위반
-      //       .collection('items')
-      //       .doc();
-      //
-      //   batch.set(notificationRef, {
-      //     'type': 'comment',
-      //     'userName': userName,
-      //     'message': message,
-      //     'title': "$userName 님이 '${challengeName ?? '챌린지'}'에 댓글을 남겼습니다.",
-      //     'challengeId': widget.challengeId,
-      //     'challengeName': challengeName,
-      //     'commenterEmail': userEmail,
-      //     'imageUrl': imageUrl,
-      //     'timestamp': FieldValue.serverTimestamp(),
-      //     'isRead': false,
-      //   });
-      // }
-      //
-      // await batch.commit();
 
     } catch (e) {
       print("백그라운드 메시지 전송 오류: $e");
@@ -248,10 +187,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
     }
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 부분 ✨✨✨ ] ▲▲▲▲▲
-
-
-// (수정 없음 - 인원 제한 로직 포함)
   Future<void> _toggleParticipation(bool join, DocumentSnapshot challengeDoc) async {
     if (_isProcessingParticipation) return;
     if (mounted) setState(() => _isProcessingParticipation = true);
@@ -272,7 +207,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final DateTime endDate = (challengeStartTime?.toDate() ?? DateTime.now()).add(Duration(days: int.tryParse(data['duration'] ?? '0') ?? 0));
     final now = DateTime.now();
 
-    // ✅ 참여 인원 제한 로직 (수정 없음)
     if (join) {
       final int participantLimit = data['participantLimit'] ?? 0;
       final int currentCount = currentParticipants.length;
@@ -289,7 +223,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
     }
 
-    // (수정 없음)
     if (!join && endDate.difference(now).inDays <= 3) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -301,7 +234,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       return;
     }
 
-    // (수정 없음)
     if (!join && endDate.difference(now).inDays > 3) {
       bool? shouldCancel = await _showCancelDialog();
       if (shouldCancel == null || !shouldCancel) {
@@ -311,7 +243,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
 
     try {
-      // (수정 없음)
       double userTotalDistance = 0.0;
 
       Timestamp? userJoinTimestamp;
@@ -346,7 +277,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         print("User $userEmail total distance to remove: $userTotalDistance km");
       }
 
-      // (수정 없음)
       List<String> updatedParticipants = List<String>.from(currentParticipants);
       WriteBatch batch = _firestore.batch();
 
@@ -374,7 +304,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
       await batch.commit();
 
-      // (수정 없음)
       final updatedDoc = await challengeRef.get();
       final updatedData = updatedDoc.data() as Map<String, dynamic>?;
       if (updatedData != null) {
@@ -402,7 +331,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  // (수정 없음)
   Future<bool?> _showCancelDialog() async {
     return showDialog<bool>(
       context: context,
@@ -444,7 +372,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  // (수정 없음)
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -457,13 +384,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
-  // (수정 없음)
   String _formatTimestamp(Timestamp timestamp) {
     final date = timestamp.toDate();
     return DateFormat('yyyy.MM.dd HH:mm').format(date);
   }
 
-  // 챌린지 정보 위젯 빌드 (수정 없음)
   Widget _buildChallengeInfo(DocumentSnapshot challengeDoc) {
     if (!challengeDoc.exists || challengeDoc.data() == null) {
       return Padding(
@@ -496,7 +421,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final formattedDate = timestamp != null ? _formatTimestamp(timestamp) : '';
         final participants = List<String>.from(data['participants'] ?? []);
 
-        // ✅ [수정] 인원 제한 값을 읽어옵니다.
         final int participantLimit = data['participantLimit'] ?? 0;
 
         final endDate = startDate.add(Duration(days: int.tryParse(duration) ?? 7));
@@ -615,9 +539,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // ✅✅✅ [핵심 수정] 참여 인원 텍스트 변경 ✅✅✅
                     Text(
-                      // participantLimit 값이 0보다 크면 "/ $participantLimit명"을 추가, 아니면 "" (빈칸) 추가
                       "👥 참여 인원: ${participants.length}명${participantLimit > 0 ? ' / $participantLimit명' : ''}",
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.grey[800]),
                     ),
@@ -656,7 +578,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  // (수정 없음)
   Widget _buildInfoText(String title, String value) {
     return Row(
       children: [
@@ -673,8 +594,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-
-  // (수정 없음)
   Widget _buildComment(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final comment = data['comment'] ?? '';
@@ -809,7 +728,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  // (수정 없음)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -859,7 +777,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                         return Column(
                           children: [
-                            _buildChallengeInfo(challengeDoc), // ✅ 수정된 함수 호출
+                            _buildChallengeInfo(challengeDoc),
                             StreamBuilder<QuerySnapshot>(
                               stream: challengeDoc.reference
                                   .collection('comments')

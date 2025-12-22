@@ -14,7 +14,7 @@ class GhostRunReadyPage extends StatefulWidget {
 
 class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
   static int _imageIndex = 0;
-  Timer? _timer; // ⏱️ 타이머 추가
+  Timer? _timer;
   bool isLoading = false;
 
   final List<List<String>> _imageSets = [
@@ -41,15 +41,9 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
     },
   ];
 
-  // ✅ 각 배경 이미지의 위치를 지정하는 리스트
   final List<Alignment> _backgroundAlignments = [
-    // 1번 배경 (ghostrunpage1.png) - 중앙 정렬 (기본값)
     Alignment.center,
-
-    // 2번 배경 (ghostrunpage2.png) - y값을 조절해 배경을 위/아래로 움직일 수 있습니다.
     const Alignment(0, -1.0),
-
-    // 3번 배경 (ghostrunpage3.png) - 중앙 정렬 (기본값)
     Alignment.center,
   ];
 
@@ -57,10 +51,8 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
   void initState() {
     super.initState();
 
-    // 페이지 진입 시 이미지 순환
     _imageIndex = (_imageIndex + 1) % _imageSets.length;
 
-    // ⏱️ 10초마다 이미지 변경
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       setState(() {
         _imageIndex = (_imageIndex + 1) % _imageSets.length;
@@ -70,7 +62,7 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // 메모리 누수 방지
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -183,7 +175,6 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
   Widget build(BuildContext context) {
     final currentImages = _imageSets[_imageIndex];
     final ghostStyle = _ghostStyles[_imageIndex];
-    // ✅ 현재 인덱스에 맞는 배경 이미지 정렬 값을 가져옴
     final currentBackgroundAlignment = _backgroundAlignments[_imageIndex];
 
     // FirebaseAuth를 통해 현재 로그인된 사용자의 이메일을 가져옵니다.
@@ -222,17 +213,14 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
       ),
       body: Stack(
         children: [
-          // ✅ 배경 이미지
           Positioned.fill(
             child: Image.asset(
               'assets/images/${currentImages[0]}',
               fit: BoxFit.cover,
-              // ✅ 가져온 정렬 값을 이미지에 적용
               alignment: currentBackgroundAlignment,
             ),
           ),
 
-          // ✅ 고스트 이미지
           Positioned.fill(
             child: Align(
               alignment: ghostStyle['alignment'],
@@ -245,7 +233,6 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
             ),
           ),
 
-          // ✅ 텍스트와 버튼
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(

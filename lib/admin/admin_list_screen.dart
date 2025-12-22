@@ -9,7 +9,6 @@ class AdminListScreen extends StatefulWidget {
 }
 
 class _AdminListScreenState extends State<AdminListScreen> {
-  // ✅ 관리자 목록을 실시간으로 가져오기 위한 스트림
   final Stream<QuerySnapshot> _adminsStream = FirebaseFirestore.instance
       .collection('users')
       .where('role', whereIn: ['admin', 'general_admin', 'super_admin'])
@@ -116,11 +115,6 @@ class _AdminListScreenState extends State<AdminListScreen> {
                     email,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
-                  // 아이콘은 섹션 타이틀에 있으므로 여기서는 생략
-                  // leading: CircleAvatar(
-                  //   backgroundColor: appearance['color'].withOpacity(0.1),
-                  //   child: Icon(appearance['icon'], color: appearance['color'], size: 20),
-                  // ),
                 );
               },
               separatorBuilder: (context, index) {

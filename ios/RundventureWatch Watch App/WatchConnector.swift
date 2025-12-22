@@ -9,9 +9,7 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
     // --- Published 변수들 ---
     @Published var kilometers: Double = 0.0
     @Published var seconds: Int = 0
-    // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 추가: 밀리초 변수 ⭐️⭐️⭐️ ] ▼▼▼▼▼
     @Published var milliseconds: Int = 0 // 👈 폰에서 받은 밀리초 (0~999)
-    // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 추가: 밀리초 변수 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
     @Published var pace: Double = 0.0
     @Published var calories: Double = 0.0
@@ -184,10 +182,8 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
             if let type = message["type"] as? String, (type == "main" || type == "battle") {
                 self.kilometers = message["kilometers"] as? Double ?? self.kilometers
                 self.seconds = message["seconds"] as? Int ?? self.seconds
-                // ▼▼▼▼▼ [ ⭐️ 밀리초 수신 ⭐️ ] ▼▼▼▼▼
                 // 폰에서 보내주면 저장, 안 보내주면 기존 값 유지
                 self.milliseconds = message["milliseconds"] as? Int ?? self.milliseconds
-                // ▲▲▲▲▲ [ ⭐️ 밀리초 수신 ⭐️ ] ▲▲▲▲▲
                 
                 self.pace = message["pace"] as? Double ?? self.pace
                 self.calories = message["calories"] as? Double ?? self.calories
@@ -234,9 +230,7 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
                     print("✅ Run finished by phone.")
                     self.kilometers = message["kilometers"] as? Double ?? self.kilometers
                     self.seconds = message["seconds"] as? Int ?? self.seconds
-                    // ▼▼▼▼▼ [ ⭐️ 밀리초 수신 ⭐️ ] ▼▼▼▼▼
                     self.milliseconds = message["milliseconds"] as? Int ?? self.milliseconds
-                    // ▲▲▲▲▲ [ ⭐️ 밀리초 수신 ⭐️ ] ▲▲▲▲▲
                     
                     self.pace = message["pace"] as? Double ?? self.pace
                     self.calories = message["calories"] as? Double ?? self.calories
@@ -310,9 +304,7 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
     func resetState() {
         DispatchQueue.main.async {
             self.kilometers = 0.0; self.seconds = 0; self.pace = 0.0; self.calories = 0.0
-            // ▼▼▼▼▼ [ ⭐️ 밀리초 초기화 ⭐️ ] ▼▼▼▼▼
             self.milliseconds = 0
-            // ▲▲▲▲▲ [ ⭐️ 밀리초 초기화 ⭐️ ] ▲▲▲▲▲
             
             self.isRunning = false; self.isPaused = false; self.isEnded = false
             self.isCountingDown = false

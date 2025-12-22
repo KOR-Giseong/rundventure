@@ -12,10 +12,9 @@ class Header extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         title: const Text(
-          '챌린지 생성 규칙', // ✅ 제목 수정
+          '챌린지 생성 규칙',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        // ✅✅✅ 챌린지 폼(ChallengeForm)의 로직에 맞게 규칙 내용 수정
         content: const Text(
           '''
 📌 챌린지 생성 시 아래 내용을 확인해 주세요:
@@ -35,7 +34,7 @@ class Header extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인했습니다', style: TextStyle(color: Colors.blue)), // ✅ 버튼 텍스트 수정
+            child: const Text('확인했습니다', style: TextStyle(color: Colors.blue)),
           ),
         ],
       ),

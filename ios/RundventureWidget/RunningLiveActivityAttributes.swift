@@ -6,7 +6,7 @@ struct RunningLiveActivityAttributes: ActivityAttributes {
         var seconds: Int
         var pace: Double
         var calories: Double
-        var isPaused: Bool // ✅ [추가] 일시정지 상태 변수
+        var isPaused: Bool
     }
     var name: String
 }

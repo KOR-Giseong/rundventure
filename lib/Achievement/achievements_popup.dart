@@ -27,9 +27,8 @@ class _AchievementsPopupState extends State<AchievementsPopup> {
   List<AchievementInfo> _calorieAchievements = [];
   List<AchievementInfo> _stepAchievements = [];
 
-  // 내 랭킹 히스토리 데이터 (남의 랭킹 변수는 삭제함)
-  List<Map<String, dynamic>> _myHallOfFame = []; // 내 명예의 전당 (월간)
-  List<Map<String, dynamic>> _myWeeklyHistory = []; // 👈 [신규] 내 주간 랭킹 기록
+  List<Map<String, dynamic>> _myHallOfFame = [];
+  List<Map<String, dynamic>> _myWeeklyHistory = [];
 
   // (탭 목표치 리스트)
   final List<double> _targetDistances = [
@@ -88,7 +87,6 @@ class _AchievementsPopupState extends State<AchievementsPopup> {
     }
   }
 
-  // ✅ 내 랭킹 히스토리 (월간 Hall of Fame + 주간 History) 로드 함수
   Future<void> _loadMyRankingHistory() async {
     if (!mounted) return;
     setState(() => _isLoadingHallOfFame = true);
@@ -215,17 +213,13 @@ class _AchievementsPopupState extends State<AchievementsPopup> {
     return ListView(
       shrinkWrap: true,
       children: [
-        // ✅ 1. 내 명예의 전당 섹션 (월간)
         _buildMyHallOfFameSection(),
 
-        // ✅ 2. 내 주간 랭킹 기록 섹션
         _buildMyWeeklyHistorySection(),
 
-        // 구분선 (랭킹 기록이 있고, 도전과제도 있을 때만)
         if ((_myHallOfFame.isNotEmpty || _myWeeklyHistory.isNotEmpty) && allCompletedAchievements.isNotEmpty)
           const Divider(height: 24, indent: 16, endIndent: 16, thickness: 1),
 
-        // ✅ 3. 도전과제 섹션들
         if (allCompletedAchievements.isNotEmpty) ...[
           _buildSection(title: "거리 도전과제", completedAchievements: _distanceAchievements, detailsGetter: _getDistanceChallengeDetails, unit: 'KM'),
           _buildSection(title: "칼로리 도전과제", completedAchievements: _calorieAchievements, detailsGetter: _getCaloriesChallengeDetails, unit: 'Kcal'),
@@ -235,9 +229,6 @@ class _AchievementsPopupState extends State<AchievementsPopup> {
     );
   }
 
-  // (지난주 Top 3 섹션 위젯은 완전히 삭제했습니다)
-
-  // ✅ 내 명예의 전당 섹션 위젯 (월간)
   Widget _buildMyHallOfFameSection() {
     if (_isLoadingHallOfFame || _myHallOfFame.isEmpty) {
       return Container();
@@ -283,7 +274,6 @@ class _AchievementsPopupState extends State<AchievementsPopup> {
     );
   }
 
-  // ✅ [신규] 내 주간 랭킹 기록 섹션 위젯
   Widget _buildMyWeeklyHistorySection() {
     if (_isLoadingHallOfFame || _myWeeklyHistory.isEmpty) {
       return Container();

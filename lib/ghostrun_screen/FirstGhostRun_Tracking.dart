@@ -11,16 +11,14 @@ import 'ghostrunpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/services.dart';
-// ✅ [추가] 워치 커넥티비티 임포트
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class FirstGhostRunTrackingPage extends StatefulWidget {
-  // ✅ [수정] withWatch 변수 추가
   final bool withWatch;
 
   const FirstGhostRunTrackingPage({
     Key? key,
-    this.withWatch = false, // 기본값은 false로 설정
+    this.withWatch = false,
   }) : super(key: key);
 
   @override
@@ -38,9 +36,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
   final List<LatLng> _points = [];
   final Location _location = Location();
   LocationData? _currentLocation;
-  // ▼▼▼▼▼ [ ✨ 신규 추가 ✨ ] ▼▼▼▼▼
-  LocationData? _previousLocationData; // 👈 속도 및 순간이동 감지를 위한 이전 위치 데이터
-  // ▲▲▲▲▲ [ ✨ 신규 추가 ✨ ] ▲▲▲▲▲
+  LocationData? _previousLocationData;
   bool _isTracking = false;
   bool _isPaused = false;
   Timer? _timer; // UI 업데이트 타이머 (기존 _uiTimer 역할 통합)
@@ -62,14 +58,12 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
   String _countdownMessage = "";
   bool _showCountdown = false;
   int _countdown = 3;
-  // ✅✅✅ [수정 1/3] 카운트다운 텍스트 크기를 위한 변수 추가
   double _countdownFontSize = 60.0;
 
   String _autoSaveStatus = "자동 저장 설정 확인 중...";
 
   StreamSubscription<LocationData>? _locationSubscription;
 
-  // ✅ [추가] 워치 커넥티비티 변수
   final _watch = WatchConnectivity();
   StreamSubscription<Map<String, dynamic>>? _watchMessageSubscription;
 
@@ -81,19 +75,16 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
 
     _liveActivityChannel = const MethodChannel('com.rundventure/liveactivity');
 
-    // ✅ [수정 1/2] Native(Swift)의 App Intent 호출을 수신할 핸들러 설정
     _liveActivityChannel.setMethodCallHandler(_handleNativeMethodCall);
 
     _initTts();
-    _initLocationTracking(); // 위치 서비스 초기화 먼저
-    _startCountdown(); // 위치 초기화 후 카운트다운 시작
+    _initLocationTracking();
+    _startCountdown();
     _loadAutoSaveStatus();
 
-    // ✅ [추가] 워치 리스너 초기화
     _initializeWatchConnectivity();
   }
 
-  // ✅ [수정 2/2] Native(Swift)에서 "handleLiveActivityCommand" 호출 시 실행될 함수
   Future<dynamic> _handleNativeMethodCall(MethodCall call) async {
     if (!mounted) return; // 위젯이 화면에 없으면 무시
 
@@ -105,11 +96,11 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
 
         if (command == 'pauseRunning') {
           print("⏸️ [DART] Live Activity로부터 '일시정지' 명령 실행");
-          if (!_isPaused) _pauseTracking(); // 👈 고스트런 함수 호출
+          if (!_isPaused) _pauseTracking();
 
         } else if (command == 'resumeRunning') {
           print("▶️ [DART] Live Activity로부터 '재개' 명령 실행");
-          if (_isPaused) _resumeTracking(); // 👈 고스트런 함수 호출
+          if (_isPaused) _resumeTracking();
         }
       } catch (e) {
         print("🚨 [DART] _handleNativeMethodCall Error: $e");
@@ -125,13 +116,11 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     _autoSaveTimer?.cancel();
     _flutterTts.stop();
 
-    // ✅ [추가] 워치 구독 취소
     _watchMessageSubscription?.cancel();
 
     super.dispose();
   }
 
-  // ✅ [추가] 워치 리스너 초기화 함수
   void _initializeWatchConnectivity() {
     // 워치 사용 안 함 옵션 선택 시 리스너 활성화 안 함
     if (!widget.withWatch) return;
@@ -178,7 +167,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
       'time': _timeDisplay,
       'distance': _distanceDisplay,
       'pace': _paceDisplay,
-      'isPaused': _isPaused, // ✅ [추가] 일시정지 상태 전송
+      'isPaused': _isPaused,
     });
   }
 
@@ -188,31 +177,21 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setPitch(1.0);
 
-    // ✅ [수정] iOS 오디오 설정 강화 (무음 모드 무시 + 스피커 강제 + 음악과 함께 재생)
     await _flutterTts.setIosAudioCategory(
-        IosTextToSpeechAudioCategory.playback, // 👈 'playback'은 무음 모드에서도 소리가 납니다.
+        IosTextToSpeechAudioCategory.playback,
         [
           IosTextToSpeechAudioCategoryOptions.allowBluetooth,
           IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-          IosTextToSpeechAudioCategoryOptions.mixWithOthers, // 👈 노래 들으면서도 안내음 나옴
-          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker // 👈 이어폰 없으면 스피커로 강제
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
         ],
         IosTextToSpeechAudioMode.voicePrompt
     );
 
-    // ✅ [추가] 공유 인스턴스 활성화 (오류 방지)
     await _flutterTts.setSharedInstance(true);
   }
 
   Future<void> _speak(String text) async {
-    // TTS 음성 출력 (일시정지 중 아닐 때만)
-    //
-    // ⚠️ [수정] _pauseTracking에서 "일시정지"를 말할 수 있도록
-    // _isPaused 조건을 제거하고, _speak 함수를 호출하는 쪽에서
-    // _isPaused 조건을 체크하도록 변경합니다.
-    // (단, _pauseTracking은 예외적으로 _isPaused가 true가 되기 직전에 호출하므로 괜찮음)
-
-    // ⛔️ [삭제] if (!_isPaused) { ... }
     await _flutterTts.speak(text);
   }
 
@@ -232,9 +211,8 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     }
   }
 
-  // ✅✅✅ [추가] 커스텀 스낵바 함수 ✅✅✅
   void _showCustomSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // mounted 확인
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -252,8 +230,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
             ),
           ],
         ),
-        // ✅✅✅ 고스트런 테마 색상(Colors.purpleAccent)으로 변경 ✅✅✅
-        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.purpleAccent, // 성공 시 보라색 계열
+        backgroundColor: isError ? Colors.redAccent.shade400 : Colors.purpleAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(15, 5, 15, 15),
@@ -269,9 +246,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
       if (!serviceEnabled) {
         serviceEnabled = await _location.requestService();
         if (!serviceEnabled) {
-          // 서비스 거부 시 스낵바 표시 후 화면 종료
           if (mounted) {
-            // ✅ [수정] 커스텀 스낵바로 변경
             _showCustomSnackBar('러닝을 시작하려면 위치 서비스를 켜주세요.', isError: true);
             Navigator.pop(context);
           }
@@ -315,7 +290,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
       if (mounted) {
         setState(() {
           _currentLocation = locationData;
-          _previousLocationData = locationData; // 👈 [추가] 초기 위치를 이전 위치로 설정
+          _previousLocationData = locationData;
         });
       }
 
@@ -330,10 +305,8 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
             newLocation.latitude ?? 0.0,
             newLocation.longitude ?? 0.0);
 
-        if (!mounted) return; // unmount 시 처리 중단
+        if (!mounted) return;
 
-        // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: _previousLocationData 사용 ✨✨✨ ] ▼▼▼▼▼
-        // 1. 이전 위치 데이터 가져오기
         LocationData? lastLoc = _previousLocationData;
 
         // 2. UI 및 카메라 업데이트
@@ -345,38 +318,30 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
           _updateCameraPosition(newPoint);
         }
 
-        // 3. 이전 위치가 있을 때만 거리/속도 계산 및 검사
         if (lastLoc != null) {
           final distanceInMeters = _calculateDistance(
               lastLoc.latitude!, lastLoc.longitude!,
               newPoint.latitude!, newLocation.longitude ?? 0.0);
 
-          // ▼▼▼▼▼ [ ✨ 신규 추가: 비정상 이동 방지 로직 ✨ ] ▼▼▼▼▼
-          // 시간 간격 계산
           double timeIntervalSec = (newLocation.time! - (lastLoc.time ?? 0)) / 1000;
-          if (timeIntervalSec <= 0) timeIntervalSec = 0.5; // 0 나누기 방지
+          if (timeIntervalSec <= 0) timeIntervalSec = 0.5;
 
-          // 속도 계산 (m/s)
           double speed = distanceInMeters / timeIntervalSec;
 
-          // 1. 순간이동 감지 (2초 이내 50m 초과)
           if (distanceInMeters > 50.0) {
             print('비정상적인 거리 이동(순간이동) 감지: $distanceInMeters m. 무시합니다.');
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
-            return; // 👈 거리/경로에 추가 안 함.
+            _previousLocationData = newLocation;
+            return;
           }
 
-          // 2. 비현실적인 속도 감지 (시속 36km/h 초과)
           if (speed > 10.0) {
             print('비현실적인 속도 감지: $speed m/s. 무시합니다.');
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
-            return; // 👈 거리/경로에 추가 안 함.
+            _previousLocationData = newLocation;
+            return;
           }
-          // ▲▲▲▲▲ [ ✨ 신규 추가 ✨ ] ▲▲▲▲▲
 
-          // 기존의 작은 이동 무시
           if (distanceInMeters < 2) {
-            _previousLocationData = newLocation; // 👈 위치는 갱신하지만
+            _previousLocationData = newLocation;
             return;
           }
 
@@ -403,34 +368,26 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
             _paceDisplay = "--:--"; // 조건 미달 시 초기값
           }
 
-          // 매 km 마다 음성 안내
           if (_distanceKm.floor() > _lastAnnouncedKm) {
             _lastAnnouncedKm = _distanceKm.floor();
             final minutes = elapsed.inMinutes;
             final seconds = elapsed.inSeconds % 60;
-            // ⚠️ [수정] _isPaused 조건 체크
             if (!_isPaused) _speak("$_lastAnnouncedKm 킬로미터, ${minutes}분 ${seconds}초 경과.");
           }
-          _updateLiveActivity(); // 라이브 액티비티 업데이트
+          _updateLiveActivity();
 
-          // ✅ [수정] 워치 사용 시 데이터 전송
           if (widget.withWatch) {
             _sendWatchData(currentElapsedSeconds);
           }
         }
 
-        // 4. 검사를 통과했거나, 첫 번째 위치일 경우 경로에 추가
-        _points.add(newPoint); // 현재 위치 경로에 추가
-        _updatePolylines(); // 지도 경로 업데이트
+        _points.add(newPoint);
+        _updatePolylines();
 
-        // 5. 현재 위치를 다음 계산을 위한 "이전 위치"로 저장
         _previousLocationData = newLocation;
-        // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 완료 ✨✨✨ ] ▲▲▲▲▲
       });
     } catch (e) {
-      // 오류 발생 시 스낵바 표시 후 화면 종료
       if (mounted) {
-        // ✅ [수정] 커스텀 스낵바로 변경
         _showCustomSnackBar('위치 정보를 가져오는 중 오류: $e', isError: true);
         Navigator.pop(context);
       }
@@ -440,13 +397,11 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) { // 앱이 다시 활성화될 때
-      setState(() {}); // UI 갱신 (시간 등)
-      // ✅ [추가] 워치 리스너 재시작
+      setState(() {});
       _initializeWatchConnectivity();
     }
   }
 
-  // ✅✅✅ [수정 2/3] _startCountdown 함수 수정
   void _startCountdown() {
     setState(() {
       _showCountdown = true;
@@ -455,20 +410,17 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     });
     _speak("준비하세요");
 
-    // ✅ [수정] 워치 사용 시 상태 업데이트 및 메시지 전송
     if (widget.withWatch) {
-      // ▼▼▼▼▼ [ ✨ 여기가 수정되었습니다 (try-catch 추가) ✨ ] ▼▼▼▼▼
       try {
         _watch.updateApplicationContext({
-          'runType': 'ghostRecord', // '첫 기록' 모드임을 알림
+          'runType': 'ghostRecord',
           'isRunning': true,
           'isEnded': false,
         });
       } catch (e) {
         print("워치 Context 업데이트 실패 (정상 동작): $e");
       }
-      // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
-      _watch.sendMessage({'command': 'showWarmup'}); // 워밍업 메시지 표시 요청
+      _watch.sendMessage({'command': 'showWarmup'});
     }
 
     // 1초 간격 타이머 시작
@@ -478,37 +430,34 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
           _countdownMessage = "$_countdown"; // 숫자 표시
           _countdownFontSize = 60.0; // 숫자 텍스트 크기
         });
-        _speak("$_countdown"); // 숫자 읽어주기
+        _speak("$_countdown");
 
-        // ✅ [추가] 워치로 카운트다운 숫자 전송
         if (widget.withWatch) {
           _watch.sendMessage({'command': 'countdown', 'value': _countdown});
         }
 
-        _countdown--; // 숫자 감소
-      } else { // 카운트다운 종료
-        timer.cancel(); // 타이머 중지
+        _countdown--;
+      } else {
+        timer.cancel();
         setState(() {
           _countdownMessage = "기록을 측정합니다!";
-          _countdownFontSize = 40.0; // 👈 "기록을 측정합니다!" 텍스트 크기 (이 값을 조절하세요)
-          _showCountdown = false; // 카운트다운 화면 숨김
-          _isTracking = true; // 트래킹 시작 상태로 변경
-          _isPaused = false; // 일시정지 해제
+          _countdownFontSize = 40.0;
+          _showCountdown = false;
+          _isTracking = true;
+          _isPaused = false;
         });
         _speak("기록을 측정합니다!");
 
-        // ✅ [추가] 워치로 시작 UI 표시 요청
         if (widget.withWatch) {
           _watch.sendMessage({'command': 'startRunningUI'});
         }
 
-        _startTracking(); // 실제 트래킹 시작
-        _startAutoSaveTimer(); // 자동 저장 타이머 시작
+        _startTracking();
+        _startAutoSaveTimer();
 
-        // 라이브 액티비티 시작
         _liveActivityChannel.invokeMethod('startLiveActivity', {
           'type': 'ghost_record',
-          'isPaused': false, // ✅ [추가] 초기 상태는 false
+          'isPaused': false,
         });
 
         // 1초 후 "출발!" 메시지 숨김
@@ -542,7 +491,6 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     }
   }
 
-  // ✅ [추가] 워치로 데이터를 전송하는 별도 함수
   void _sendWatchData(int currentSeconds) {
     // 워치 사용 안 함, 트래킹 중 아님, 일시정지 중이면 전송 안 함
     if (!widget.withWatch || !_isTracking || _isPaused) return;
@@ -573,9 +521,8 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
       // UI 상태 업데이트
       setState(() {
         _timeDisplay = "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
-        _updateLiveActivity(); // 라이브 액티비티 업데이트
+        _updateLiveActivity();
 
-        // ✅ [수정] 워치 사용 시 데이터 전송 함수 호출
         if (widget.withWatch) {
           _sendWatchData(elapsed.inSeconds);
         }
@@ -602,36 +549,25 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     // 설정된 시간 후 자동 저장 실행 타이머 시작
     _autoSaveTimer?.cancel(); // 기존 타이머 취소
     _autoSaveTimer = Timer(Duration(minutes: minutes), () {
-      if (_isTracking && !_autoSaved) { // 트래킹 중이고 아직 자동 저장 안 됐으면
-        // ⚠️ [수정] _isPaused 조건 체크
+      if (_isTracking && !_autoSaved) {
         if (!_isPaused) _speak("$minutes분 경과, 기록을 자동 저장합니다.");
 
-        // 현재 경과 시간 계산
         final autoSaveElapsedSeconds = (_pausedElapsed + (_startTime != null ? DateTime.now().difference(_startTime!) : Duration.zero)).inSeconds;
 
-        // 기록 저장 (isAutoSave 플래그 true)
         _saveRunRecord(autoSaveElapsedSeconds, isAutoSave: true).then((_) {
           if (mounted) {
-            setState(() { // 자동 저장 완료 상태로 변경
+            setState(() {
               _autoSaved = true;
               _autoSaveStatus = "자동 저장됨";
             });
 
-            // ✅ [수정] 커스텀 스낵바로 변경
             _showCustomSnackBar('$minutes분 경과! 기록이 자동 저장되었습니다.');
 
-            // ⬇️ [수정] 자동 저장 후 GhostRunPage로 이동 ⬇️
-            // 스낵바가 사라질 시간(2초)을 기다린 후,
-            // _finishTracking(save: false)를 호출하여
-            // 타이머/위치/라이브액티비티 정리 및 페이지 이동을 수행합니다.
             Future.delayed(const Duration(seconds: 2), () {
               if (mounted && _isTracking) {
-                // save: false로 설정하여 기록을 중복 저장하지 않고,
-                // 리소스 정리 및 GhostRunPage로의 화면 전환만 수행합니다.
                 _finishTracking(save: false);
               }
             });
-            // ⬆️ [수정] 완료 ⬆️
           }
         });
       }
@@ -639,40 +575,33 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
   }
 
   void _pauseTracking() {
-    // 일시정지 시작 시간 기록 및 총 일시정지 시간 누적
-    if (_startTime != null && !_isPaused) { // 이미 일시정지 상태가 아닐 때만 누적
+    if (_startTime != null && !_isPaused) {
       _pausedElapsed += DateTime.now().difference(_startTime!);
     }
-    // ✅ [수정] 일시정지 음성 안내 (setState 전에 호출)
     _speak("일시정지");
     setState(() {
       _isPaused = true;
-      _startTime = null; // 재개 시 새로운 시작 시간 기록 위해 null 설정
+      _startTime = null;
     });
 
-    // ✅ [추가] 워치로 일시정지 명령 전송
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'pauseFromPhone'});
     }
 
-    // ✅ [추가] 일시정지 즉시 Live Activity 업데이트
     _updateLiveActivity();
   }
 
   void _resumeTracking() {
-    _startTime = DateTime.now(); // 현재 시간을 새로운 시작 시간으로 기록
+    _startTime = DateTime.now();
     setState(() {
       _isPaused = false;
     });
-    // ⚠️ [수정] _isPaused 조건 체크 (setState 이후에 호출)
     if (!_isPaused) _speak("운동을 다시 시작합니다");
 
-    // ✅ [추가] 워치로 재개 명령 전송
     if (widget.withWatch) {
       _watch.sendMessage({'command': 'resumeFromPhone'});
     }
 
-    // ✅ [추가] 재개 즉시 Live Activity 업데이트
     _updateLiveActivity();
   }
 
@@ -771,7 +700,6 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
     } catch (e) {
       print('기록 저장 오류: $e');
       if(mounted){
-        // ✅ [수정] 커스텀 스낵바로 변경
         _showCustomSnackBar('기록 저장 실패: $e', isError: true);
       }
     }
@@ -799,9 +727,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
       'type': 'ghost_record',
     });
 
-    // --- ⬇️ 수정된 부분 ⬇️ ---
     if (widget.withWatch) {
-      // 최종 페이스 계산 (0 나누기 방지 및 유효성 검사)
       double finalPace = 0.0;
       if (_distanceKm > 0 && finalElapsedSeconds > 0) {
         finalPace = (finalElapsedSeconds / 60) / _distanceKm;
@@ -810,40 +736,29 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
         }
       }
 
-      // 'resetToMainMenu' 대신 'stopFromPhone' 명령과 최종 데이터 전송
       _watch.sendMessage({
-        'command': 'stopFromPhone',      // 👈 'stopFromPhone'으로 변경
-        'kilometers': _distanceKm,      // 👈 최종 거리
-        'seconds': finalElapsedSeconds, // 👈 최종 시간
-        'pace': finalPace,              // 👈 최종 페이스
-        'calories': 0.0,                // 칼로리 없음
-        // 'raceOutcome'은 첫 기록 모드에는 없음
-        'isEnded': true,                // 종료 상태
+        'command': 'stopFromPhone',
+        'kilometers': _distanceKm,
+        'seconds': finalElapsedSeconds,
+        'pace': finalPace,
+        'calories': 0.0,
+        'isEnded': true,
       });
-      // Context 업데이트 (필수)
-      // ▼▼▼▼▼ [ ✨ 여기가 수정되었습니다 (try-catch, await 추가) ✨ ] ▼▼▼▼▼
       try {
         await _watch.updateApplicationContext({
-          'runType': 'ghostRecord', // 👈 런 타입 재확인
+          'runType': 'ghostRecord',
           'isRunning': false,
-          'isEnded': true           // 👈 종료 상태로 변경
+          'isEnded': true
         });
       } catch (e) {
         print("워치 Context 업데이트 실패 (정상 동작): $e");
       }
-      // ▲▲▲▲▲ [ ✨ 수정 완료 ✨ ] ▲▲▲▲▲
     }
-    // --- ⬆️ 수정된 부분 ⬆️ ---
 
-    // --- 기존 코드 ---
     if (save) {
-      // ⚠️ [수정] _isPaused 조건 체크 (일시정지 상태여도 "저장" 음성 안내)
-      // if (!_isPaused)
       _speak("운동을 종료하고 기록을 저장합니다.");
       await _saveRunRecord(finalElapsedSeconds);
     } else {
-      // ⚠️ [수정] _isPaused 조건 체크 (일시정지 상태여도 "종료" 음성 안내)
-      // if (!_isPaused)
       _speak("운동을 종료합니다.");
     }
 
@@ -913,20 +828,17 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
                 _mapController = controller;
               },
             )
-                : const Center(child: CircularProgressIndicator()), // 위치 로딩 중 표시
+                : const Center(child: CircularProgressIndicator()),
 
-            // ✅✅✅ [수정 3/3] 카운트다운 오버레이 Text 위젯 수정
-            // 카운트다운 오버레이
             if (_showCountdown || _countdownMessage.isNotEmpty)
               Container(
-                color: Colors.black.withOpacity(0.8), // 반투명 검정 배경
+                color: Colors.black.withOpacity(0.8),
                 alignment: Alignment.center,
                 child: Text(
                   _countdownMessage,
-                  // const TextStyle을 TextStyle로 변경하고 _countdownFontSize 변수 사용
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: _countdownFontSize, // 👈 변수 사용
+                    fontSize: _countdownFontSize,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

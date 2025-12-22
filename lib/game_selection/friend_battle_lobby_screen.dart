@@ -1,25 +1,12 @@
-// [전체 코드] friend_battle_lobby_screen.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
-// ▼▼▼▼▼ [ ⭐️ (요청) 수정: TTS 임포트 추가 ⭐️ ] ▼▼▼▼▼
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:flutter/services.dart'; // for IosTextToSpeechAudioCategory
-// ▲▲▲▲▲ [ ⭐️ (요청) 수정: TTS 임포트 추가 ⭐️ ] ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 커넥티비티 임포트 ⭐️⭐️⭐️ ] ▼▼▼▼▼
+import 'package:flutter/services.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
-// ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 커넥티비티 임포트 ⭐️⭐️⭐️ ] ▲▲▲▲▲
-
-// ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: 설정값 로드용 임포트 ✨✨✨ ] ▼▼▼▼▼
 import 'package:shared_preferences/shared_preferences.dart';
-// ▲▲▲▲▲ [ ✨✨✨ 핵심 수정: 설정값 로드용 임포트 ✨✨✨ ] ▲▲▲▲▲
-
-// Part 4에서 생성한 파일 (미리 임포트)
 import 'friend_battle_running_screen.dart';
 
 
@@ -42,18 +29,16 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
   final String? _myEmail = FirebaseAuth.instance.currentUser?.email;
 
   StreamSubscription? _battleSubscription;
-  bool _isCancelling = false; // 취소 로딩
-  bool _isNavigating = false; // 러닝 화면으로 이동 중인지 (중복 방지)
+  bool _isCancelling = false;
+  bool _isNavigating = false;
 
-  // ▼▼▼▼▼ [ ⭐️ 권한 상태 변수 추가 ⭐️ ] ▼▼▼▼▼
-  String? _userRole; // 'user', 'admin', 'head_admin', 'super_admin'
-  // ▲▲▲▲▲ [ ⭐️ 권한 상태 변수 추가 ⭐️ ] ▲▲▲▲▲
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
     _listenToBattleStatus();
-    _checkUserRole(); // 👈 권한 확인
+    _checkUserRole();
   }
 
   @override
@@ -62,7 +47,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
     super.dispose();
   }
 
-  // ▼▼▼▼▼ [ ⭐️ 권한 확인 로직 ⭐️ ] ▼▼▼▼▼
   Future<void> _checkUserRole() async {
     if (_myEmail == null) return;
     try {
@@ -76,7 +60,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
       print("권한 확인 실패: $e");
     }
   }
-  // ▲▲▲▲▲ [ ⭐️ 권한 확인 로직 ⭐️ ] ▲▲▲▲▲
 
   // Firestore 스트림 리스너
   void _listenToBattleStatus() {
@@ -96,7 +79,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
 
         switch (status) {
           case 'accepted':
-          // ✅ 양쪽 모두 준비 완료!
             _startCountdownAndNavigate(data);
             break;
           case 'rejected':
@@ -116,33 +98,27 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
     );
   }
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정: 설정값 로드 및 적용 ✨✨✨ ] ▼▼▼▼▼
-  // 카운트다운 후 러닝 화면으로 이동
   Future<void> _startCountdownAndNavigate(Map<String, dynamic> battleData) async {
-    if (_isNavigating) return; // 중복 실행 방지
+    if (_isNavigating) return;
     _isNavigating = true;
 
-    // 1. SharedPreferences에서 워치 설정값 미리 로드
     final prefs = await SharedPreferences.getInstance();
     final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
     if (!mounted) return;
 
-    // 2. 3초 카운트다운 다이얼로그 표시
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => CountdownDialog(),
     ).then((_) {
-      // 다이얼로그가 닫히면 (즉, 3초가 지나면) 러닝 화면으로 이동
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => FriendBattleRunningScreen(
               battleId: widget.battleId,
-              battleData: battleData, // 👈 대결 데이터 전달
-              // ❗️ [수정] 저장된 설정값(withWatch)을 전달합니다.
+              battleData: battleData,
               withWatch: withWatch,
             ),
           ),
@@ -150,7 +126,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
       }
     });
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정: 설정값 로드 및 적용 ✨✨✨ ] ▲▲▲▲▲
 
   // 대결 취소 (Cloud Function 호출)
   Future<void> _cancelBattle() async {
@@ -160,7 +135,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          // ▼▼▼▼▼ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▼▼▼▼▼
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text('대결 취소', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -175,7 +149,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
               onPressed: () => Navigator.pop(context, true),
             ),
           ],
-          // ▲▲▲▲▲ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▲▲▲▲▲
         );
       },
     );
@@ -211,7 +184,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          // ▼▼▼▼▼ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▼▼▼▼▼
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text('알림', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -220,14 +192,13 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
             TextButton(
               child: Text('확인', style: TextStyle(fontWeight: FontWeight.bold)),
               onPressed: () {
-                Navigator.pop(context); // 다이얼로그 닫기
+                Navigator.pop(context);
                 if (Navigator.canPop(context)) {
-                  Navigator.pop(context); // 로비 화면 닫기
+                  Navigator.pop(context);
                 }
               },
             ),
           ],
-          // ▲▲▲▲▲ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▲▲▲▲▲
         );
       },
     );
@@ -239,7 +210,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        // ▼▼▼▼▼ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▼▼▼▼▼
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text('오류', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
@@ -250,7 +220,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
             child: Text('확인', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
-        // ▲▲▲▲▲ [ ⭐️ 디자인 수정 2/2: 흰색 배경 다이얼로그 ⭐️ ] ▲▲▲▲▲
       ),
     );
   }
@@ -295,10 +264,7 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
             final data = snapshot.data!.data() as Map<String, dynamic>;
             final status = data['status'] as String;
 
-            // ▼▼▼▼▼ [ ✅ 수정 ] ▼▼▼▼▼
-            // targetDistanceKm를 스트림에서 직접 읽어옴
             final targetDistanceKm = (data['targetDistanceKm'] as num? ?? 5).toDouble();
-            // ▲▲▲▲▲ [ ✅ 수정 ] ▲▲▲▲▲
 
             // 내가 도전자 / 상대방 정보
             final myInfo = {
@@ -320,19 +286,17 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- 대결 정보 요약 ---
-                  // ▼▼▼▼▼ [ ⭐️ 디자인 수정 1/2: km 텍스트 심플화 ⭐️ ] ▼▼▼▼▼
                   Text(
-                    '${targetDistanceKm.toStringAsFixed(0)} km', // 거리만 강조
+                    '${targetDistanceKm.toStringAsFixed(0)} km',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 28, // 크기 키우기
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: Colors.blueAccent,
                     ),
                   ),
                   Text(
-                    '목표 거리', // 레이블 추가
+                    '목표 거리',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -340,8 +304,7 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
                       color: Colors.grey[600],
                     ),
                   ),
-                  // ▲▲▲▲▲ [ ⭐️ 디자인 수정 1/2: km 텍스트 심플화 ⭐️ ] ▲▲▲▲▲
-                  SizedBox(height: 24), // 간격 조정
+                  SizedBox(height: 24),
 
                   // --- 플레이어 카드 비교 ---
                   Row(
@@ -382,7 +345,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
                   _buildStatusMessage(status, opponentInfo['nickname']),
                   Spacer(),
 
-                  // ▼▼▼▼▼ [ ⭐️ 디버그 기능 추가 (관리자 전용) ⭐️ ] ▼▼▼▼▼
                   if (isAnyAdmin)
                     Column(
                       children: [
@@ -407,7 +369,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
                         SizedBox(height: 8),
                       ],
                     ),
-                  // ▲▲▲▲▲ [ ⭐️ 디버그 기능 추가 (관리자 전용) ⭐️ ] ▲▲▲▲▲
 
                   // --- 취소 버튼 (심플 스타일) ---
                   ElevatedButton(
@@ -538,7 +499,6 @@ class _FriendBattleLobbyScreenState extends State<FriendBattleLobbyScreen> {
 }
 
 
-// --- (신규) 3초 카운트다운 다이얼로그 위젯 ---
 class CountdownDialog extends StatefulWidget {
   const CountdownDialog({Key? key}) : super(key: key);
 
@@ -546,25 +506,20 @@ class CountdownDialog extends StatefulWidget {
   _CountdownDialogState createState() => _CountdownDialogState();
 }
 
-// ▼▼▼▼▼ [ ⭐️ (요청) 수정: TTS 기능 + ⭐️⭐️⭐️ 워치 전송 ⭐️⭐️⭐️ ⭐️ ] ▼▼▼▼▼
 class _CountdownDialogState extends State<CountdownDialog> {
   int _countdown = 3;
   Timer? _timer;
-  late FlutterTts _flutterTts; // 👈 TTS 인스턴스 추가
-  // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 인스턴스 ⭐️⭐️⭐️ ] ▼▼▼▼▼
+  late FlutterTts _flutterTts;
   final _watch = WatchConnectivity();
-  // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 인스턴스 ⭐️⭐️⭐️ ] ▲▲▲▲▲
 
   @override
   void initState() {
     super.initState();
     _flutterTts = FlutterTts();
-    _initTts(); // 👈 TTS 초기화 후 타이머 시작
+    _initTts();
   }
 
-  // (신규) TTS 초기화 함수
   Future<void> _initTts() async {
-    // (Running Screen의 TTS 설정과 동일하게 맞춤)
     await _flutterTts.setLanguage("ko-KR");
     await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setIosAudioCategory(
@@ -576,11 +531,9 @@ class _CountdownDialogState extends State<CountdownDialog> {
         IosTextToSpeechAudioMode.voicePrompt
     );
 
-    // TTS 준비 완료 후 타이머 시작
     _startTimer();
   }
 
-  // (신규) TTS Speak 헬퍼
   Future<void> _speak(String text) async {
     if (mounted) {
       await _flutterTts.speak(text);
@@ -588,17 +541,14 @@ class _CountdownDialogState extends State<CountdownDialog> {
   }
 
   void _startTimer() {
-    // (수정) 타이머 시작 시 첫 숫자(3) 음성 재생 및 ⭐️ 워치 전송 ⭐️
     if (_countdown > 0) {
       _speak(_countdown.toString());
-      // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▼▼▼▼▼
       try {
-        _watch.sendMessage({'command': 'showWarmup'}); // 👈 '준비'
-        _watch.sendMessage({'command': 'countdown', 'value': _countdown}); // 👈 '3'
+        _watch.sendMessage({'command': 'showWarmup'});
+        _watch.sendMessage({'command': 'countdown', 'value': _countdown});
       } catch (e) {
         print("Watch SendMessage Error (Countdown Start): $e");
       }
-      // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▲▲▲▲▲
     }
 
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -609,19 +559,13 @@ class _CountdownDialogState extends State<CountdownDialog> {
 
       if (_countdown == 1) {
         timer.cancel();
-        // "START!"를 1초간 더 보여준 뒤 다이얼로그 닫기
-        setState(() => _countdown = 0); // "START!"로 변경
-        // ▼▼▼▼▼ [ ⭐️ 수정 ⭐️ ] ▼▼▼▼▼
-        // _speak("START!"); // 👈 [제거] START 음성은 여기서 안함 (다음 화면에서 함)
-        // ▲▲▲▲▲ [ ⭐️ 수정 ⭐️ ] ▲▲▲▲▲
+        setState(() => _countdown = 0);
 
-        // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▼▼▼▼▼
         try {
-          _watch.sendMessage({'command': 'startRunningUI'}); // 👈 '시작!'
+          _watch.sendMessage({'command': 'startRunningUI'});
         } catch (e) {
           print("Watch SendMessage Error (Countdown START!): $e");
         }
-        // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▲▲▲▲▲
         Future.delayed(Duration(seconds: 1), () {
           if (mounted) Navigator.pop(context);
         });
@@ -629,16 +573,13 @@ class _CountdownDialogState extends State<CountdownDialog> {
         setState(() {
           _countdown--;
         });
-        // (수정) 다음 숫자 (2, 1) 음성 재생 및 ⭐️ 워치 전송 ⭐️
         if (_countdown > 0) {
           _speak(_countdown.toString());
-          // ▼▼▼▼▼ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▼▼▼▼▼
           try {
-            _watch.sendMessage({'command': 'countdown', 'value': _countdown}); // 👈 '2', '1'
+            _watch.sendMessage({'command': 'countdown', 'value': _countdown});
           } catch (e) {
             print("Watch SendMessage Error (Countdown $e): $e");
           }
-          // ▲▲▲▲▲ [ ⭐️⭐️⭐️ 신규 수정: 워치 전송 ⭐️⭐️⭐️ ] ▲▲▲▲▲
         }
       }
     });
@@ -647,10 +588,9 @@ class _CountdownDialogState extends State<CountdownDialog> {
   @override
   void dispose() {
     _timer?.cancel();
-    _flutterTts.stop(); // 👈 (수정) TTS 정지
+    _flutterTts.stop();
     super.dispose();
   }
-  // ▲▲▲▲▲ [ ⭐️ (요청) 수정: TTS 기능 + ⭐️⭐️⭐️ 워치 전송 ⭐️⭐️⭐️ ⭐️ ] ▲▲▲▲▲
 
   @override
   Widget build(BuildContext context) {
@@ -669,7 +609,7 @@ class _CountdownDialogState extends State<CountdownDialog> {
             displayText,
             key: ValueKey<String>(displayText), // 키를 주어 애니메이션이 동작하도록 함
             style: TextStyle(
-              fontSize: 75, // ⭐️ [수정] 폰트 크기 80
+              fontSize: 75,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               shadows: [

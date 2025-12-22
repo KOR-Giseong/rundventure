@@ -27,7 +27,7 @@ class RunningRecordsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea( // ⬅️ SafeArea 추가
+      body: SafeArea(
         child: Column(
           children: [
             // 🔹 상단 바

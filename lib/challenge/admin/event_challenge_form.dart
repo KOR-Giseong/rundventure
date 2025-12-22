@@ -120,10 +120,9 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
         'participantCount': 0, // 현재 참여자 수 (증가/감소용)
         'rewardInfo': _rewardController.text.trim().isNotEmpty
             ? _rewardController.text.trim()
-            : '이벤트 종료 후 참여도를 집계하여 우수 참여자 및 랜덤 추첨을 통해 관리자가 직접 이메일로 상품을 지급할 예정입니다.', // 상품 지급 안내
+            : '이벤트 종료 후 참여도를 집계하여 우수 참여자 및 랜덤 추첨을 통해 관리자가 직접 이메일로 상품을 지급할 예정입니다.',
       };
 
-      // ✨ 새로운 컬렉션 'eventChallenges'에 저장
       await FirebaseFirestore.instance
           .collection('eventChallenges')
           .doc(challengeId)
@@ -144,13 +143,11 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-        backgroundColor: Colors.white, // 👈 배경 흰색으로 변경
+        backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
-          elevation: 0, // 👈 그림자 제거
-          centerTitle: true, // 👈 타이틀 중앙 정렬
-          // 👈 뒤로가기 버튼
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
             icon: Image.asset('assets/images/Back-Navs.png', width: 60, height: 60),
             onPressed: () => Navigator.pop(context),
@@ -165,7 +162,6 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
             ),
           ),
         ),
-        // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
         body: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -177,12 +173,10 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
                       Text('기본 정보', style: TextStyle(
-                          fontSize: 20, // 👈 크기 살짝 조절
+                          fontSize: 20,
                           fontWeight: FontWeight.bold
                       )),
-                      // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
                       SizedBox(height: 16),
                       // 챌린지 이름
                       TextFormField(
@@ -212,12 +206,10 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
                       Text('참여 조건', style: TextStyle(
-                          fontSize: 20, // 👈 크기 살짝 조절
+                          fontSize: 20,
                           fontWeight: FontWeight.bold
                       )),
-                      // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
                       SizedBox(height: 16),
                       // 선착순 인원
                       TextFormField(
@@ -285,12 +277,10 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
                       Text('설정 및 보상', style: TextStyle(
-                          fontSize: 20, // 👈 크기 살짝 조절
+                          fontSize: 20,
                           fontWeight: FontWeight.bold
                       )),
-                      // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
                       SizedBox(height: 10),
                       // 랭킹 공개 여부
                       SwitchListTile(
@@ -342,21 +332,17 @@ class _EventChallengeFormState extends State<EventChallengeForm> {
     );
   }
 
-  // ▼▼▼▼▼ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▼▼▼▼▼
-  // 카드 디자인을 그림자 대신 옅은 테두리로 변경
   Widget _buildCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-          color: Colors.white, // 👈 카드 배경은 흰색 유지
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!) // 👈 옅은 테두리 추가
-        // 👈 그림자(boxShadow) 제거
+          border: Border.all(color: Colors.grey[200]!)
       ),
       child: child,
     );
   }
-  // ▲▲▲▲▲ [ 🔴 여기가 수정된 부분입니다 🔴 ] ▲▲▲▲▲
 
   InputDecoration _inputDecoration(String label, IconData icon, {bool isOptional = false}) {
     return InputDecoration(

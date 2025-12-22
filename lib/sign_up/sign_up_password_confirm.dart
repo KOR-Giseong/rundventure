@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../login_screens/login_screen.dart'; // 로그인 화면으로 임포트
-import 'terms_of_Use.dart'; // 이용약관 화면 임포트
-import 'profile_screen.dart'; // 프로필 화면 임포트
+import '../login_screens/login_screen.dart';
+import 'terms_of_Use.dart';
+import 'profile_screen.dart';
 
 class ConfirmPasswordScreen extends StatefulWidget {
   final String email;
@@ -19,7 +19,7 @@ class _ConfirmPasswordScreenState extends State<ConfirmPasswordScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _agreedToTerms = false; // 이용약관 동의 상태
+  bool _agreedToTerms = false;
 
   void _goBack() {
     Navigator.pop(context);
@@ -160,7 +160,7 @@ class _ConfirmPasswordScreenState extends State<ConfirmPasswordScreen> {
                 ),
                 const SizedBox(height: 20),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center, // 체크박스와 텍스트 수직 중앙 정렬
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Checkbox(
                       value: _agreedToTerms,
@@ -173,9 +173,7 @@ class _ConfirmPasswordScreenState extends State<ConfirmPasswordScreen> {
                     Expanded(
                       child: GestureDetector(
                         onTap: _navigateToTerms,
-                        // ▼▼▼▼▼ [⭐️⭐️⭐️ 수정된 부분: 깔끔한 밑줄 적용 ⭐️⭐️⭐️] ▼▼▼▼▼
                         child: Row(
-                          // Row로 감싸서 IntrinsicWidth가 왼쪽 정렬되도록 함
                           children: [
                             IntrinsicWidth(
                               child: Column(
@@ -186,20 +184,19 @@ class _ConfirmPasswordScreenState extends State<ConfirmPasswordScreen> {
                                     '개인정보 보호정책 및 이용약관에 동의합니다.',
                                     style: TextStyle(
                                       color: Colors.grey[700],
-                                      fontSize: 14, // 글자 크기 명시 (필요시 조절)
+                                      fontSize: 14,
                                     ),
                                   ),
                                   Container(
-                                    height: 1.0, // 밑줄 두께
-                                    color: Colors.grey[700], // 밑줄 색상
-                                    margin: const EdgeInsets.only(top: 2.0), // 텍스트와의 간격
+                                    height: 1.0,
+                                    color: Colors.grey[700],
+                                    margin: const EdgeInsets.only(top: 2.0),
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                        // ▲▲▲▲▲ [⭐️⭐️⭐️ 수정된 부분: 깔끔한 밑줄 적용 ⭐️⭐️⭐️] ▲▲▲▲▲
                       ),
                     ),
                   ],

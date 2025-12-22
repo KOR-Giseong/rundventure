@@ -16,12 +16,7 @@ import 'FirstGhostRun_Tracking.dart';
 import 'GhostRunRulePage.dart';
 import 'GhostRun_TrackingPage.dart';
 import 'ghostrun_ready.dart';
-
-// ⛔️ [삭제됨] import 'package:watch_connectivity/watch_connectivity.dart';
-
-// ▼▼▼▼▼ [ ✨ 1. 신규 추가 ✨ ] ▼▼▼▼▼
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 SharedPreferences 임포트
-// ▲▲▲▲▲ [ ✨ 1. 신규 추가 ✨ ] ▲▲▲▲▲
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ================== 공유 미리보기 오버레이 ==================
 // (수정 없음)
@@ -742,25 +737,18 @@ class _GhostRunPageState extends State<GhostRunPage> {
     super.dispose();
   }
 
-  // ▼▼▼▼▼ [ ✨ 2. 수정된 함수 ✨ ] ▼▼▼▼▼
-  /// (수정) Apple Watch 연동 다이얼로그 대신 SharedPreferences에서 설정값을 읽어옵니다.
-  void _showUseWatchDialog(BuildContext context) async { // 👈 async로 변경
-    // 1. MainScreen의 워치 명령으로 진입한 경우 (withWatch: true), 즉시 시작
+  void _showUseWatchDialog(BuildContext context) async {
     if (widget.withWatch) {
       print("GhostRunPage: MainScreen으로부터 withWatch=true 받음. 즉시 시작.");
       _startRun(withWatch: true);
       return;
     }
 
-    // 2. 워치 명령이 아닌, 사용자가 직접 버튼을 누른 경우
     final prefs = await SharedPreferences.getInstance();
-    // 'watchSyncEnabled' 키로 저장된 값을 읽어오며, 없으면 false(끄기)를 기본값으로 합니다.
     final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
-    // 설정값(withWatch)에 따라 바로 _startRun 함수를 호출합니다.
     _startRun(withWatch: withWatch);
   }
-  // ▲▲▲▲▲ [ ✨ 2. 수정된 함수 ✨ ] ▲▲▲▲▲
 
   // (수정 없음)
   void _startRun({required bool withWatch}) {
@@ -1420,7 +1408,7 @@ class _GhostRunPageState extends State<GhostRunPage> {
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: () => _showUseWatchDialog(context), // 👈 ✨ [수정] 수정된 함수 호출
+                      onPressed: () => _showUseWatchDialog(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(

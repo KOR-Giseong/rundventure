@@ -18,14 +18,12 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
 
   bool _isMainAnnouncement = false;
 
-  // ✅ [추가] 내용 필드 포커스 노드
   final _contentFocusNode = FocusNode();
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
-    // ✅ [추가] 포커스 노드 해제
     _contentFocusNode.dispose();
     super.dispose();
   }
@@ -66,7 +64,6 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
     });
 
     try {
-      // ✅ [로직 수정] WriteBatch를 사용하여 두 곳에 저장
       final title = _titleController.text.trim();
       final content = _contentController.text.trim();
       final authorEmail = user.email;
@@ -100,15 +97,11 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
       // 4. 배치 작업 실행 (두 작업이 동시에 성공하거나 실패함)
       await batch.commit();
 
-      // ✅ [로직 수정 완료]
-
       if (mounted) {
-        // ✅ [수정] 성공 시 true 값을 반환하며 화면을 닫습니다. (스낵바는 ChallengeScreen에서 띄움)
         Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
-        // ✅ [스낵바 수정] 오류 스낵바 (에러 스타일)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -170,7 +163,6 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
           ),
         ],
       ),
-      // ✅ [수정] GestureDetector 추가 (키보드 닫기용)
       body: GestureDetector(
         onTap: () {
           // 화면의 다른 곳을 탭하면 키보드 포커스 해제
@@ -192,7 +184,6 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
                   TextFormField(
                     controller: _titleController,
                     textInputAction: TextInputAction.next,
-                    // ✅ [수정] '다음' 누르면 내용 필드로 포커스 이동
                     onFieldSubmitted: (_) {
                       FocusScope.of(context).requestFocus(_contentFocusNode);
                     },
@@ -230,18 +221,9 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _contentController,
-                    // ✅ [추가] 포커스 노드 할당
                     focusNode: _contentFocusNode,
-
-                    // ✅ [수정] '완료' 버튼을 '줄바꿈' 버튼으로 변경
                     textInputAction: TextInputAction.newline,
-
-                    keyboardType: TextInputType.multiline, // 멀티라인 명시
-
-                    // ⛔️ 'newline' 액션에서는 onFieldSubmitted가 Enter키로 호출되지 않습니다.
-                    // onFieldSubmitted: (_) {
-                    //   FocusScope.of(context).unfocus();
-                    // },
+                    keyboardType: TextInputType.multiline,
 
                     decoration: InputDecoration(
                       hintText: '공지사항 내용을 입력하세요',
@@ -272,7 +254,6 @@ class _AnnouncementFormState extends State<AnnouncementForm> {
                     },
                   ),
 
-                  // ✅ [추가] 메인 공지사항 스위치 UI
                   const SizedBox(height: 24),
                   SwitchListTile(
                     title: const Text(

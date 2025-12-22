@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'exercise_data.dart';
 import 'exercise_service.dart';
-// ▼▼▼▼▼ [ ✨ 추가된 부분 ✨ ] ▼▼▼▼▼
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 SharedPreferences 임포트
-// ▲▲▲▲▲ [ ✨ 추가된 부분 ✨ ] ▲▲▲▲▲
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StepsAchievementsTab extends StatefulWidget {
   final List<ExerciseRecord> allRecords;
@@ -24,17 +22,12 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
   List<AchievementInfo> _achievements = [];
   bool _isCalculating = true;
 
-  // ▼▼▼▼▼ [ ✨ 추가된 부분 ✨ ] ▼▼▼▼▼
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // ▲▲▲▲▲ [ ✨ 추가된 부분 ✨ ] ▲▲▲▲▲
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 부분 (목표값) ✨✨✨ ] ▼▼▼▼▼
-  // 9개 목표 걸음수 (단위: 걸음) - 수정됨
   final List<double> _targetSteps = [
     2000, 5000, 15000, 35000, 70000, 200000, 500000, 1000000, 2000000
   ];
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 부분 (목표값) ✨✨✨ ] ▲▲▲▲▲
 
   @override
   void initState() {
@@ -50,7 +43,6 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
     }
   }
 
-  // ▼▼▼▼▼ [ ✨ 추가된 함수 (distance/calories 탭과 동일) ✨ ] ▼▼▼▼▼
   Future<void> _sendAchievementNotification(String achievementId, String title, String message) async {
     final userEmail = _auth.currentUser?.email;
     if (userEmail == null) return;
@@ -72,15 +64,14 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
 
       await notiRef.set({
         'id': notiRef.id,
-        'type': 'achievement_completed', // 👈 알림 타입: 도전과제 완료
+        'type': 'achievement_completed',
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
         'isRead': false,
-        'achievementId': achievementId, // (선택 사항)
+        'achievementId': achievementId,
       });
 
-      // 알림 전송 성공 시 SharedPreferences에 기록
       await prefs.setBool(notificationKey, true);
       print("Achievement notification sent: $achievementId");
 
@@ -88,58 +79,42 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
       print("Error sending achievement notification: $e");
     }
   }
-  // ▲▲▲▲▲ [ ✨ 추가된 함수 ✨ ] ▲▲▲▲▲
 
-
-  // ▼▼▼▼▼ [ ✨ 수정된 함수 ✨ ] ▼▼▼▼▼
-  void _calculateAchievements() async { // 👈 async로 변경
+  void _calculateAchievements() async {
     if (mounted) setState(() => _isCalculating = true);
 
-    // [수정] 알림 전송을 위한 이전 상태 저장 로직 (삭제)
-    // List<AchievementInfo> oldAchievements = List.from(_achievements);
-
-    // 총 걸음수 계산
     _totalSteps = _exerciseService.calculateTotalSteps(widget.allRecords);
 
-    // 각 목표별 달성 정보 계산
     List<AchievementInfo> newAchievements = [];
-    final formatter = NumberFormat('#,###'); // 👈 포맷터 추가
+    final formatter = NumberFormat('#,###');
 
     for (double target in _targetSteps) {
       final achievementInfo = _exerciseService.getAchievementInfo(
         targetValue: target,
         allRecords: widget.allRecords,
-        getValueFromRecord: (record) => record.stepCount.toDouble(), // 걸음수 값 사용
+        getValueFromRecord: (record) => record.stepCount.toDouble(),
       );
 
-      // [신규] 1. 도전과제가 '완료'되었는지 확인
       if (achievementInfo.isCompleted) {
-        // [신규] 2. 알림 전송
         final details = _getChallengeDetails(target);
         final String title = "도전과제 달성: ${details['title']}";
         final String message = "누적 ${formatter.format(target)} 걸음을 축하합니다!";
-        final String achievementId = 'steps_${target.toInt()}'; // 👈 고유 ID
+        final String achievementId = 'steps_${target.toInt()}';
 
-        // (비동기) 알림 전송 시도
         _sendAchievementNotification(achievementId, title, message);
       }
 
       newAchievements.add(achievementInfo);
     }
 
-    if (mounted) { // 👈 mounted 확인
+    if (mounted) {
       setState(() {
         _achievements = newAchievements;
         _isCalculating = false;
       });
     }
-
-    // [신규] 상태 업데이트 후, '새롭게' 완료된 도전과제 알림 전송 (로직 삭제)
   }
-  // ▲▲▲▲▲ [ ✨ 수정된 함수 ✨ ] ▲▲▲▲▲
 
-  // ▼▼▼▼▼ [ ✨✨✨ 핵심 수정 부분 (칭호/이미지 경로) ✨✨✨ ] ▼▼▼▼▼
-  // 목표 걸음수(9개 레벨)에 따라 칭호와 *이미지 경로* 반환
   Map<String, dynamic> _getChallengeDetails(double targetValue) {
     String title;
     // 9개 레벨: 2000, 5000, 15000, 35000, 70000, 200000, 500000, 1000000, 2000000
@@ -151,27 +126,20 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
     else if (targetValue <= 200000) title = '대륙 탐험가';
     else if (targetValue <= 500000) title = '지구 순례자';
     else if (targetValue <= 1000000) title = '백만 걸음';
-    else title = '천리안'; // 2,000,000 걸음
+    else title = '천리안';
 
-    // [수정] 'icon' 대신 'imagePath'를 반환 (요청하신 경로 및 파일명)
-    // 👈 👈 👈 경로 수정됨!!!
     final String imagePath = 'assets/badges/${targetValue.toInt()}.png';
 
     return {'title': title, 'imagePath': imagePath};
   }
-  // ▲▲▲▲▲ [ ✨✨✨ 핵심 수정 부분 (칭호/이미지 경로) ✨✨✨ ] ▲▲▲▲▲
 
   // 팝업 (단위: 걸음으로 변경)
   void showChallengeCompletionPopup(BuildContext context, AchievementInfo achievement) {
     final details = _getChallengeDetails(achievement.targetValue);
     final String badgeTitle = details['title'];
-    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-    final String badgeImagePath = details['imagePath']; // 👈 'icon' 대신 'imagePath' 사용
-    // final IconData badgeIcon = details['icon']; // 👈 삭제
+    final String badgeImagePath = details['imagePath'];
     final DateTime completionDate = achievement.completionDate ?? DateTime.now();
-    // final Color completedColor = Colors.blue[600]!; // 👈 이미지에는 적용 안함 (삭제)
-    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
-    final formatter = NumberFormat('#,###'); // 👈 콤마 포맷터
+    final formatter = NumberFormat('#,###');
 
     showModalBottomSheet(
       context: context,
@@ -195,18 +163,13 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
                 builder: (context, scale, child) {
                   return Transform.scale(scale: scale, child: child);
                 },
-                // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-                child: Image.asset(badgeImagePath, width: 100, height: 100), // 👈 Icon을 Image.asset으로 변경
-                // child: Icon(badgeIcon, size: 100, color: completedColor), // 👈 삭제
-                // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
+                child: Image.asset(badgeImagePath, width: 100, height: 100),
               ),
               SizedBox(height: 40),
               Text(badgeTitle, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
               SizedBox(height: 10),
-              // ✅ 콤마 포맷 적용
               Text('${formatter.format(achievement.targetValue)} 걸음', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
               SizedBox(height: 10),
-              // ✅ 콤마 포맷 적용
               Text('총 ${formatter.format(achievement.targetValue)} 걸음 달성', style: TextStyle(fontSize: 16, color: Colors.black), textAlign: TextAlign.center),
               SizedBox(height: 20),
               Container(
@@ -233,14 +196,10 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
   // 카드 UI (단위: 걸음으로 변경)
   Widget _buildChallengeCard(AchievementInfo achievement) {
     final details = _getChallengeDetails(achievement.targetValue);
-    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-    final String badgeImagePath = details['imagePath']; // 👈 'icon' 대신 'imagePath' 사용
-    // final IconData badgeIcon = details['icon']; // 👈 삭제
+    final String badgeImagePath = details['imagePath'];
     double progress = (_totalSteps / achievement.targetValue).clamp(0.0, 1.0);
     final Color progressColor = achievement.isCompleted ? Colors.blue[600]! : Colors.grey;
-    // final Color iconColor = achievement.isCompleted ? Colors.blue[600]! : Colors.grey[600]!; // 👈 삭제
-    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
-    final formatter = NumberFormat('#,###'); // 👈 콤마 포맷터
+    final formatter = NumberFormat('#,###');
 
     return Padding(
       padding: const EdgeInsets.all(6.0),
@@ -272,18 +231,13 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
                         backgroundColor: Colors.grey[200],
                       ),
                     ),
-                    // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-                    // 👈 Icon을 Opacity와 Image.asset으로 변경
                     Opacity(
-                      opacity: achievement.isCompleted ? 1.0 : 0.4, // 👈 미완료 시 40% 투명도
+                      opacity: achievement.isCompleted ? 1.0 : 0.4,
                       child: Image.asset(badgeImagePath, width: 90, height: 90),
                     ),
-                    // Icon(badgeIcon, size: 60, color: iconColor), // 👈 삭제
-                    // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
                   ],
                 ),
                 SizedBox(height: 10),
-                // ✅ 콤마 포맷 적용
                 Text('+ ${formatter.format(achievement.targetValue)} 걸음', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 Text(achievement.isCompleted ? '달성완료!' : '도전중', style: TextStyle(color: achievement.isCompleted ? Colors.blue[600] : Colors.grey[600], fontSize: 14)),
               ],
@@ -319,10 +273,8 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
               child: Column(
                 children: [
-                  // ▼▼▼▼▼ [ ✨ 수정된 부분 ✨ ] ▼▼▼▼▼
-                  // RichText를 FittedBox로 감싸서 텍스트 크기가 자동으로 조절되도록 함
                   FittedBox(
-                    fit: BoxFit.scaleDown, // 텍스트가 넘칠 경우에만 크기를 줄임
+                    fit: BoxFit.scaleDown,
                     child: RichText(
                       text: TextSpan(
                         style: const TextStyle(fontSize: 50, fontWeight: FontWeight.w900, color: Colors.black),
@@ -333,7 +285,6 @@ class _StepsAchievementsTabState extends State<StepsAchievementsTab>
                       ),
                     ),
                   ),
-                  // ▲▲▲▲▲ [ ✨ 수정된 부분 ✨ ] ▲▲▲▲▲
                   const SizedBox(height: 10),
                   Text('누적 걸음수', style: TextStyle(color: Colors.black, fontSize: 16)),
                 ],

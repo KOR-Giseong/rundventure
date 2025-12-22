@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 import '../../game_selection/friend_battle_intro_screen.dart';
 import '../../ghostrun_screen/ghostrun_ready.dart';
 import '../../ghostrun_screen/ghostrun_stretching.dart';
-import '../../main_screens/main_screen.dart'; // ← MainScreen import 추가
-
-// ▼▼▼▼▼ [ ✅ 신규 추가 ] ▼▼▼▼▼
-// 친구 대결 인트로 페이지 import
-
-// ▲▲▲▲▲ [ ✅ 신규 추가 ] ▲▲▲▲▲
+import '../../main_screens/main_screen.dart';
 
 
 class GameSelectionPage extends StatelessWidget {
@@ -19,9 +14,9 @@ class GameSelectionPage extends StatelessWidget {
       onWillPop: () async {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MainScreen()), // 홈 화면으로 이동
+          MaterialPageRoute(builder: (_) => const MainScreen()),
         );
-        return false; // pop 막기
+        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -42,7 +37,7 @@ class GameSelectionPage extends StatelessWidget {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const MainScreen()), // ← 여기서도 MainScreen으로
+                MaterialPageRoute(builder: (_) => const MainScreen()),
               );
             },
             padding: const EdgeInsets.only(left: 8),
@@ -65,20 +60,18 @@ class GameSelectionPage extends StatelessWidget {
                 },
               ),
 
-              // ▼▼▼▼▼ [ ✅ 신규 추가된 '친구 대결' 카드 ] ▼▼▼▼▼
               _buildGameCard(
                 context,
-                '친구 대결', // 👈 타이틀
-                '친구와 실시간 러닝 대결!', // 👈 설명
-                'assets/images/friendbattle.png', // 👈 배경 이미지 (새 애셋)
+                '친구 대결',
+                '친구와 실시간 러닝 대결!',
+                'assets/images/friendbattle.png',
                     () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const FriendBattleIntroScreen()), // 👈 인트로 화면으로
+                    MaterialPageRoute(builder: (_) => const FriendBattleIntroScreen()),
                   );
                 },
               ),
-              // ▲▲▲▲▲ [ ✅ 신규 추가 끝 ] ▲▲▲▲▲
 
               _buildGameCard(
                 context,
@@ -152,24 +145,19 @@ class GameSelectionPage extends StatelessWidget {
       String imagePath,
       VoidCallback onTap,
       ) {
-    // ▼▼▼▼▼ [ ✅ 수정 1 ] ▼▼▼▼▼
-    // 아이콘 경로 및 '실제 크기'를 분기 처리합니다.
     final String iconPath;
-    double iconWidth = 24; // 기본 너비
-    double iconHeight = 24; // 기본 높이
+    double iconWidth = 24;
+    double iconHeight = 24;
 
     if (title == '고스트 런') {
       iconPath = 'assets/images/ghostlogo.png';
-      // iconWidth, iconHeight는 24 그대로
     } else if (title == '친구 대결') {
-      iconPath = 'assets/images/battlelogo.png'; // 👈 새 아이콘 (새 애셋)
-      iconWidth = 40; // 👈 실제 아이콘 너비
-      iconHeight = 40; // 👈 실제 아이콘 높이
+      iconPath = 'assets/images/battlelogo.png';
+      iconWidth = 40;
+      iconHeight = 40;
     } else {
       iconPath = 'assets/images/soonlogo.png';
-      // iconWidth, iconHeight는 24 그대로
     }
-    // ▲▲▲▲▲ [ ✅ 수정 1 끝 ] ▲▲▲▲▲
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -192,19 +180,19 @@ class GameSelectionPage extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: imagePath == 'assets/images/friendbattle.png'
-                    ? Align( // Align 위젯을 사용하여 위치를 조정합니다.
-                  alignment: Alignment.centerRight, // 오른쪽으로 정렬
+                    ? Align(
+                  alignment: Alignment.centerRight,
                   child: Image.asset(
                     imagePath,
-                    height: double.infinity, // 높이는 컨테이너에 맞춥니다.
-                    fit: BoxFit.fitHeight, // 이미지의 높이를 기준으로 확대/축소
+                    height: double.infinity,
+                    fit: BoxFit.fitHeight,
                   ),
                 )
                     : Image.asset(
                   imagePath,
                   width: double.infinity,
                   height: double.infinity,
-                  fit: BoxFit.cover, // 나머지 이미지는 cover 유지
+                  fit: BoxFit.cover,
                 ),
               ),
               Positioned.fill(
@@ -234,20 +222,17 @@ class GameSelectionPage extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // ▼▼▼▼▼ [ ✅ 핵심 수정 2 ] ▼▼▼▼▼
-                        // 아이콘을 고정된 크기(32x32)의 '투명 상자' 안에 넣습니다.
                         SizedBox(
-                          width: 40,  // 👈 모든 카드의 아이콘 영역 너비를 32로 고정
-                          height: 33, // 👈 모든 카드의 아이콘 영역 높이를 32로 고정
-                          child: Center( // 👈 32x32 상자 안에서
+                          width: 40,
+                          height: 33,
+                          child: Center(
                             child: Image.asset(
                               iconPath,
-                              width: iconWidth,   // 👈 아이콘 '실제 크기' (24 또는 32)
-                              height: iconHeight,  // 👈 아이콘 '실제 크기' (24 또는 32)
+                              width: iconWidth,
+                              height: iconHeight,
                             ),
                           ),
                         ),
-                        // ▲▲▲▲▲ [ ✅ 핵심 수정 2 끝 ] ▲▲▲▲▲
                         const SizedBox(width: 8),
                         Text(
                           title,

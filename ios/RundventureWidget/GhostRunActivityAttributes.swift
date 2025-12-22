@@ -7,7 +7,7 @@ struct GhostRunActivityAttributes: ActivityAttributes {
         var time: String
         var distance: String
         var pace: String
-        var isPaused: Bool // ✅ [추가] 일시정지 상태 변수
+        var isPaused: Bool
     }
 
     // 정적 데이터 (앱 이름 등)
