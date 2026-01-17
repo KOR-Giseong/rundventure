@@ -8,6 +8,12 @@ Rundventure는 러닝을 더 재미있고 동기부여가 되는 경험으로 �
 
 **개발 과정**: 이 프로젝트는 처음에 Android Flutter로 시작되었으나, 크로스 플랫폼 개발의 필요성을 느껴 **Xcode(Swift / Swift UI)**로 통합하여 개발했습니다. Flutter를 통해 iOS와 Apple Watch까지 지원하는 단일 코드베이스로 확장할 수 있었습니다.
 
+## 📱 지원 플랫폼
+
+- iOS (iOS 13.0 이상) ✅ **현재 유지보수 및 업데이트 진행 중**
+- Apple Watch (watchOS 7.0 이상)
+- Android ⚠️ 초기 버전 개발 완료, 현재는 iOS 중심으로 유지보수 중
+
 ## ✨ 주요 기능
 
 ### 🏃 러닝 트래킹
