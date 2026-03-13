@@ -5,12 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:rundventure/main_screens/main_screen.dart';
-import 'package:rundventure/home_Screens/home_screen2.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rundventure/main_screens/main_screen.dart';
 import '../sign_up/TermsAgreementScreen_Social.dart';
 import '../sign_up/sign_up_screen.dart';
-import '../sign_up/profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -377,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        final data = userDoc.data() as Map<String, dynamic>? ?? {};
+        final data = userDoc.data() ?? {};
         final bool isSuspended = data['isSuspended'] ?? false;
 
         if (isSuspended) {
@@ -388,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final idTokenResult = await refreshedUser.getIdTokenResult();
         final isAdmin = idTokenResult.claims?['admin'] ?? false;
 
-        if (!mounted) return;
+        if (!context.mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => MainScreen(showWelcomeMessage: true, isAdmin: isAdmin)),
@@ -570,9 +568,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 final localContext = context;
                 try {
                   await _auth.sendPasswordResetEmail(email: resetEmailController.text.trim());
+                  if (!localContext.mounted) return;
                   Navigator.of(localContext).pop();
                   _showCustomSnackBar('비밀번호 재설정 메일을 보냈습니다.', isSuccess: true);
                 } catch (e) {
+                  if (!localContext.mounted) return;
                   Navigator.of(localContext).pop();
                   _showCustomSnackBar('이메일 전송 실패: $e', isError: true);
                 }

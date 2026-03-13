@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:rundventure/challenge/challenge_screen.dart'; // 목록 화면
-import '../challenge.dart'; // 필요한 import
 
 class NextButton extends StatelessWidget {
   final VoidCallback? onPressed;

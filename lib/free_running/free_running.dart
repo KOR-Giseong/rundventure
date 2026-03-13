@@ -444,6 +444,7 @@ class _FreeRunningPageState extends State<FreeRunningPage> {
         }
       }
 
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => MainScreen()),

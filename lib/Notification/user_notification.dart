@@ -2,9 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:timeago/timeago.dart' as timeago_ko show setLocaleMessages, KoMessages;
+import 'package:timeago/timeago.dart' as timeago_ko show KoMessages;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -454,11 +453,14 @@ class _NotificationCardState extends State<NotificationCard> {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
           .httpsCallable(functionName);
       await callable.call(params);
+      if (!context.mounted) return;
       Navigator.pop(context);
     } on FirebaseFunctionsException catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       _showErrorDialog(context, e.message ?? "알 수 없는 오류");
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       _showErrorDialog(context, "작업 중 오류가 발생했습니다.");
     }
@@ -535,7 +537,6 @@ class _NotificationCardState extends State<NotificationCard> {
         break;
 
       case SnackBarType.info:
-      default:
         backgroundColor = Colors.grey[850]!;
         shape = RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24.0),
@@ -734,7 +735,7 @@ class _NotificationCardState extends State<NotificationCard> {
                     Navigator.pop(dialogContext);
                     _callBattleFunction(
                         buildContext, 'respondToFriendBattleRequest', {
-                      'battleId': battleId!,
+                      'battleId': battleId,
                       'response': 'rejected',
                     });
                   },
@@ -762,10 +763,11 @@ class _NotificationCardState extends State<NotificationCard> {
                           region: 'asia-northeast3')
                           .httpsCallable('respondToFriendBattleRequest');
                       await callable.call({
-                        'battleId': battleId!,
+                        'battleId': battleId,
                         'response': 'accepted',
                       });
 
+                      if (!context.mounted || !buildContext.mounted) return;
                       Navigator.pop(context);
 
                       Navigator.push(
@@ -778,10 +780,14 @@ class _NotificationCardState extends State<NotificationCard> {
                         ),
                       );
                     } on FirebaseFunctionsException catch (e) {
+                      if (!context.mounted) return;
                       Navigator.pop(context);
+                      if (!buildContext.mounted) return;
                       _showErrorDialog(buildContext, e.message ?? "알 수 없는 오류");
                     } catch (e) {
+                      if (!context.mounted) return;
                       Navigator.pop(context);
+                      if (!buildContext.mounted) return;
                       _showErrorDialog(buildContext, "작업 중 오류가 발생했습니다.");
                     }
                   },
@@ -801,14 +807,14 @@ class _NotificationCardState extends State<NotificationCard> {
         Navigator.push(
           buildContext,
           MaterialPageRoute(
-            builder: (context) => ChatRoomScreen(challengeId: challengeId!),
+            builder: (context) => ChatRoomScreen(challengeId: challengeId),
           ),
         );
       } else if (isFreeTalkComment) {
         Navigator.push(
           buildContext,
           MaterialPageRoute(
-            builder: (context) => FreeTalkDetailScreen(postId: postId!),
+            builder: (context) => FreeTalkDetailScreen(postId: postId),
           ),
         );
       }

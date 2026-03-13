@@ -41,7 +41,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
 
   String _myNickname = '알수없음';
 
-  String? _selectedFriendEmail;
   FriendData? _selectedFriend;
   double? _selectedDistanceKm;
 
@@ -155,6 +154,7 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
         final prefs = await SharedPreferences.getInstance();
         final bool withWatch = prefs.getBool('watchSyncEnabled') ?? false;
 
+        if (!mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -427,7 +427,6 @@ class _AsyncBattleCreateScreenState extends State<AsyncBattleCreateScreen> {
                       onTap: () {
                         setState(() {
                           _selectedFriend = friend;
-                          _selectedFriendEmail = friend.email;
                         });
                         Navigator.pop(context);
                       },

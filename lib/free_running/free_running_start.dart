@@ -12,29 +12,23 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'models/route_data_point.dart';
+export 'models/route_data_point.dart';
 
-class RouteDataPoint {
-  final LatLng point;
-  final double speed;
+/// 러닝 중 하단 표시 정보 컬럼 위젯 (레이블 + 값)
+class RunningInfoColumn extends StatelessWidget {
+  final String label;
+  final String value;
 
-  RouteDataPoint({required this.point, required this.speed});
+  const RunningInfoColumn(this.label, this.value, {Key? key}) : super(key: key);
 
-  // 1. 저장할 때 쓰는 함수 (toMap)
-  Map<String, dynamic> toMap() {
-    return {
-      'latitude': point.latitude,
-      'longitude': point.longitude,
-      'speed': speed,
-    };
-  }
-
-  factory RouteDataPoint.fromMap(Map<String, dynamic> map) {
-    return RouteDataPoint(
-      point: LatLng(
-        (map['latitude'] as num).toDouble(),
-        (map['longitude'] as num).toDouble(),
-      ),
-      speed: (map['speed'] as num).toDouble(),
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }
@@ -81,11 +75,11 @@ class _RunningPageState extends State<RunningPage>
   late AnimationController _animationController;
   bool _showMap = false;
 
-  List<RouteDataPoint> _routePointsWithSpeed = [];
+  final List<RouteDataPoint> _routePointsWithSpeed = [];
   late SharedPreferences prefs;
   Annotation? _startMarker;
   Annotation? _endMarker;
-  List<Annotation> _waypointMarkers = [];
+  final List<Annotation> _waypointMarkers = [];
   DateTime? _initialStartTime;
   Duration _totalPausedDuration = Duration.zero;
   DateTime? _pauseStartTime;
@@ -646,8 +640,6 @@ class _RunningPageState extends State<RunningPage>
     }
   }
 
-  void _updateCalories() {}
-
   Future<void> _pauseRunning({bool isAuto = false}) async {
     if (!mounted) return;
     if (_isPaused) return;
@@ -999,9 +991,9 @@ class _RunningPageState extends State<RunningPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildRunningInfo('페이스', '${_formatPace(_pace)}/KM'),
-              _buildRunningInfo('시간', _formatTime(_seconds)),
-              _buildRunningInfo('칼로리', '${_calories.toStringAsFixed(0)}kcal'),
+              RunningInfoColumn('페이스', '${_formatPace(_pace)}/KM'),
+              RunningInfoColumn('시간', _formatTime(_seconds)),
+              RunningInfoColumn('칼로리', '${_calories.toStringAsFixed(0)}kcal'),
             ],
           ),
         ),
@@ -1073,21 +1065,6 @@ class _RunningPageState extends State<RunningPage>
                 ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRunningInfo(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        Text(
-          value,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
       ],
     );

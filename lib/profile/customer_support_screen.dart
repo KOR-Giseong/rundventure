@@ -33,6 +33,7 @@ class CustomerSupportScreen extends StatelessWidget {
                     if (await canLaunchUrl(emailUri)) {
                       await launchUrl(emailUri);
                     } else {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('이메일 앱을 열 수 없습니다.')),
                       );
@@ -55,6 +56,7 @@ class CustomerSupportScreen extends StatelessWidget {
                     try {
                       await launchUrl(gmailUri);
                     } catch (e) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Gmail 앱을 열 수 없습니다. 설치되어 있는지 확인해주세요.')),
                       );
@@ -69,6 +71,7 @@ class CustomerSupportScreen extends StatelessWidget {
                     final Uri naverUri = Uri.parse('https://mail.naver.com');
                     await launchUrl(naverUri, mode: LaunchMode.externalApplication);
 
+                    if (!context.mounted) return;
                     showDialog(
                       context: context,
                       builder: (_) => AlertDialog(

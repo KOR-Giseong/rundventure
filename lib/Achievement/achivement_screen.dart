@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:rundventure/Achievement/quest_screen.dart';
 import 'package:rundventure/Achievement/quest_service.dart';
-import 'package:rundventure/Achievement/quest_data.dart';
 import 'exercise_data.dart';
 import 'exercise_service.dart';
 import 'distance_achievements_tab.dart';

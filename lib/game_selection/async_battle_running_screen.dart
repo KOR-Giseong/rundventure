@@ -13,7 +13,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:rundventure/free_running/free_running_start.dart';
-import 'async_battle_list_screen.dart';
+import 'widgets/battle_running_widgets.dart';
 
 
 class AsyncBattleRunningScreen extends StatefulWidget {
@@ -48,7 +48,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
 
   // --- 나의 러닝 상태 ---
   bool _isMyRunFinished = false; // 내가 완주했는지
-  String _myStatus = 'running'; // 'running', 'paused', 'finished'
   double _myKilometers = 0.0;
   double _myPace = 0.0;
   double _mySeconds = 0.0;
@@ -66,7 +65,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
   loc.Location location = loc.Location();
   StreamSubscription<loc.LocationData>? _locationSubscription;
   loc.LocationData? _lastLocation;
-  List<RouteDataPoint> _routePointsWithSpeed = [];
+  final List<RouteDataPoint> _routePointsWithSpeed = [];
   Timer? _timer;
   bool _isPaused = false;
   bool _dialogShownRecently = false; // 자동 일시정지 스로틀링
@@ -753,7 +752,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
     setState(() {
       _isPaused = true;
       _pauseStartTime = DateTime.now();
-      _myStatus = 'paused';
     });
 
     if (widget.withWatch) {
@@ -780,7 +778,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
       }
       _isPaused = false;
       _dialogShownRecently = false;
-      _myStatus = 'running';
     });
 
     if (widget.withWatch) {
@@ -800,7 +797,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
   Future<void> _finishMyRun() async {
     if (_isMyRunFinished || _isProcessing) return;
 
-    if (widget.battleId == null || widget.battleId.isEmpty) {
+    if (widget.battleId.isEmpty) {
       _showErrorDialog("치명적인 오류: Battle ID가 없습니다. 이 기록은 저장될 수 없습니다.");
       setState(() {
         _isMyRunFinished = false;
@@ -816,7 +813,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
     setState(() {
       _isMyRunFinished = true;
       _isPaused = true;
-      _myStatus = 'finished';
       _isProcessing = true;
     });
 
@@ -909,29 +905,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
   }
 
 
-  // ===================================================================
-  // 5. 헬퍼 함수 (Formatters) - 정밀 시간 포맷
-  // ===================================================================
 
-  String _formatTime(double seconds) {
-    final int totalSec = seconds.floor();
-    final int hours = totalSec ~/ 3600;
-    final int minutes = (totalSec % 3600) ~/ 60;
-    final int secs = totalSec % 60;
-    final int centi = ((seconds - totalSec) * 100).floor();
-    String timeStr = '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}.${centi.toString().padLeft(2, '0')}';
-    if (hours > 0) {
-      timeStr = '${hours.toString().padLeft(2, '0')}:$timeStr';
-    }
-    return timeStr;
-  }
-
-  String _formatPace(double pace) {
-    if (pace.isInfinite || pace.isNaN || pace == 0) return '--:--';
-    int min = pace.floor();
-    int sec = ((pace - min) * 60).round();
-    return '$min:${sec.toString().padLeft(2, '0')}';
-  }
 
 
   // ===================================================================
@@ -955,59 +929,6 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
         body: _isLoadingUserData
             ? Center(child: CircularProgressIndicator(color: Color(0xFFFF9F80)))
             : _buildBattleUI(isAnyAdmin),
-      ),
-    );
-  }
-
-  /// 완주/전송중 오버레이 UI
-  Widget _buildFinishOverlay() {
-    return Container(
-      color: Colors.black.withOpacity(0.8),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_isProcessing) ...[
-              Text(
-                '기록 전송 중...',
-                style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
-            ] else ... [
-              Icon(Icons.flag, color: Colors.white, size: 80),
-              SizedBox(height: 20),
-              Text(
-                _formatTime(_mySeconds),
-                style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '완주!',
-                style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '기록 전송에 실패했습니다.\n(컨트롤 버튼을 눌러 중단하거나 앱 재시작)',
-                style: TextStyle(color: Colors.grey[300], fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.redAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                child: Text(
-                  "나가기 (기록 미저장)",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-            ]
-          ],
-        ),
       ),
     );
   }
@@ -1068,15 +989,15 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
         SafeArea(
           child: Column(
             children: [
-              // 1. 상단: 내 정보
-              _buildPlayerHeader(),
+              // 상단: 내 정보
+              AsyncBattlePlayerHeader(myKilometers: _myKilometers, targetDistanceKm: _targetDistanceKm),
 
-              // 3. 하단: 핵심 스탯
+              // 핵심 스탯
               Spacer(),
-              _buildMainStats(),
+              AsyncBattleMainStats(myPace: _myPace, mySeconds: _mySeconds, myCalories: _myCalories),
               Spacer(),
 
-              // 4. 컨트롤 버튼
+              // 컨트롤 버튼
               _buildControls(),
             ],
           ),
@@ -1095,98 +1016,7 @@ class _AsyncBattleRunningScreenState extends State<AsyncBattleRunningScreen>
           ),
 
         if (_isMyRunFinished)
-          _buildFinishOverlay(),
-      ],
-    );
-  }
-
-  /// 상단: 내 정보
-  Widget _buildPlayerHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '오프라인 대결',
-                style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '${_myKilometers.toStringAsFixed(2)} km',
-                style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '목표',
-                style: TextStyle(color: Colors.deepPurple, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '${_targetDistanceKm.toStringAsFixed(0)} km',
-                style: TextStyle(color: Colors.deepPurple, fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 하단: 핵심 스탯
-  Widget _buildMainStats() {
-    return Column(
-      children: [
-        Text(
-          '${_formatPace(_myPace)}',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 72,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        Text(
-          '현재 페이스 (/km)',
-          style: TextStyle(color: Colors.grey[700], fontSize: 16),
-        ),
-        SizedBox(height: 30),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatColumn('시간', _formatTime(_mySeconds)),
-              _buildStatColumn('칼로리', '${_myCalories.toStringAsFixed(0)} kcal'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatColumn(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          // 소수점까지 나오면 글자가 길어지므로 폰트 사이즈를 약간 조정하거나 모노스페이스 폰트 사용 권장
-          style: TextStyle(
-              color: Colors.black,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              fontFeatures: [FontFeature.tabularFigures()] // 숫자 너비 고정
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey[700], fontSize: 14),
-        ),
+          AsyncBattleFinishOverlay(isProcessing: _isProcessing, mySeconds: _mySeconds, onExit: () => Navigator.of(context).pop()),
       ],
     );
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:async/async.dart' as async;
 import 'package:flutter_tts/flutter_tts.dart';
@@ -424,17 +423,6 @@ class _AsyncBattleListScreenState extends State<AsyncBattleListScreen> {
         },
       ),
     );
-  }
-
-  String _formatTime(int seconds) {
-    final hours = seconds ~/ 3600;
-    final minutes = (seconds % 3600) ~/ 60;
-    final secs = seconds % 60;
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-    } else {
-      return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-    }
   }
 
   void _showCancelConfirmDialog(String battleId) {

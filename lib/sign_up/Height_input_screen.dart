@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rundventure/sign_up/weight_input_screen.dart';
 import 'loading_screen.dart';
 

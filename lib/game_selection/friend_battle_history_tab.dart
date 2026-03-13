@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'friend_battle_result_screen.dart';
@@ -83,6 +82,7 @@ class FriendBattleHistoryTab extends StatelessWidget {
           .get();
 
       // 3. 로딩 닫기
+      if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
       if (runRecordSnapshot.docs.isEmpty) {
@@ -162,11 +162,7 @@ class FriendBattleHistoryTab extends StatelessWidget {
       );
 
     } catch (e) {
-      // 로딩 닫기가 안 된 상태일 수 있으니 안전장치
-      // (위에서 pop을 했지만, 에러가 그 전에 났을 수도 있음)
-      // 하지만 try-catch 구조상 pop은 try 블록 안에서 실행되므로
-      // 에러가 catch로 오면 다이얼로그가 안 닫혔을 가능성은 적음.
-      // 혹시 모르니 catch에서도 pop 시도하는 것이 좋지만, useRootNavigator 복잡도 때문에 생략.
+      if (!context.mounted) return;
       _showCustomSnackBar(context, '기록 로딩 중 오류: ${e.toString()}', isError: true);
     }
   }

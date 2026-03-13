@@ -127,48 +127,6 @@ struct SummaryView: View {
 
     // --- Helper 함수들 ---
 
-    private func formatTimeWithMs(_ totalMs: Int) -> String {
-        let totalSeconds = totalMs / 1000
-        let ms = (totalMs % 1000) / 10 // 2자리 (0~99)로 표시
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-
-        if hours > 0 {
-            // 예: 1:05:23.45
-            return String(format: "%d:%02d:%02d.%02d", hours, minutes, seconds, ms)
-        } else {
-            // 예: 05:23.45
-            return String(format: "%02d:%02d.%02d", minutes, seconds, ms)
-        }
-    }
-
-    // (기존) 단순 시간 포맷 (백업용 or 다른 곳 사용)
-    private func formatTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        if hours > 0 {
-            return String(format: "%d시간 %d분", hours, minutes)
-        } else {
-            if minutes == 0 {
-                return String(format: "%d초", totalSeconds % 60)
-            } else {
-                return String(format: "%d분 %d초", minutes, totalSeconds % 60)
-            }
-        }
-    }
-
-    private func formatPace(_ pace: Double) -> String {
-        if pace.isInfinite || pace.isNaN || pace <= 0 { return "--'--" }
-        let minutes = Int(pace)
-        let seconds = Int((pace - Double(minutes)) * 60)
-        if seconds == 60 {
-            return String(format: "%d'00\"", minutes + 1)
-        } else {
-            return String(format: "%d'%02d\"", minutes, seconds)
-        }
-    }
-
     private func getMainColor() -> Color {
         switch connector.runType {
         case "ghostRace", "ghostRecord":

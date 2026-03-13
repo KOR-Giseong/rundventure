@@ -269,7 +269,7 @@ class _GhostRunReadyPageState extends State<GhostRunReadyPage> {
                       final ghostRecord = await _loadPreviousRecord(userEmail);
 
                       // 화면 이동
-                      if (!mounted) return;
+                      if (!context.mounted) return;
 
                       // 이제 GhostRunPage로 이동합니다
                       Navigator.push(

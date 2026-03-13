@@ -1,10 +1,7 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'admin/admin_screen.dart';
 
 import '../admin/utils/admin_permissions.dart';
 import '../profile/other_user_profile.dart';
@@ -155,12 +152,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
         });
       }
     }
-  }
-
-  void _toggleImageSize() {
-    setState(() {
-      isImageExpanded = !isImageExpanded;
-    });
   }
 
   Future<void> _checkCurrentUserPermissions() async {
@@ -629,6 +620,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                                         .collection('freeTalks')
                                         .doc(widget.postId)
                                         .delete();
+                                    if (!context.mounted) return;
                                     Navigator.of(context).pop();
                                   }
                                 },
@@ -959,28 +951,6 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
     );
   }
 
-  void _setReplyingToNickname(String commentId) async {
-    final commentsRef = FirebaseFirestore.instance
-        .collection('freeTalks')
-        .doc(widget.postId)
-        .collection('comments');
-    final commentSnapshot = await commentsRef.doc(commentId).get();
-
-    if (commentSnapshot.exists && commentSnapshot.data() != null) {
-      final commentData = commentSnapshot.data() as Map<String, dynamic>;
-      setState(() {
-        replyingToNickname = commentData['nickname'];
-      });
-    }
-  }
-
-  void _startReply(String commentId) {
-    setState(() {
-      replyingToCommentId = commentId;
-      _setReplyingToNickname(commentId);
-    });
-  }
-
   Widget _buildCommentItem(
       DocumentSnapshot doc, Map<String, dynamic> data, CollectionReference commentsRef) {
     final timestamp = (data['timestamp'] is Timestamp)
@@ -1029,7 +999,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => OtherUserProfileScreen(
-                                userEmail: commentEmail!
+                                userEmail: commentEmail
                                     .replaceAll('@', '_at_')
                                     .replaceAll('.', '_dot_')),
                           ),
@@ -1061,7 +1031,7 @@ class _FreeTalkDetailScreenState extends State<FreeTalkDetailScreen> {
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           OtherUserProfileScreen(
-                                              userEmail: commentEmail!
+                                              userEmail: commentEmail
                                                   .replaceAll('@', '_at_')
                                                   .replaceAll('.', '_dot_')),
                                     ),

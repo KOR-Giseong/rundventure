@@ -11,6 +11,7 @@ import 'GhostRun_Resultpage.dart'; // GhostRunResultScreen이 있는 파일
 import 'ghostrunpage.dart'; // GhostRunPage가 있는 파일
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
+import 'widgets/ghost_run_tracking_widgets.dart';
 
 class GhostRunTrackingPage extends StatefulWidget {
   final Map<String, dynamic> ghostRunData;
@@ -472,6 +473,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         if (permissionGranted != PermissionStatus.granted) {
           if (mounted) {
             await showDialog(context: context, builder: (ctx) => AlertDialog(title: const Text('권한 필요'), content: const Text('위치 권한 필요'), actions: [TextButton(onPressed: ()=>Navigator.of(ctx).pop(), child: const Text('확인'))]));
+            if (!mounted) return;
             Navigator.of(context).pop();
           }
           return;
@@ -510,10 +512,10 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
         if (lastLoc != null) {
           final distanceInMeters = _calculateDistance(
               lastLoc.latitude!, lastLoc.longitude!,
-              newPoint.latitude!, newPoint.longitude!
+              newPoint.latitude, newPoint.longitude
           );
 
-          double timeIntervalSec = (newLocation.time! - (lastLoc.time ?? 0)) / 1000;
+          double timeIntervalSec = ((newLocation.time ?? 0) - (lastLoc.time ?? 0)) / 1000;
           if (timeIntervalSec <= 0) timeIntervalSec = 0.5;
 
           double speed = distanceInMeters / timeIntervalSec;
@@ -982,7 +984,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
     return WillPopScope(
       onWillPop: () async {
         bool stop = await _showStopConfirmDialog();
-        if (stop && mounted) {
+        if (stop && context.mounted) {
           _stopAndCleanUp();
           // GhostRunPage로 돌아가기 (이전 화면 스택 모두 제거)
           Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => GhostRunPage()), (route) => false);
@@ -1028,7 +1030,7 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
               child: GestureDetector(
                 onTap: () async {
                   bool stop = await _showStopConfirmDialog();
-                  if (stop && mounted) {
+                  if (stop && context.mounted) {
                     _stopAndCleanUp();
                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => GhostRunPage()), (route) => false);
                   }
@@ -1104,99 +1106,19 @@ class _GhostRunTrackingPageState extends State<GhostRunTrackingPage> with Widget
               ),
             ),
             // 하단 정보 및 컨트롤 패널
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8), // 반투명 검정 배경
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // 내용물 크기만큼만 차지
-                  children: [
-                    // 유저 정보 표시 영역
-                    Row(
-                      children: [
-                        const Icon(Icons.person, color: Colors.white, size: 16),
-                        const SizedBox(width: 4),
-                        const Text("Me", style: TextStyle(color: Colors.white, fontSize: 12)),
-                        const SizedBox(width: 20),
-                        Expanded(child: _buildInfoBox(_timeDisplay, "Time", Colors.white)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildInfoBox(_distanceDisplay, "Km", Colors.white)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildInfoBox(_paceDisplay, "min/km", Colors.white)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // 고스트 정보 표시 영역
-                    Row(
-                      children: [
-                        Image.asset('assets/images/ghostlogo.png', width: 16, height: 16, color: Colors.purple, fit: BoxFit.contain), // 고스트 아이콘
-                        const SizedBox(width: 4),
-                        const Text("Ghost", style: TextStyle(color: Colors.purple, fontSize: 12)),
-                        const SizedBox(width: 20),
-                        Expanded(child: _buildInfoBox(_ghostTimeDisplay, "Time", Colors.purple)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildInfoBox(_ghostDistanceDisplay, "Km", Colors.purple)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildInfoBox(_ghostPaceDisplay, "min/km", Colors.purple)), // 고스트 페이스 표시
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // 컨트롤 버튼 영역 (일시정지/재개)
-                    if (!_isPaused) // 러닝 중일 때
-                      Center(
-                        child: GestureDetector(
-                          onTap: _pauseTracking, // 탭하면 일시정지
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.orange), // 주황색 원
-                            child: const Icon(Icons.pause, color: Colors.white, size: 32), // 일시정지 아이콘
-                          ),
-                        ),
-                      )
-                    else // 일시정지 중일 때
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: _resumeTracking, // 탭하면 재개
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.green), // 초록색 원
-                              child: const Icon(Icons.play_arrow, color: Colors.white, size: 32), // 재생 아이콘
-                            ),
-                          ),
-                          // 여기에 종료 버튼 추가 가능 (GhostRun_FirstTrackingPage 참고)
-                          // 예:
-                          // const SizedBox(width: 40),
-                          // GestureDetector(onTap: _finishRace, ... ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
+            GhostRunBottomPanel(
+              timeDisplay: _timeDisplay,
+              distanceDisplay: _distanceDisplay,
+              paceDisplay: _paceDisplay,
+              ghostTimeDisplay: _ghostTimeDisplay,
+              ghostDistanceDisplay: _ghostDistanceDisplay,
+              ghostPaceDisplay: _ghostPaceDisplay,
+              isPaused: _isPaused,
+              onPause: _pauseTracking,
+              onResume: _resumeTracking,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // 정보 표시용 작은 박스 위젯 빌더
-  Widget _buildInfoBox(String value, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.black), // 검정 배경, 둥근 모서리
-      child: Column(
-        children: [
-          Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)), // 값 (주어진 색상)
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)), // 레이블 (회색)
-        ],
       ),
     );
   }

@@ -10,13 +10,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart';
-import 'package:rundventure/free_running/free_running.dart';
 import 'CustomCalendar_Dialog.dart';
 import 'package:rundventure/main_screens/main_screen.dart';
 import 'RunningRecords_Page.dart';
 import 'Running_Goal_Setting.dart';
 import 'dart:math' as math;
 import 'package:rundventure/free_running/free_running_start.dart'; // RouteDataPoint 클래스를 임포트
+import 'painters/running_data_painters.dart';
+import 'full_screen_map_page.dart';
+import 'widgets/running_data_widgets.dart';
 
 class RunningStatsPage extends StatefulWidget {
   final String date;
@@ -29,13 +31,11 @@ class RunningStatsPage extends StatefulWidget {
 
 class _RunningStatsPageState extends State<RunningStatsPage> {
   late DateTime _selectedDate;
-  bool _showCalendar = false;
   bool _isCaloriesSelected = true;
   Map<String, Map<String, dynamic>?> weeklyData = {};
   Map<String, dynamic>? _selectedRecord;
   int calorieGoal = 500;
   double distanceGoal = 10.0;
-  List<Map<String, dynamic>> _weeklyData = [];
   bool _isLoadingGoal = true;
 
   AppleMapController? _mapController;
@@ -444,47 +444,7 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
     );
   }
 
-  DateTime _getDateTime(Map<String, dynamic> runningData) {
-    final dateData = runningData['date'];
-    if (dateData is Timestamp) return dateData.toDate();
-    else if (dateData is DateTime) return dateData;
-    return DateTime.now();
-  }
-
-  Widget _buildCalendarDialog() {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TableCalendar(
-              firstDay: DateTime.utc(2024, 1, 1),
-              lastDay: DateTime.now(),
-              focusedDay: _selectedDate,
-              selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDate = selectedDay;
-                  _selectedRecord = null;
-                  _showCalendar = false;
-                });
-                Navigator.of(context).pop();
-                _loadGoalForDate(_selectedDate).then((_) => _loadWeeklyData());
-              },
-              headerStyle: HeaderStyle(formatButtonVisible: false, titleCentered: true),
-              calendarStyle: CalendarStyle(
-                selectedDecoration: BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                todayDecoration: BoxDecoration(color: Colors.deepOrange.withOpacity(0.2), shape: BoxShape.circle),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeekDay(String day, bool isComplete, {bool isActive = false}) {
+  Widget _buildWeekDay(String day, bool isComplete) {
     int dayIndex = ['월', '화', '수', '목', '금', '토', '일'].indexOf(day);
     DateTime dayDate = _getStartOfWeek(_selectedDate).add(Duration(days: dayIndex));
     String formattedDayDate = DateFormat('yyyy-MM-dd').format(dayDate);
@@ -669,7 +629,7 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
                     left: 0,
                     child: RepaintBoundary(
                       key: _shareBoundaryKey,
-                      child: _buildShareableCard(selectedData, _routeDataPoints.map((dp) => dp.point).toList()),
+                      child: RunningShareableCard(data: selectedData, latLngPoints: _routeDataPoints.map((dp) => dp.point).toList()),
                     ),
                   ),
                   ListView(
@@ -880,17 +840,16 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
                               SizedBox(height: 15),
                             Column(
                               children: [
-                                _buildDetailStatCard('평균 페이스', '${_formatPace((selectedData['pace'] as num).toDouble())}/KM'),
-                                _buildDetailStatCard('시간', _formatDuration((selectedData['seconds'] as num).toInt())),
-                                _buildDetailStatCard(
-                                  _isCaloriesSelected ? '거리' : '칼로리',
-                                  _isCaloriesSelected
+                                RunningDetailStatCard(label: '평균 페이스', value: '${formatRunningPace((selectedData['pace'] as num).toDouble())}/KM'),
+                                RunningDetailStatCard(label: '시간', value: formatRunningDuration((selectedData['seconds'] as num).toInt())),
+                                RunningDetailStatCard(label: 
+                                  _isCaloriesSelected ? '거리' : '칼로리', value: _isCaloriesSelected
                                       ? '${(selectedData['kilometers'] as num).toStringAsFixed(2)} KM'
                                       : '${(selectedData['calories'] as num).round()} KCAL',
                                 ),
-                                _buildDetailStatCard('고도', '${(selectedData['elevation'] as num?)?.toDouble().toStringAsFixed(1) ?? "0.0"} M'),
-                                _buildDetailStatCard('걸음수', '${(selectedData['stepCount'] as num?)?.toInt() ?? 0}'),
-                                _buildDetailStatCard('평균 속도', '${(selectedData['averageSpeed'] as num).toStringAsFixed(1)} KM/H'),
+                                RunningDetailStatCard(label: '고도', value: '${(selectedData['elevation'] as num?)?.toDouble().toStringAsFixed(1) ?? "0.0"} M'),
+                                RunningDetailStatCard(label: '걸음수', value: '${(selectedData['stepCount'] as num?)?.toInt() ?? 0}'),
+                                RunningDetailStatCard(label: '평균 속도', value: '${(selectedData['averageSpeed'] as num).toStringAsFixed(1)} KM/H'),
                               ],
                             ),
                           ],
@@ -906,545 +865,5 @@ class _RunningStatsPageState extends State<RunningStatsPage> {
       ),
     );
   }
-
-  Widget _buildShareableCard(Map<String, dynamic> data, List<LatLng> latLngPoints) {
-    final double safeKilometers = (data['kilometers'] as num? ?? 0.0).toDouble();
-    final double safePace = (data['pace'] as num? ?? 0.0).toDouble();
-    final int safeSeconds = (data['seconds'] as num? ?? 0).toInt();
-    final double safeCalories = (data['calories'] as num? ?? 0.0).toDouble();
-
-    if (latLngPoints.length < 2) {
-      return Container(
-        width: 450,
-        height: 800,
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)),
-              Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
-              SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildStatColumn('평균 페이스', _formatPace(safePace)),
-                  _buildStatColumn('시간', _formatDuration(safeSeconds)),
-                  _buildStatColumn('칼로리', '${safeCalories.toStringAsFixed(0)} kcal'),
-                ],
-              ),
-              SizedBox(height: 40),
-              Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))),
-            ],
-          ),
-        ),
-      );
-    }
-
-    double minLat = latLngPoints.map((p) => p.latitude).reduce(math.min);
-    double maxLat = latLngPoints.map((p) => p.latitude).reduce(math.max);
-    double minLng = latLngPoints.map((p) => p.longitude).reduce(math.min);
-    double maxLng = latLngPoints.map((p) => p.longitude).reduce(math.max);
-    final bounds = LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
-    );
-
-    return Container(
-      width: 450,
-      height: 800,
-      color: Colors.white,
-      child: Stack(
-        children: [
-          CustomPaint(
-            size: Size(450, 800),
-            painter: RoutePainter(points: latLngPoints, bounds: bounds),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(safeKilometers.toStringAsFixed(2), style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900, decoration: TextDecoration.none)),
-                Text('킬로미터', style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
-                SizedBox(height: 40),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStatColumn('평균 페이스', _formatPace(safePace)),
-                    _buildStatColumn('시간', _formatDuration(safeSeconds)),
-                    _buildStatColumn('칼로리', '${safeCalories.toStringAsFixed(0)} kcal'),
-                  ],
-                ),
-                SizedBox(height: 40),
-                Center(child: Text('RUNDVENTURE', style: TextStyle(color: Colors.black54, fontSize: 18, fontWeight: FontWeight.bold, decoration: TextDecoration.none))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatColumn(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 18, decoration: TextDecoration.none)),
-        SizedBox(height: 4),
-        Text(value, style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold, decoration: TextDecoration.none)),
-      ],
-    );
-  }
-
-  Widget _buildDetailStatCard(String label, String value) {
-    final double deviceWidth = MediaQuery.of(context).size.width;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 20.0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepOrange.withOpacity(0.15)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 5,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: deviceWidth * 0.038,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: deviceWidth * 0.040,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResponsiveDetailRow(
-      BuildContext context,
-      String label1, String value1,
-      String label2, String value2,
-      String label3, String value3,
-      ) {
-    final double deviceWidth = MediaQuery.of(context).size.width;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: _buildResponsiveDetailItem(context, label1, value1)),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 13.0),
-            child: _buildResponsiveDetailItem(context, label2, value2),
-          ),
-        ),
-        Expanded(child: _buildResponsiveDetailItem(context, label3, value3)),
-      ],
-    );
-  }
-
-  Widget _buildResponsiveDetailItem(BuildContext context, String label, String value) {
-    final double deviceWidth = MediaQuery.of(context).size.width;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: deviceWidth * 0.033,
-          ),
-        ),
-        SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: deviceWidth * 0.04,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-class ThreeDProgressPainter extends CustomPainter {
-  final double progress;
-
-  ThreeDProgressPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double radius = size.width / 2;
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final Rect rect = Rect.fromCircle(center: center, radius: radius);
-    final double startAngle = -math.pi / 2;
-    final double strokeWidth = size.width * 0.15;
-
-    final Paint backgroundPaint = Paint()
-      ..color = Colors.grey[200]!
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawArc(rect, 0, 2 * math.pi, false, backgroundPaint);
-
-    final bool isGoalReached = progress >= 1.0;
-
-    final Paint basePaint = Paint()
-      ..color = isGoalReached ? Colors.deepOrange[600]! : Colors.deepOrange
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final double primaryProgress = math.min(progress, 1.0);
-    final double primarySweep = primaryProgress * 2 * math.pi;
-
-    if (primarySweep > 0) {
-      canvas.drawArc(rect, startAngle, primarySweep, false, basePaint);
-    }
-
-    if (progress > 1.0) {
-      final double extraProgress = progress - 1.0;
-      final double extraSweep = extraProgress * 2 * math.pi;
-
-      final Paint gradientPaint = Paint()
-        ..shader = SweepGradient(
-          startAngle: 0.0,
-          endAngle: extraSweep,
-          colors: [
-            Colors.deepOrange[600]!,
-            Colors.deepOrange[700]!,
-            Colors.deepOrange[800]!,
-          ],
-          stops: [0.0, 0.5, 1.0],
-          transform: GradientRotation(startAngle + primarySweep),
-        ).createShader(rect)
-        ..strokeWidth = strokeWidth
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.butt;
-
-      canvas.drawArc(rect, startAngle + primarySweep, extraSweep, false, gradientPaint);
-
-      final Paint endCapPaint = Paint()
-        ..color = Colors.deepOrange[800]!
-        ..strokeWidth = strokeWidth
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(rect, startAngle + primarySweep + extraSweep - 0.001, 0.001, false, endCapPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class RoutePainter extends CustomPainter {
-  final List<LatLng> points;
-  final LatLngBounds bounds;
-
-  RoutePainter({required this.points, required this.bounds});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (points.length < 2) {
-      if (points.isNotEmpty) {
-        final startPoint = _scalePoint(points.first, size);
-        _drawCircle(canvas, startPoint, Colors.green);
-      }
-      return;
-    }
-
-    final paint = Paint()
-      ..color = Colors.black54
-      ..strokeWidth = 5.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = Path();
-    final firstScaledPoint = _scalePoint(points.first, size);
-    path.moveTo(firstScaledPoint.dx, firstScaledPoint.dy);
-
-    for (int i = 1; i < points.length; i++) {
-      final scaledPoint = _scalePoint(points[i], size);
-      path.lineTo(scaledPoint.dx, scaledPoint.dy);
-    }
-
-    canvas.drawPath(path, paint);
-
-    final startPoint = _scalePoint(points.first, size);
-    _drawCircle(canvas, startPoint, Colors.green);
-
-    final endPoint = _scalePoint(points.last, size);
-    _drawCircle(canvas, endPoint, Colors.red);
-  }
-
-  Offset _scalePoint(LatLng point, Size size) {
-    double minLat = bounds.southwest.latitude;
-    double maxLat = bounds.northeast.latitude;
-    double minLng = bounds.southwest.longitude;
-    double maxLng = bounds.northeast.longitude;
-    double normalizedX = (point.longitude - minLng) / (maxLng - minLng);
-    double normalizedY = (point.latitude - minLat) / (maxLat - minLat);
-    double lngRange = maxLng - minLng;
-    double latRange = maxLat - minLat;
-
-    if (lngRange.abs() < 0.00001) normalizedX = 0.5;
-    if (latRange.abs() < 0.00001) normalizedY = 0.5;
-
-    double paddingX = size.width * 0.15;
-    double paddingY = size.height * 0.15;
-    double drawWidth = size.width - 2 * paddingX;
-    double drawHeight = size.height - 2 * paddingY;
-    double scaledX = paddingX + normalizedX * drawWidth;
-    double scaledY = paddingY + (1 - normalizedY) * drawHeight;
-
-    return Offset(scaledX, scaledY);
-  }
-
-  void _drawCircle(Canvas canvas, Offset center, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 8.0, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant RoutePainter oldDelegate) {
-    return oldDelegate.points != points || oldDelegate.bounds != bounds;
-  }
-}
-
-String _formatPace(double pace) {
-  int minutes = pace.floor();
-  int seconds = ((pace - minutes) * 60).round();
-  return "$minutes'${seconds.toString().padLeft(2, '0')}\"";
-}
-
-String _formatDuration(int seconds) {
-  int minutes = seconds ~/ 60;
-  int remainingSeconds = seconds % 60;
-  return "$minutes:${remainingSeconds.toString().padLeft(2, '0')}";
-}
-
-class FullScreenMapPage extends StatefulWidget {
-  final List<RouteDataPoint> routeDataPoints;
-
-  const FullScreenMapPage({Key? key, required this.routeDataPoints}) : super(key: key);
-
-  @override
-  _FullScreenMapPageState createState() => _FullScreenMapPageState();
-}
-
-class _FullScreenMapPageState extends State<FullScreenMapPage> {
-  AppleMapController? _mapController;
-  final Set<Polyline> _polylines = {};
-  final Set<Annotation> _markers = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _updateMapDisplay();
-  }
-
-  Color _getColorForSpeed(double speed) {
-    double speedKmh = speed * 3.6;
-    if (speedKmh < 4) return Colors.blue.shade700;
-    else if (speedKmh < 8) return Colors.green.shade600;
-    else if (speedKmh < 12) return Colors.orange.shade700;
-    else return Colors.red.shade600;
-  }
-
-  void _onMapCreated(AppleMapController controller) {
-    _mapController = controller;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _moveCameraToBounds();
-    });
-  }
-
-  void _updateMapDisplay() {
-    if (widget.routeDataPoints.length < 2) return;
-
-    for (int i = 0; i < widget.routeDataPoints.length - 1; i++) {
-      final start = widget.routeDataPoints[i];
-      final end = widget.routeDataPoints[i + 1];
-      _polylines.add(Polyline(
-        polylineId: PolylineId('route_segment_$i'),
-        points: [start.point, end.point],
-        color: _getColorForSpeed(end.speed),
-        width: 5,
-      ));
-    }
-
-    _markers.add(
-      Annotation(
-        annotationId: AnnotationId('start_position'),
-        position: widget.routeDataPoints.first.point,
-        icon: BitmapDescriptor.defaultAnnotationWithHue(BitmapDescriptor.hueGreen),
-      ),
-    );
-
-    _markers.add(
-      Annotation(
-        annotationId: AnnotationId('end_position'),
-        position: widget.routeDataPoints.last.point,
-        icon: BitmapDescriptor.defaultAnnotationWithHue(BitmapDescriptor.hueRed),
-      ),
-    );
-    setState(() {});
-  }
-
-  void _moveCameraToBounds() async {
-    if (widget.routeDataPoints.length < 2 || _mapController == null) return;
-
-    final points = widget.routeDataPoints.map((dp) => dp.point).toList();
-    double minLat = points.first.latitude;
-    double maxLat = points.first.latitude;
-    double minLng = points.first.longitude;
-    double maxLng = points.first.longitude;
-
-    for (var point in points) {
-      minLat = math.min(minLat, point.latitude);
-      maxLat = math.max(maxLat, point.latitude);
-      minLng = math.min(minLng, point.longitude);
-      maxLng = math.max(maxLng, point.longitude);
-    }
-
-    _mapController!.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: LatLng(minLat, minLng),
-          northeast: LatLng(maxLat, maxLng),
-        ),
-        60.0,
-      ),
-    );
-  }
-
-  Widget _buildLegend() {
-    return Positioned(
-      top: 10,
-      left: 10,
-      child: Container(
-        padding: EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 5,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('속도 (km/h)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-            SizedBox(height: 5),
-            _buildLegendItem(Colors.blue.shade700, '< 4'),
-            _buildLegendItem(Colors.green.shade600, '4 ~ 8'),
-            _buildLegendItem(Colors.orange.shade700, '8 ~ 12'),
-            _buildLegendItem(Colors.red.shade600, '> 12'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(Color color, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          SizedBox(width: 8),
-          Text(text, style: TextStyle(fontSize: 11, color: Colors.black87)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          '경로 상세보기',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        leading: IconButton(
-          icon: Image.asset('assets/images/Back-Navs.png', width: 40, height: 40),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: Stack(
-        children: [
-          AppleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: widget.routeDataPoints.isNotEmpty
-                  ? widget.routeDataPoints.first.point
-                  : LatLng(37.4563, 126.7052), // 인천광역시청 좌표
-              zoom: 15.0,
-            ),
-            polylines: _polylines,
-            annotations: _markers,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            zoomGesturesEnabled: true,
-            scrollGesturesEnabled: true,
-          ),
-          _buildLegend(),
-        ],
-      ),
-    );
-  }
-}

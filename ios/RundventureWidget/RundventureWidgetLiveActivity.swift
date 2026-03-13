@@ -66,7 +66,7 @@ struct RundventureWidgetLiveActivity: Widget {
                         Text("시간")
                             .font(.caption)
                             .foregroundColor(.gray)
-                        Text("\(formatTime(context.state.seconds))")
+                        Text("\(formatTimeFull(context.state.seconds))")
                             .font(.title2)
                             .fontWeight(.semibold)
                             .foregroundColor(.black)
@@ -114,7 +114,7 @@ struct RundventureWidgetLiveActivity: Widget {
                         Image(systemName: "timer")
                             .font(.caption2)
                             .foregroundColor(.gray)
-                        Text("\(formatTime(context.state.seconds))")
+                        Text("\(formatTimeFull(context.state.seconds))")
                             .font(.caption2)
                             .foregroundColor(.white)
                         
@@ -169,12 +169,4 @@ struct RundventureWidgetLiveActivity: Widget {
             }
         }
     }
-}
-
-// 시간(초)를 HH:MM:SS 형식으로 변환하는 함수
-func formatTime(_ totalSeconds: Int) -> String {
-    let hours = totalSeconds / 3600
-    let minutes = (totalSeconds % 3600) / 60
-    let seconds = totalSeconds % 60
-    return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
 }

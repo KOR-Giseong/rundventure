@@ -1,6 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'sign_up_password_confirm.dart'; // 비밀번호 확인 페이지 임포트
+import 'sign_up_password_confirm.dart';
 
 class SignUpPasswordScreen extends StatefulWidget {
   final String email;

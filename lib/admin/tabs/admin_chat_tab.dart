@@ -24,7 +24,7 @@ class _AdminChatTabState extends State<AdminChatTab>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  List<int> _matchIndices = [];
+  final List<int> _matchIndices = [];
   List<GlobalKey> _matchKeys = [];
   int _currentMatchIndex = -1;
 

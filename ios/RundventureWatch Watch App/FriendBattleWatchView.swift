@@ -161,26 +161,6 @@ struct FriendBattleWatchView: View {
 
     // --- Helper 함수들 ---
 
-    // 시간 포맷 함수 (HH:MM:SS)
-    private func formatTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-    }
-
-    // 페이스 포맷 함수 (M'SS")
-    private func formatPace(_ pace: Double) -> String {
-        if pace.isInfinite || pace.isNaN || pace <= 0 { return "--'--" }
-        let minutes = Int(pace)
-        let seconds = Int((pace - Double(minutes)) * 60)
-        if seconds == 60 {
-            return String(format: "%d'00\"", minutes + 1)
-        } else {
-            return String(format: "%d'%02d\"", minutes, seconds)
-        }
-    }
-    
     // 격차 포맷 함수 (+120m, -30m, 0m)
     private func formatDifference(_ diff: Double) -> String {
         if abs(diff) < 1 { return "0m" } // 1m 미만은 0 (diff.abs() -> abs(diff))

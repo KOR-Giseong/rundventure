@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 class SearchFriendScreen extends StatefulWidget {
@@ -36,7 +35,6 @@ class FriendSearchResult {
 class _SearchFriendScreenState extends State<SearchFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
   // final String? _myEmail = FirebaseAuth.instance.currentUser?.email;
-  final String? _myNickname = FirebaseAuth.instance.currentUser?.displayName;
 
   bool _isProcessingRequest = false;
   String? _processingEmail; // 현재 요청을 처리 중인 이메일

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -134,14 +134,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		367A01992E2D459800F01A65 /* Exceptions for "RundventureWidget" folder in "RundventureWidgetExtension" target */ = {
+		367A01992E2D459800F01A65 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 367A01882E2D459300F01A65 /* RundventureWidgetExtension */;
 		};
-		36BB15772E70B5E8005301E8 /* Exceptions for "RundventureWidget" folder in "Runner" target */ = {
+		36BB15772E70B5E8005301E8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AsyncBattleActivityAttributes.swift,
@@ -155,30 +155,8 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		367A018C2E2D459300F01A65 /* RundventureWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				36BB15772E70B5E8005301E8 /* Exceptions for "RundventureWidget" folder in "Runner" target */,
-				367A01992E2D459800F01A65 /* Exceptions for "RundventureWidget" folder in "RundventureWidgetExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = RundventureWidget;
-			sourceTree = "<group>";
-		};
-		36D1DC582E7D8B5D00B254F2 /* RundventureWatch Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "RundventureWatch Watch App";
-			sourceTree = "<group>";
-		};
+		367A018C2E2D459300F01A65 /* RundventureWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (36BB15772E70B5E8005301E8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 367A01992E2D459800F01A65 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = RundventureWidget; sourceTree = "<group>"; };
+		36D1DC582E7D8B5D00B254F2 /* RundventureWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "RundventureWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -498,9 +476,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

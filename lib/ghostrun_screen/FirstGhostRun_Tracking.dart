@@ -6,7 +6,6 @@ import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'dart:math' show cos, sqrt, asin;
 import 'GhosRun_Setting.dart'; // 오타 수정: GhostRun_Setting.dart 가정
-import 'ghostrun_ready.dart';
 import 'ghostrunpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -274,6 +273,7 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
                 ],
               ),
             );
+            if (!mounted) return;
             Navigator.of(context).pop();
           }
           return;
@@ -321,9 +321,9 @@ class _FirstRunTrackingPageState extends State<FirstGhostRunTrackingPage> with W
         if (lastLoc != null) {
           final distanceInMeters = _calculateDistance(
               lastLoc.latitude!, lastLoc.longitude!,
-              newPoint.latitude!, newLocation.longitude ?? 0.0);
+              newPoint.latitude, newLocation.longitude ?? 0.0);
 
-          double timeIntervalSec = (newLocation.time! - (lastLoc.time ?? 0)) / 1000;
+          double timeIntervalSec = ((newLocation.time ?? 0) - (lastLoc.time ?? 0)) / 1000;
           if (timeIntervalSec <= 0) timeIntervalSec = 0.5;
 
           double speed = distanceInMeters / timeIntervalSec;

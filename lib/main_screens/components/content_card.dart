@@ -4,8 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../game_selection/friend_battle_intro_screen.dart';
-import '../../ghostrun_screen/ghostrun_ready.dart';
-import '../../ghostrun_screen/ghostrun_stretching.dart';
 import 'package:rundventure/challenge/chat_room_screen.dart';
 
 class ContentCardSection extends StatelessWidget {
@@ -478,17 +476,6 @@ class _RotatingChallengeCardState extends State<RotatingChallengeCard> {
         _challenges = [];
       });
     }
-  }
-
-  double _calculateProgress(Timestamp? startTime, int? duration) {
-    if (startTime == null || duration == null || duration == 0) return 0.0;
-    final now = DateTime.now();
-    final start = startTime.toDate();
-    final end = start.add(Duration(days: duration));
-    final total = end.difference(start).inDays;
-    final remaining = end.difference(now).inDays;
-    final elapsed = (total - remaining).clamp(0, total);
-    return elapsed / total;
   }
 
   void _startRotation() {

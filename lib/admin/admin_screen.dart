@@ -137,6 +137,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           .httpsCallable('setSuperAdminRole')
           .call();
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -160,6 +161,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
       );
     } on FirebaseFunctionsException catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       String errorMessage = "알 수 없는 오류가 발생했습니다.";
@@ -193,6 +195,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -227,6 +230,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       ),
     ).then((confirmed) {
       if (confirmed == true) {
+        if (!context.mounted) return;
         _executeSuperAdminRoleRecovery(context);
       }
     }    );
@@ -251,7 +255,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      if(mounted) {
+      if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -277,7 +281,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       }
 
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

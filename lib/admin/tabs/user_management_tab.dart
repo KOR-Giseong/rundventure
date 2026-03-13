@@ -7,6 +7,7 @@ import '../../admin_support_dashboard_screen.dart'; // 경로 수정
 import '../utils/admin_permissions.dart'; // 분리한 파일 임포트
 import '../dialogs/permissions_dialog.dart'; // 분리한 파일 임포트
 import '../dialogs/user_details_dialog.dart'; // 분리한 파일 임포트
+import '../widgets/user_management_widgets.dart';
 
 // -----------------------------------------------------------------------------
 // 탭 1: 사용자 관리
@@ -66,7 +67,7 @@ class _UserManagementTabState extends State<UserManagementTab>
   Future<void> _setAdminOnlineStatus() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     // currentUser가 null이거나 uid가 없으면 실행 중지
-    if (currentUser == null || currentUser.uid == null) {
+    if (currentUser == null) {
       print("Admin online status: User not logged in.");
       return;
     }
@@ -176,6 +177,7 @@ class _UserManagementTabState extends State<UserManagementTab>
           .doc('admin_config')
           .set({'password': _newPasswordController.text.trim()});
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -200,6 +202,7 @@ class _UserManagementTabState extends State<UserManagementTab>
       _newPasswordController.clear();
       FocusScope.of(context).unfocus();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -235,7 +238,7 @@ class _UserManagementTabState extends State<UserManagementTab>
             title: "실시간 접속 관리자",
             child: Column(
               children: [
-                _buildOnlineAdminList(),
+                AdminOnlineList(onlineAdminsStream: widget.onlineAdminsStream, primaryColor: primaryColor),
 
                 if (widget.isSuperAdmin || widget.currentUserRole == 'general_admin')
                   Padding(
@@ -358,7 +361,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                     ],
                   ),
                 ),
-                _buildNotificationForm(),
+                AdminNotificationForm(titleController: _titleController, messageController: _messageController, onSend: _sendNotificationToAllUsers, primaryColor: primaryColor),
               ],
             ),
           ),
@@ -396,7 +399,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                     ],
                   ),
                 ),
-                _buildPasswordChangeForm(),
+                AdminPasswordChangeForm(passwordController: _newPasswordController, onSave: _changePassword),
               ],
             ),
           ),
@@ -443,130 +446,8 @@ class _UserManagementTabState extends State<UserManagementTab>
     );
   }
 
-  Widget _buildOnlineAdminList() {
-    return SizedBox(
-      height: 100,
-      child: StreamBuilder<DatabaseEvent>(
-        stream: widget.onlineAdminsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData)
-            return Center(
-                child: CircularProgressIndicator(color: primaryColor));
-          if (snapshot.hasError) return Text("오류: ${snapshot.error}");
-          if (!snapshot.hasData || snapshot.data?.snapshot.value == null)
-            return Center(
-                child: Text("접속 중인 관리자가 없습니다.",
-                    style: TextStyle(color: Colors.grey.shade600)));
 
-          // data가 Map<Object?, Object?> 타입일 수 있으므로 안전하게 캐스팅
-          final dataObject = snapshot.data!.snapshot.value;
-          if (dataObject is! Map) {
-            return Center(
-                child: Text("데이터 형식이 올바르지 않습니다.",
-                    style: TextStyle(color: Colors.grey.shade600)));
-          }
-          final data = Map<String, dynamic>.from(dataObject as Map);
 
-          final onlineAdmins = data.entries
-              .where((e) => (e.value as Map?)?['isOnline'] == true) // isOnline: true 필터링 추가
-              .map((e) =>
-          (e.value as Map)['nickname'] as String? ?? '이름없음')
-              .toList();
-          if (onlineAdmins.isEmpty)
-            return Center(
-                child: Text("접속 중인 관리자가 없습니다.",
-                    style: TextStyle(color: Colors.grey.shade600)));
-          return ListView.builder(
-            itemCount: onlineAdmins.length,
-            itemBuilder: (context, index) => ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.circle,
-                  size: 10, color: Colors.green.shade600),
-              title: Text(onlineAdmins[index],
-                  style: TextStyle(
-                      fontWeight: FontWeight.w500, color: Colors.black87)),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildNotificationForm() {
-    return Column(
-      children: [
-        TextField(
-          controller: _titleController,
-          decoration: InputDecoration(
-            labelText: '제목',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _messageController,
-          decoration: InputDecoration(
-            labelText: '내용',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-          ),
-          maxLines: 3,
-        ),
-        const SizedBox(height: 18),
-        ElevatedButton.icon(
-          onPressed: _sendNotificationToAllUsers,
-          icon: Icon(Icons.notifications_active_outlined, size: 20),
-          label: Text("알림 전송", style: TextStyle(fontSize: 16)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            minimumSize: Size(double.infinity, 50),
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            elevation: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPasswordChangeForm() {
-    return Column(
-      children: [
-        TextField(
-          controller: _newPasswordController,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-            labelText: '새 암호 (숫자 4자리 이상)',
-            prefixIcon: Icon(Icons.lock_outline, color: Colors.grey.shade600),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-          ),
-        ),
-        const SizedBox(height: 18),
-        ElevatedButton.icon(
-          onPressed: _changePassword,
-          icon: Icon(Icons.key_outlined, size: 20),
-          label: const Text('새 암호 저장', style: TextStyle(fontSize: 16)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.purple,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 50),
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            elevation: 1,
-          ),
-        )
-      ],
-    );
-  }
 
   Widget _buildUserManagementSection() {
     return Column(
@@ -1010,9 +891,6 @@ class _UserManagementTabState extends State<UserManagementTab>
 
   Future<void> _showDeleteConfirmation(
       BuildContext context, DocumentSnapshot doc, String email) async {
-    // 테마 색상 정의 (UserManagementTabState 내에 primaryColor가 정의되어 있어야 함)
-    const Color primaryColor = Color(0xFF1E88E5);
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1043,7 +921,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                 final callable =
                 FirebaseFunctions.instance.httpsCallable('deleteUser');
                 await callable.call({'uid': doc.id});
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
@@ -1067,7 +945,7 @@ class _UserManagementTabState extends State<UserManagementTab>
                   );
                 }
               } catch (e) {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(

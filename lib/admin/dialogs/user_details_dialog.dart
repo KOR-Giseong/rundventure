@@ -420,7 +420,7 @@ class _UserDetailsDialogState extends State<UserDetailsDialog> {
       final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
           .httpsCallable('sendNotificationToUser');
 
-      final result = await callable.call({
+      await callable.call({
         'targetEmail': targetEmail,
         'title': title,
         'message': message,

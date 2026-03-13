@@ -442,7 +442,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
   Widget _buildRankListItem({required int rank, required String nickname, required int exp, bool isCurrentUser = false}) {
     IconData rankIcon;
     Color rankColor;
-    double iconSize = 24;
+
     Widget rankWidget; // 랭크 표시 위젯 분리
 
     switch (rank) {

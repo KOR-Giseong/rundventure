@@ -74,7 +74,7 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
   void _listenForNewChatMessages() {
     if (_myEmail == null) return;
 
-    final String myEmailKey = _emailToKey(_myEmail!);
+    final String myEmailKey = _emailToKey(_myEmail);
 
     _chatMessageSubscription?.cancel();
 
@@ -280,7 +280,7 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
     if (_myEmail == null) return;
 
     try {
-      final String myEmailKey = _emailToKey(_myEmail!);
+      final String myEmailKey = _emailToKey(_myEmail);
       await FirebaseFirestore.instance
           .collection('userChats')
           .doc(chatRoomId)
@@ -415,9 +415,9 @@ class _FriendManagementScreenState extends State<FriendManagementScreen> with Si
             TabBarView(
               controller: _tabController,
               children: [
-                _buildFriendListTab(_myEmail!),
-                _buildFriendRequestTab(_myEmail!),
-                _buildChatListTab(_myEmail!),
+                _buildFriendListTab(_myEmail),
+                _buildFriendRequestTab(_myEmail),
+                _buildChatListTab(_myEmail),
               ],
             ),
           ],

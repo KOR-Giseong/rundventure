@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../game_selection/friend_battle_intro_screen.dart';
-import '../../ghostrun_screen/ghostrun_ready.dart';
 import '../../ghostrun_screen/ghostrun_stretching.dart';
 import '../../main_screens/main_screen.dart';
 

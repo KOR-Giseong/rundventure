@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../free_running/free_running_start.dart';
 import '../constants/main_screen_constants.dart';
 
 class CenterButton extends StatelessWidget {

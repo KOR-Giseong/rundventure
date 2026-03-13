@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math' as math;
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +20,7 @@ import 'package:rundventure/free_running/free_running_start.dart';
 
 // --- 결과 페이지 임포트 ---
 import 'friend_battle_result_screen.dart';
+import 'widgets/battle_running_widgets.dart';
 
 
 class FriendBattleRunningScreen extends StatefulWidget {
@@ -53,9 +50,7 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
   final String? _myEmail = FirebaseAuth.instance.currentUser?.email;
   late final bool _isMeChallenger;
   late final String _myNickname;
-  late final String? _myProfileUrl;
   late final String _opponentNickname;
-  late final String? _opponentProfileUrl;
   late final String _opponentEmail;
   late final double _targetDistanceKm;
 
@@ -84,7 +79,6 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
   // --- 상대방 러닝 상태 (Firestore 구독) ---
   String _opponentStatus = 'ready'; // 'ready', 'running', 'paused', 'stopping', 'finished'
   double _opponentKilometers = 0.0;
-  double _opponentPace = 0.0;
 
   // ===================================================================
   // 2. 기존 RunningPage 로직 변수들
@@ -92,11 +86,10 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
   loc.Location location = loc.Location();
   StreamSubscription<loc.LocationData>? _locationSubscription;
   loc.LocationData? _lastLocation;
-  List<RouteDataPoint> _routePointsWithSpeed = [];
+  final List<RouteDataPoint> _routePointsWithSpeed = [];
   Timer? _timer;
   double? _userWeight;
   bool _isLoadingUserData = true;
-  DateTime? _initialStartTime;
   late SharedPreferences prefs;
 
   final _watch = WatchConnectivity();
@@ -131,15 +124,11 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
 
     if (_isMeChallenger) {
       _myNickname = widget.battleData['challengerNickname'];
-      _myProfileUrl = widget.battleData['challengerProfileUrl'];
       _opponentNickname = widget.battleData['opponentNickname'];
-      _opponentProfileUrl = widget.battleData['opponentProfileUrl'];
       _opponentEmail = widget.battleData['opponentEmail'];
     } else {
       _myNickname = widget.battleData['opponentNickname'];
-      _myProfileUrl = widget.battleData['opponentProfileUrl'];
       _opponentNickname = widget.battleData['challengerNickname'];
-      _opponentProfileUrl = widget.battleData['challengerProfileUrl'];
       _opponentEmail = widget.battleData['challengerEmail'];
     }
 
@@ -267,13 +256,11 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
       // 상대방 데이터 추출
       final String opponentStatus = data[_isMeChallenger ? 'opponentStatus' : 'challengerStatus'] ?? 'ready';
       final double opponentKm = (data[_isMeChallenger ? 'opponentDistance' : 'challengerDistance'] ?? 0.0).toDouble();
-      final double opponentPace = (data[_isMeChallenger ? 'opponentPace' : 'challengerPace'] ?? 0.0).toDouble();
 
       // UI 갱신을 위해 setState
       setState(() {
         _opponentStatus = opponentStatus;
         _opponentKilometers = opponentKm;
-        _opponentPace = opponentPace;
       });
 
       // (1) 누군가에 의해 대결이 취소된 경우
@@ -414,9 +401,7 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
 
     // (내 페이스, 상대방 페이스/거리/초 계산)
     final bool isMeChallenger = finalData['challengerEmail'] == _myEmail;
-    final double targetDistanceKm = (finalData['targetDistanceKm'] as num).toDouble();
 
-    final double opponentPace = (isMeChallenger ? finalData['opponentPace'] : finalData['challengerPace'] as num).toDouble();
     final double opponentKm = (isMeChallenger ? finalData['opponentDistance'] : finalData['challengerDistance'] as num).toDouble();
 
     final int myTimeMs = (isMeChallenger
@@ -1071,53 +1056,8 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
   }
 
 
-  // ===================================================================
-  // 5. 헬퍼 함수 (Formatters)
-  // ===================================================================
 
-  String _formatTime(int seconds) {
-    final hours = seconds ~/ 3600;
-    final minutes = (seconds % 3600) ~/ 60;
-    final secs = seconds % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
 
-  String _formatPace(double pace) {
-    if (pace.isInfinite || pace.isNaN || pace == 0) return '--:--';
-    int min = pace.floor();
-    int sec = ((pace - min) * 60).round();
-    return '$min:${sec.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildOpponentStatusIndicator() {
-    String text;
-    Color color;
-    switch (_opponentStatus) {
-      case 'stopping':
-        text = '중단 중...';
-        color = Colors.redAccent;
-        break;
-      case 'paused': // (호환용)
-        text = '일시정지';
-        color = Colors.orange;
-        break;
-      case 'finished':
-        text = '완주!';
-        color = Colors.green;
-        break;
-      default:
-        text = '러닝 중';
-        color = Colors.deepPurple[600]!;
-    }
-    return Text(
-      text,
-      style: TextStyle(
-        color: color,
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1138,75 +1078,6 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
             ? Center(child: CircularProgressIndicator(color: Color(0xFFFF9F80)))
             : _buildBattleUI(isAnyAdmin),
       ),
-    );
-  }
-
-  /// (신규) 완주/대기 오버레이 UI
-  Widget _buildFinishOverlay() {
-    return Container(
-      color: Colors.black.withOpacity(0.8),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.flag, color: Colors.white, size: 80),
-            SizedBox(height: 20),
-            Text(
-              '${_formatTime(_mySeconds)}',
-              style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '완주!',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text(
-              _opponentStatus == 'finished'
-                  ? '상대방도 완주! 잠시 후 결과가 표시됩니다...'
-                  : '$_opponentNickname 님을 기다리는 중...',
-              style: TextStyle(color: Colors.grey[300], fontSize: 16),
-            ),
-            SizedBox(height: 20),
-            CircularProgressIndicator(color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// (신규) 취소/중단 로딩 오버레이
-  Widget _buildCancellingOverlay() {
-    return Container(
-      color: Colors.black.withOpacity(0.5),
-      child: Center(child: CircularProgressIndicator(color: Colors.white)),
-    );
-  }
-
-  Widget _buildLongPressHint() {
-    return AnimatedOpacity(
-      opacity: _showLongPressHint ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: _showLongPressHint
-          ? Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.grey[800]?.withOpacity(0.9), // 어두운 토스트 색상
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.info_outline, color: Colors.white, size: 18),
-            SizedBox(width: 10),
-            Text(
-              '중단하려면 버튼을 3초간 꾹 누르세요.',
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ],
-        ),
-      )
-          : SizedBox(height: 46),
     );
   }
 
@@ -1265,23 +1136,23 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
         SafeArea(
           child: Column(
             children: [
-              _buildPlayerHeader(),
-              _buildDistanceComparator(),
-              _buildLongPressHint(),
+              FriendBattlePlayerHeader(myNickname: _myNickname, myKilometers: _myKilometers, opponentNickname: _opponentNickname, opponentKilometers: _opponentKilometers, opponentStatus: _opponentStatus),
+              BattleDistanceComparator(myKilometers: _myKilometers, opponentKilometers: _opponentKilometers, targetDistanceKm: _targetDistanceKm, isMyRunFinished: _isMyRunFinished),
+              LongPressHint(showHint: _showLongPressHint),
               Spacer(),
-              _buildMainStats(),
+              BattleMainStats(myPace: _myPace, mySeconds: _mySeconds, myCalories: _myCalories),
               Spacer(),
               _buildControls(),
             ],
           ),
         ),
 
-        // 5. 완주 시 오버레이
+        // 완주 시 오버레이
         if (_isMyRunFinished)
-          _buildFinishOverlay(),
+          FriendBattleFinishOverlay(mySeconds: _mySeconds, opponentStatus: _opponentStatus, opponentNickname: _opponentNickname),
 
         if (_isCancelling)
-          _buildCancellingOverlay(),
+          const BattleCancellingOverlay(),
 
         if (isAnyAdmin && !_isMyRunFinished)
           Positioned(
@@ -1317,198 +1188,6 @@ class _FriendBattleRunningScreenState extends State<FriendBattleRunningScreen>
               child: Icon(Icons.person_off, color: Colors.white),
             ),
           ),
-      ],
-    );
-  }
-
-  Widget _buildPlayerHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '나 ($_myNickname)',
-                  style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '${_myKilometers.toStringAsFixed(2)} km',
-                  style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _buildOpponentStatusIndicator(),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        _opponentNickname,
-                        style: TextStyle(color: Colors.deepPurple, fontSize: 16, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '${_opponentKilometers.toStringAsFixed(2)} km',
-                  style: TextStyle(color: Colors.deepPurple, fontSize: 28, fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDistanceComparator() {
-    double myProgress = (_myKilometers / _targetDistanceKm).clamp(0.0, 1.0);
-    double opponentProgress = (_opponentKilometers / _targetDistanceKm).clamp(0.0, 1.0);
-
-    // 리드/낙오 거리 계산
-    double diff = _myKilometers - _opponentKilometers;
-    String diffText;
-    Color diffColor;
-    if (_isMyRunFinished) {
-      diffText = '완주!';
-      diffColor = Colors.green;
-    }
-    else if (diff.abs() < 0.01) { // 10m 이내
-      diffText = '박빙';
-      diffColor = Colors.black87;
-    } else if (diff > 0) {
-      diffText = '${(diff * 1000).toStringAsFixed(0)}m 리드';
-      diffColor = Colors.blueAccent;
-    } else {
-      diffText = '${(diff.abs() * 1000).toStringAsFixed(0)}m 낙오';
-      diffColor = Colors.redAccent;
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            diffText,
-            style: TextStyle(color: diffColor, fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 12),
-          LayoutBuilder(
-              builder: (context, constraints) {
-                return Stack(
-                  children: [
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                    // 상대방
-                    AnimatedContainer(
-                      duration: Duration(milliseconds: 500),
-                      height: 10,
-                      width: constraints.maxWidth * opponentProgress,
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple[300]!,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                    // 내 프로그레스 바 (앞)
-                    AnimatedContainer(
-                      duration: Duration(milliseconds: 500),
-                      height: 10,
-                      width: constraints.maxWidth * myProgress,
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ],
-                );
-              }
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('0km', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              Text('${_targetDistanceKm.toStringAsFixed(0)}km', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainStats() {
-    return Column(
-      children: [
-        Text(
-          '${_formatPace(_myPace)}',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 72,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        Text(
-          '현재 페이스 (/km)',
-          style: TextStyle(color: Colors.grey[700], fontSize: 16),
-        ),
-        SizedBox(height: 30),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatColumn('시간', _formatTime(_mySeconds)),
-              _buildStatColumn('칼로리', '${_myCalories.toStringAsFixed(0)} kcal'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatColumn(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey[700], fontSize: 14),
-        ),
       ],
     );
   }

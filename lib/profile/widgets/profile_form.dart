@@ -25,11 +25,11 @@
 
   class _ProfileFormState extends State<ProfileForm> {
     String? _selectedGender;
-    TextEditingController _nicknameController = TextEditingController();
-    TextEditingController _emailController = TextEditingController();
-    TextEditingController _weightController = TextEditingController();
-    TextEditingController _heightController = TextEditingController();
-    TextEditingController _birthdateController = TextEditingController();
+    final TextEditingController _nicknameController = TextEditingController();
+    final TextEditingController _emailController = TextEditingController();
+    final TextEditingController _weightController = TextEditingController();
+    final TextEditingController _heightController = TextEditingController();
+    final TextEditingController _birthdateController = TextEditingController();
 
     @override
     void initState() {

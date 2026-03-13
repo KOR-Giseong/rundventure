@@ -179,23 +179,4 @@ struct RunningView: View {
         }
     }
 
-    // 시간 포맷 함수 (HH:MM:SS) (수정 없음)
-    private func formatTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-    }
-
-    // 페이스 포맷 함수 (M'SS") (수정 없음)
-    private func formatPace(_ pace: Double) -> String {
-        if pace.isInfinite || pace.isNaN || pace <= 0 { return "--'--" }
-        let minutes = Int(pace)
-        let seconds = Int((pace - Double(minutes)) * 60)
-        if seconds == 60 {
-             return String(format: "%d'00\"", minutes + 1)
-        } else {
-             return String(format: "%d'%02d\"", minutes, seconds)
-        }
-    }
 } // RunningView End

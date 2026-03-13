@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../login_screens/login_screen.dart';
 import 'terms_of_Use.dart';
 import 'profile_screen.dart';
 

@@ -23,8 +23,6 @@ class RunningRecordsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

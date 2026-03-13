@@ -15,7 +15,7 @@ class PermissionsDialog extends StatefulWidget {
 }
 
 class _PermissionsDialogState extends State<PermissionsDialog> {
-  Map<AdminPermission, bool> _permissions = {};
+  final Map<AdminPermission, bool> _permissions = {};
   bool _isLoading = true;
   static const Color primaryColor = Color(0xFF1E88E5);
 

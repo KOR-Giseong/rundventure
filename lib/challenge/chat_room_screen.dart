@@ -5,13 +5,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../admin/admin_screen.dart';
 import 'package:uuid/uuid.dart';
 
 import '../admin/utils/admin_permissions.dart';
 import '../profile/other_user_profile.dart';
-import 'package:rundventure/achievement/exercise_data.dart';
-import 'package:rundventure/challenge/chat_room_screen.dart';
 
 
 class ChatRoomScreen extends StatefulWidget {
@@ -39,7 +36,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Map<String, dynamic> _currentAdminPermissions = {};
 
   File? _selectedImage;
-  Map<String, Map<String, dynamic>> _userCache = {};
+  final Map<String, Map<String, dynamic>> _userCache = {};
 
   bool _isProcessingParticipation = false;
 
@@ -119,15 +116,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   String decodeEmail(String encodedEmail) {
     return encodedEmail.replaceAll('_at_', '@').replaceAll('_dot_', '.');
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null && mounted) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
   }
 
   void _sendMessage() {
@@ -462,21 +450,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         constraints: BoxConstraints(),
                         icon: Icon(Icons.delete_outline, color: Colors.redAccent),
                         onPressed: () async {
+                          final navigator = Navigator.of(context);
                           final confirmed = await showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
+                            builder: (ctx) => AlertDialog(
                               backgroundColor: Colors.white,
                               title: Text('삭제 확인'),
                               content: Text('정말로 이 챌린지를 삭제하시겠습니까?'),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text('취소', style: TextStyle(color: Colors.blue))),
-                                TextButton(onPressed: () => Navigator.pop(context, true), child: Text('삭제', style: TextStyle(color: Colors.red))),
+                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('취소', style: TextStyle(color: Colors.blue))),
+                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('삭제', style: TextStyle(color: Colors.red))),
                               ],
                             ),
                           );
-                          if (confirmed == true && mounted) {
+                          if (confirmed == true) {
                             await _firestore.collection('challenges').doc(widget.challengeId).delete();
-                            Navigator.pop(context);
+                            if (!mounted) return;
+                            navigator.pop();
                           }
                         },
                       ),

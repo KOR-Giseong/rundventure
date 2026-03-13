@@ -14,7 +14,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'async_battle_running_screen.dart';
-import 'package:rundventure/free_running/free_running_start.dart';
 
 class AsyncBattleDetailScreen extends StatefulWidget {
   final String battleId;

@@ -50,7 +50,7 @@ class LevelingService {
         .get();
 
     for (var doc in questSnapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       questXp += (data['rewardXp'] as num? ?? 0).toInt();
     }
 
@@ -73,7 +73,7 @@ class LevelingService {
           .get();
 
       for (var doc in ghostRunsSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         double distance = (data['distance'] as num? ?? 0.0).toDouble();
         String raceResult = data['raceResult'] ?? '';
 

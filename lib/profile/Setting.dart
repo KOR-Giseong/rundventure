@@ -276,6 +276,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
+                    final navigator = Navigator.of(context);
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -286,7 +287,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     try {
                       if (isEmailLogin) {
                         if (_passwordController.text.trim().isEmpty) {
-                          Navigator.pop(context);
+                          navigator.pop();
                           _showCustomSnackBar('비밀번호를 입력해 주세요.', isError: true);
                           return;
                         }
@@ -298,7 +299,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                           'google.com') {
                         final googleUser = await GoogleSignIn().signIn();
                         if (googleUser == null) {
-                          Navigator.pop(context);
+                          navigator.pop();
                           return;
                         }
                         final googleAuth = await googleUser.authentication;
@@ -327,10 +328,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       await prefs.clear();
 
                       if (!mounted) return;
-                      Navigator.pop(context);
+                      navigator.pop();
                       _showCustomSnackBar('계정 탈퇴가 완료되었습니다.');
 
                       WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!context.mounted) return;
                         Navigator.of(context, rootNavigator: true)
                             .pushAndRemoveUntil(
                           MaterialPageRoute(
@@ -340,7 +342,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       });
                     } on FirebaseAuthException catch (e) {
                       if (!mounted) return;
-                      Navigator.pop(context);
+                      navigator.pop();
                       String message = "인증에 실패했습니다. 잠시 후 다시 시도해주세요.";
                       if (e.code == 'wrong-password')
                         message = '비밀번호가 올바르지 않습니다.';
@@ -349,7 +351,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       _showCustomSnackBar(message, isError: true);
                     } catch (e) {
                       if (!mounted) return;
-                      Navigator.pop(context);
+                      navigator.pop();
                       String errorMessage = '알 수 없는 오류가 발생했습니다.';
                       if (e is FirebaseFunctionsException) {
                         errorMessage = '오류: ${e.message}';

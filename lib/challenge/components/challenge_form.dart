@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore 추가
-import 'package:firebase_auth/firebase_auth.dart'; // Firebase Authentication 추가
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../challenge_screen.dart';
-import 'next_button.dart'; // NextButton import
-import 'dart:convert'; // URL 인코딩을 위한 라이브러리 추가
-import '../challenge.dart';
+import 'next_button.dart';
 
 class ChallengeForm extends StatefulWidget {
   const ChallengeForm({Key? key}) : super(key: key);
@@ -96,7 +94,7 @@ class _ChallengeFormState extends State<ChallengeForm> {
 
       _showCustomSnackBar('챌린지가 성공적으로 생성되었습니다.');
 
-
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ChallengeScreen()),

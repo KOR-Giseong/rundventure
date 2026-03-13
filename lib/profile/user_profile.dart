@@ -7,8 +7,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 import 'package:rundventure/home_screens/home_screen2.dart';
-import 'package:rundventure/main_screens/main_screen.dart';
-import 'package:rundventure/login_screens/login_screen.dart';
 import '../Achievement/achievements_popup.dart';
 import 'Setting.dart';
 import 'customer_support_screen.dart';
@@ -18,6 +16,8 @@ import 'package:rundventure/Achievement/exercise_service.dart';
 import 'package:rundventure/profile/leveling_service.dart';
 import 'package:rundventure/profile/widgets/level_bar_widget.dart';
 import 'package:intl/intl.dart';
+import 'widgets/profile_form_widgets.dart';
+import 'widgets/other_profile_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -220,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickAndUploadImage() async {
     final User? user = _auth.currentUser;
-    if (user == null || user.uid == null) {
+    if (user == null) {
       _showCustomSnackBar("로그인이 필요합니다.", isError: true);
       return;
     }
@@ -732,7 +732,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 9),
                 Expanded(child: GenderButton(label: '여자', isSelected: _selectedGender == '여자', onPressed: () => setState(() => _selectedGender = '여자'), width: double.infinity, height: 60)),
                 const SizedBox(width: 8),
-                _buildHideCheckbox('성별', _hideGender, (value) => setState(() => _hideGender = value ?? false)),
+                ProfileHideCheckbox(label: '성별', value: _hideGender, onChanged: (value) => setState(() => _hideGender = value ?? false)),
               ],
             ),
             const SizedBox(height: 11),
@@ -755,7 +755,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _buildHideCheckbox('생년월일', _hideBirthdate, (value) => setState(() => _hideBirthdate = value ?? false)),
+                ProfileHideCheckbox(label: '생년월일', value: _hideBirthdate, onChanged: (value) => setState(() => _hideBirthdate = value ?? false)),
               ],
             ),
             const SizedBox(height: 11),
@@ -767,7 +767,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 12),
                 UnitButton(label: 'CM', width: 60, height: 60),
                 const SizedBox(width: 8),
-                _buildHideCheckbox('키', _hideHeight, (value) => setState(() => _hideHeight = value ?? false)),
+                ProfileHideCheckbox(label: '키', value: _hideHeight, onChanged: (value) => setState(() => _hideHeight = value ?? false)),
               ],
             ),
             const SizedBox(height: 11),
@@ -779,7 +779,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 12),
                 UnitButton(label: 'KG', width: 60, height: 60),
                 const SizedBox(width: 8),
-                _buildHideCheckbox('체중', _hideWeight, (value) => setState(() => _hideWeight = value ?? false)),
+                ProfileHideCheckbox(label: '체중', value: _hideWeight, onChanged: (value) => setState(() => _hideWeight = value ?? false)),
               ],
             ),
             const SizedBox(height: 1),
@@ -800,31 +800,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   '문의하기',
                   style: TextStyle(fontSize: 14, color: Colors.blueAccent, decoration: TextDecoration.underline),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHideCheckbox(String label, bool value, ValueChanged<bool?> onChanged) {
-    return Tooltip(
-      message: '$label 비공개',
-      child: GestureDetector(
-        onTap: () => onChanged(!value),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 30,
-              width: 30,
-              child: Checkbox(
-                value: value,
-                onChanged: onChanged,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                activeColor: Color(0xFFFF9F80),
               ),
             ),
           ],
@@ -1098,9 +1073,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                                     children: [
-                                      _buildWLStatColumn('총 대결', '${_battleWins + _battleLosses} 회'),
-                                      _buildWLStatColumn('승리', '$_battleWins 회', color: Colors.blueAccent),
-                                      _buildWLStatColumn('패배', '$_battleLosses 회', color: Colors.redAccent),
+                                      buildWLStatColumn('총 대결', '${_battleWins + _battleLosses} 회'),
+                                      buildWLStatColumn('승리', '$_battleWins 회', color: Colors.blueAccent),
+                                      buildWLStatColumn('패배', '$_battleLosses 회', color: Colors.redAccent),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
@@ -1113,7 +1088,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         '상대방에게 이 기록 비공개',
                                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                       ),
-                                      _buildHideCheckbox('대결 기록', _hideBattleStats, (value) => setState(() => _hideBattleStats = value ?? false)),
+                                      ProfileHideCheckbox(label: '대결 기록', value: _hideBattleStats, onChanged: (value) => setState(() => _hideBattleStats = value ?? false)),
                                     ],
                                   )
                                 ],
@@ -1152,214 +1127,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildWLStatColumn(String label, String value, {Color color = Colors.black87}) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 14,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-}
-
-class ActionButton extends StatelessWidget {
-  final String label;
-  final bool isOutlined;
-  final VoidCallback onPressed;
-
-  const ActionButton({
-    Key? key,
-    required this.label,
-    required this.isOutlined,
-    required this.onPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 55),
-        backgroundColor: isOutlined ? Colors.white : Colors.black,
-        foregroundColor: isOutlined ? Colors.black : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isOutlined ? Colors.grey[400]! : Colors.transparent,
-            width: 1,
-          ),
-        ),
-        elevation: isOutlined ? 0 : 2,
-      ),
-      onPressed: onPressed,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Pretendard',
-        ),
-      ),
-    );
-  }
-}
-
-class GenderButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onPressed;
-  final double width;
-  final double height;
-
-  const GenderButton({
-    Key? key,
-    required this.label,
-    required this.isSelected,
-    required this.onPressed,
-    required this.width,
-    required this.height,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.black : Colors.white,
-        foregroundColor: isSelected ? Colors.white : Colors.black,
-        minimumSize: Size(width, height),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: isSelected ? Colors.black : Colors.grey.shade300,
-            width: 1,
-          ),
-        ),
-        elevation: 0,
-      ),
-      onPressed: onPressed,
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Pretendard',
-        ),
-      ),
-    );
-  }
-}
-
-class UnitButton extends StatelessWidget {
-  final String label;
-  final double width;
-  final double height;
-
-  const UnitButton({
-    Key? key,
-    required this.label,
-    required this.width,
-    required this.height,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: Color(0xFFFF9F80),
-      ),
-      child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Pretendard',
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ProfileTextField extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final TextEditingController controller;
-  final double width;
-  final double height;
-  final bool readOnly;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-
-  const ProfileTextField({
-    Key? key,
-    required this.label,
-    required this.icon,
-    required this.controller,
-    required this.width,
-    required this.height,
-    this.readOnly = false,
-    this.keyboardType,
-    this.textInputAction,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      padding: const EdgeInsets.only(left: 13),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[300]!, width: 0.8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: Colors.grey[600]),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              readOnly: readOnly,
-              keyboardType: keyboardType,
-              textInputAction: textInputAction,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Pretendard',
-                color: Colors.black87,
-              ),
-              decoration: InputDecoration(
-                hintText: label,
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(bottom: 5, right: 13),
-              ),
-              enableInteractiveSelection: !readOnly,
-              focusNode: readOnly ? FocusNode(canRequestFocus: false) : null,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

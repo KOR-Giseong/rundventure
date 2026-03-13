@@ -130,7 +130,7 @@ class QuestService {
           .where('participants', arrayContains: _userEmail)
           .get();
       allFriendBattles = fbSnapshot.docs.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         return data['status'] == 'finished';
       }).toList();
     } catch (e) { print("실시간 대결 로딩 실패: $e"); }
@@ -149,7 +149,7 @@ class QuestService {
       final combined = [...asyncChallenger.docs, ...asyncOpponent.docs];
       final ids = <String>{};
       allAsyncBattles = combined.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         if (!ids.add(doc.id)) return false;
         return data['status'] == 'finished';
       }).toList();
@@ -466,8 +466,6 @@ class QuestService {
       case QuestMetric.friendBattleWin: return '실시간 대결 ${formatter.format(targetValue)}회 승리하기';
       case QuestMetric.asyncBattlePlay: return '오프라인 대결 ${formatter.format(targetValue)}회 참여하기';
       case QuestMetric.asyncBattleWin: return '오프라인 대결 ${formatter.format(targetValue)}회 승리하기';
-
-      default: return '';
     }
   }
 

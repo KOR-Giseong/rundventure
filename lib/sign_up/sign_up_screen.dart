@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -7,7 +6,6 @@ import 'package:rundventure/home_Screens/home_screen2.dart';
 import '../login_screens/login_screen.dart';
 import '../sign_up/sign_up_email.dart';
 import 'TermsAgreementScreen_Social.dart';
-import 'profile_screen.dart';
 import 'package:rundventure/sign_up/components/social_sign_up_button.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -19,9 +17,6 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Future<void> _signUpWithEmail() async {
-  }
 
   Future<void> _signUpWithGoogle() async {
     try {
@@ -37,6 +32,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       UserCredential userCredential = await _auth.signInWithCredential(credential);
 
+      if (!mounted) return;
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
         Navigator.pushReplacement(
           context,
@@ -82,6 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       print("구글 연동 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -115,6 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (user == null) throw Exception("유저 정보 없음");
 
+      if (!mounted) return;
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
         Navigator.pushReplacement(
           context,
@@ -159,6 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       print("애플 연동 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -124,11 +124,6 @@ class _BirthdayInputScreenState extends State<BirthdayInputScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
-    double boxHeight = screenHeight * 0.06;
-    double boxWidth = screenWidth * 0.8;
-    double buttonHeight = screenHeight * 0.08;
-    double buttonWidth = screenWidth * 0.4;
-
     double topPadding = screenHeight * 0.25;
 
     return Scaffold(

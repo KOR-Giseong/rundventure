@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../admin/admin_screen.dart';
 import '../admin/utils/admin_permissions.dart';
 
 class FreeTalkForm extends StatefulWidget {
@@ -20,7 +19,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
   final TextEditingController _contentController = TextEditingController();
   File? _selectedImage;
 
-  bool _showContentHint = true;
   bool _isNotice = false;
 
   bool _isSuperAdmin = false;
@@ -77,7 +75,6 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
   void _updateState() {
     if(mounted) {
       setState(() {
-        _showContentHint = _contentController.text.trim().isEmpty;
       });
     }
   }
@@ -128,7 +125,7 @@ class _FreeTalkFormState extends State<FreeTalkForm> {
     }
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || user.email == null || user.uid == null) {
+    if (user == null || user.email == null) {
       _showCustomSnackBar('사용자 정보를 찾을 수 없습니다.', isError: true);
       return;
     }

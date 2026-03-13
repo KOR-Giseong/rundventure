@@ -121,7 +121,7 @@ class _GoalSettingPageState extends State<GoalSettingPage> {
         }
       }, SetOptions(merge: true));  // ← 이걸 꼭 써야 기존 workouts 유지됨
 
-
+      if (!mounted) return;
       Navigator.pop(context, {
         'calorieGoal': calorieGoal,
         'distanceGoal': distanceGoal,
@@ -140,8 +140,6 @@ class _GoalSettingPageState extends State<GoalSettingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final deviceWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

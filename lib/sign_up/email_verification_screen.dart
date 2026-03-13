@@ -27,13 +27,12 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   // 인증 코드 검증 함수
   void _verifyCode() async {
     if (_formKey.currentState!.validate()) {
-      String enteredCode = _codeController.text;
-
       // 여기서 실제 인증 코드 검증 로직을 구현해야 합니다.
       // Firebase Auth의 sendEmailVerification()으로 보낸 코드와 비교하여야 함
 
       User? user = _auth.currentUser;
       await user?.reload(); // 사용자의 정보를 업데이트합니다.
+      if (!mounted) return;
       if (user != null && user.emailVerified) {
         // 인증이 완료되면 다음 페이지로 이동
         Navigator.push(

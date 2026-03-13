@@ -47,54 +47,7 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
         let receivedContext = session.receivedApplicationContext
         if !receivedContext.isEmpty {
             print("✅ Watch launched. Checking initial context: \(receivedContext)")
-            if let isRunning = receivedContext["isRunning"] as? Bool, isRunning == true {
-                DispatchQueue.main.async {
-                    self.isRunning = true
-                    self.isEnded = false
-                    if let runType = receivedContext["runType"] as? String { self.runType = runType }
-                    if let outcome = receivedContext["raceOutcome"] as? String { self.raceOutcome = outcome }
-                    if let ended = receivedContext["isEnded"] as? Bool {
-                        self.isEnded = ended
-                        if ended { self.isRunning = false }
-                    }
-                    if let km = receivedContext["kilometers"] as? Double { self.kilometers = km }
-                    if let sec = receivedContext["seconds"] as? Int { self.seconds = sec }
-                    // ▼▼▼▼▼ [ ⭐️ 밀리초 복원 ⭐️ ] ▼▼▼▼▼
-                    if let ms = receivedContext["milliseconds"] as? Int { self.milliseconds = ms }
-                    // ▲▲▲▲▲ [ ⭐️ 밀리초 복원 ⭐️ ] ▲▲▲▲▲
-                    
-                    if let pc = receivedContext["pace"] as? Double { self.pace = pc }
-                    if let cal = receivedContext["calories"] as? Double { self.calories = cal }
-                    if let status = receivedContext["raceStatus"] as? String { self.raceStatus = status }
-                    
-                    if let oppNick = receivedContext["opponentNickname"] as? String { self.opponentNickname = oppNick }
-                    if let oppKm = receivedContext["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
-                    if let targetKm = receivedContext["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
-                }
-            } else {
-                DispatchQueue.main.async {
-                    if receivedContext["isEnded"] as? Bool != true {
-                        self.resetState()
-                    } else {
-                        self.isEnded = true
-                        self.isRunning = false
-                        if let runType = receivedContext["runType"] as? String { self.runType = runType }
-                        if let outcome = receivedContext["raceOutcome"] as? String { self.raceOutcome = outcome }
-                        if let km = receivedContext["kilometers"] as? Double { self.kilometers = km }
-                        if let sec = receivedContext["seconds"] as? Int { self.seconds = sec }
-                        // ▼▼▼▼▼ [ ⭐️ 밀리초 복원 ⭐️ ] ▼▼▼▼▼
-                        if let ms = receivedContext["milliseconds"] as? Int { self.milliseconds = ms }
-                        // ▲▲▲▲▲ [ ⭐️ 밀리초 복원 ⭐️ ] ▲▲▲▲▲
-                        
-                        if let pc = receivedContext["pace"] as? Double { self.pace = pc }
-                        if let cal = receivedContext["calories"] as? Double { self.calories = cal }
-                        
-                        if let oppNick = receivedContext["opponentNickname"] as? String { self.opponentNickname = oppNick }
-                        if let oppKm = receivedContext["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
-                        if let targetKm = receivedContext["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
-                    }
-                }
-            }
+            restoreStateFromContext(receivedContext)
         }
     }
 
@@ -110,51 +63,7 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
         if activationState == .activated {
             let receivedContext = session.receivedApplicationContext
             if !receivedContext.isEmpty {
-                // (재활성화 시에도 위 init과 동일하게 상태 복원 로직 수행)
-                if let isRunning = receivedContext["isRunning"] as? Bool, isRunning == true {
-                    DispatchQueue.main.async {
-                        self.isRunning = true
-                        self.isEnded = false
-                        if let runType = receivedContext["runType"] as? String { self.runType = runType }
-                        if let outcome = receivedContext["raceOutcome"] as? String { self.raceOutcome = outcome }
-                        if let ended = receivedContext["isEnded"] as? Bool {
-                            self.isEnded = ended
-                            if ended { self.isRunning = false }
-                        }
-                        if let km = receivedContext["kilometers"] as? Double { self.kilometers = km }
-                        if let sec = receivedContext["seconds"] as? Int { self.seconds = sec }
-                        if let ms = receivedContext["milliseconds"] as? Int { self.milliseconds = ms } // 👈
-                        
-                        if let pc = receivedContext["pace"] as? Double { self.pace = pc }
-                        if let cal = receivedContext["calories"] as? Double { self.calories = cal }
-                        if let status = receivedContext["raceStatus"] as? String { self.raceStatus = status }
-
-                        if let oppNick = receivedContext["opponentNickname"] as? String { self.opponentNickname = oppNick }
-                        if let oppKm = receivedContext["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
-                        if let targetKm = receivedContext["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        if receivedContext["isEnded"] as? Bool != true {
-                            self.resetState()
-                        } else {
-                            self.isEnded = true
-                            self.isRunning = false
-                            if let runType = receivedContext["runType"] as? String { self.runType = runType }
-                            if let outcome = receivedContext["raceOutcome"] as? String { self.raceOutcome = outcome }
-                            if let km = receivedContext["kilometers"] as? Double { self.kilometers = km }
-                            if let sec = receivedContext["seconds"] as? Int { self.seconds = sec }
-                            if let ms = receivedContext["milliseconds"] as? Int { self.milliseconds = ms } // 👈
-                            
-                            if let pc = receivedContext["pace"] as? Double { self.pace = pc }
-                            if let cal = receivedContext["calories"] as? Double { self.calories = cal }
-
-                            if let oppNick = receivedContext["opponentNickname"] as? String { self.opponentNickname = oppNick }
-                            if let oppKm = receivedContext["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
-                            if let targetKm = receivedContext["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
-                        }
-                    }
-                }
+                restoreStateFromContext(receivedContext)
             }
         }
     }
@@ -166,6 +75,46 @@ class WatchConnector: NSObject, WCSessionDelegate, ObservableObject {
     }
     #endif
     
+    // --- 컨텍스트 상태 복원 헬퍼 ---
+    private func restoreStateFromContext(_ context: [String: Any]) {
+        DispatchQueue.main.async {
+            if let isRunning = context["isRunning"] as? Bool, isRunning == true {
+                self.isRunning = true
+                self.isEnded = false
+                if let runType = context["runType"] as? String { self.runType = runType }
+                if let outcome = context["raceOutcome"] as? String { self.raceOutcome = outcome }
+                if let ended = context["isEnded"] as? Bool {
+                    self.isEnded = ended
+                    if ended { self.isRunning = false }
+                }
+                if let km = context["kilometers"] as? Double { self.kilometers = km }
+                if let sec = context["seconds"] as? Int { self.seconds = sec }
+                if let ms = context["milliseconds"] as? Int { self.milliseconds = ms }
+                if let pc = context["pace"] as? Double { self.pace = pc }
+                if let cal = context["calories"] as? Double { self.calories = cal }
+                if let status = context["raceStatus"] as? String { self.raceStatus = status }
+                if let oppNick = context["opponentNickname"] as? String { self.opponentNickname = oppNick }
+                if let oppKm = context["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
+                if let targetKm = context["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
+            } else if context["isEnded"] as? Bool == true {
+                self.isEnded = true
+                self.isRunning = false
+                if let runType = context["runType"] as? String { self.runType = runType }
+                if let outcome = context["raceOutcome"] as? String { self.raceOutcome = outcome }
+                if let km = context["kilometers"] as? Double { self.kilometers = km }
+                if let sec = context["seconds"] as? Int { self.seconds = sec }
+                if let ms = context["milliseconds"] as? Int { self.milliseconds = ms }
+                if let pc = context["pace"] as? Double { self.pace = pc }
+                if let cal = context["calories"] as? Double { self.calories = cal }
+                if let oppNick = context["opponentNickname"] as? String { self.opponentNickname = oppNick }
+                if let oppKm = context["opponentDistance"] as? Double { self.opponentKilometers = oppKm }
+                if let targetKm = context["targetDistanceKm"] as? Double { self.targetDistanceKm = targetKm }
+            } else {
+                self.resetState()
+            }
+        }
+    }
+
     // --- 메시지/Context 공통 처리 핸들러 ---
     private func handleReceivedMessage(_ message: [String: Any]) {
         DispatchQueue.main.async {

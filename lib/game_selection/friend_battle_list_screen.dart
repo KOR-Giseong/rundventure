@@ -284,6 +284,7 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
       });
 
       setState(() => _isLoading = false);
+      if (!mounted) return;
 
       Navigator.push(
         context,
@@ -349,9 +350,9 @@ class _FriendBattleListScreenState extends State<FriendBattleListScreen>
             controller: _tabController,
             children: [
               // 1번 탭: 친구 목록
-              _buildFriendListTab(_myEmail!),
+              _buildFriendListTab(_myEmail),
               // 2번 탭: 대결 기록
-              FriendBattleHistoryTab(myEmail: _myEmail!),
+              FriendBattleHistoryTab(myEmail: _myEmail),
             ],
           ),
 

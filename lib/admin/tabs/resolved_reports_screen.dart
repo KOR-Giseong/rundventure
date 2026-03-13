@@ -70,7 +70,6 @@ class _ResolvedReportsScreenState extends State<ResolvedReportsScreen> {
               final data = doc.data() as Map<String, dynamic>;
               final nickname = data['reportedUserNickname'] ?? '알 수 없음';
               final category = data['category'] ?? '기타';
-              final timestamp = data['timestamp'] as Timestamp?; // 신고 접수일
               final resolvedAt = data['resolvedAt'] as Timestamp?; // 처리 완료일
 
               return Container(

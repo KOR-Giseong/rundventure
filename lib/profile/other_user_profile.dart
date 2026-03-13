@@ -11,6 +11,7 @@ import 'package:rundventure/Achievement/exercise_service.dart';
 import 'package:rundventure/Achievement/exercise_data.dart';
 
 import '../main_screens/main_screen.dart';
+import 'widgets/other_profile_widgets.dart';
 
 
 class OtherUserProfileScreen extends StatefulWidget {
@@ -76,8 +77,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
 
   // 명예의 전당 (월간 랭킹) 상태
   List<Map<String, dynamic>> _hallOfFame = [];
-  final NumberFormat _expFormatter = NumberFormat('#,###');
-
   // Latest Run Record State
   Map<String, dynamic>? latestRunRecord;
   bool _isLoadingLatestRun = true;
@@ -781,9 +780,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                   _isLoadingProfile
                       ? SizedBox(height: 20)
                       : _userNotFound
-                      ? _buildPrivateLevelBar()
+                      ? const ProfilePrivateLevelBar()
                       : _profileIsHidden
-                      ? _buildPrivateLevelBar()
+                      ? const ProfilePrivateLevelBar()
                       : LevelBarWidget(
                     levelData: _levelData,
                     isLoading: _isLoadingLevel,
@@ -809,9 +808,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildWLStatColumn('총 대결', '${_battleWins + _battleLosses} 회'),
-                            _buildWLStatColumn('승리', '$_battleWins 회', color: Colors.blueAccent),
-                            _buildWLStatColumn('패배', '$_battleLosses 회', color: Colors.redAccent),
+                            buildWLStatColumn('총 대결', '${_battleWins + _battleLosses} 회'),
+                            buildWLStatColumn('승리', '$_battleWins 회', color: Colors.blueAccent),
+                            buildWLStatColumn('패배', '$_battleLosses 회', color: Colors.redAccent),
                           ],
                         ),
                       ),
@@ -825,92 +824,14 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                   _isLoadingProfile
                       ? Container()
                       : _userNotFound
-                      ? _buildWithdrawnUserMessage()
+                      ? const ProfileWithdrawnMessage()
                       : _profileIsHidden
-                      ? _buildPrivateProfileMessage()
+                      ? const ProfilePrivateMessage()
                       : _buildPublicProfileDetails(dateFormat),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // W/L 통계 UI를 그리는 헬퍼 위젯
-  Widget _buildWLStatColumn(String label, String value, {Color color = Colors.black87}) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 14,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrivateProfileMessage() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      margin: const EdgeInsets.only(top: 20),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!)),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline_rounded, size: 40, color: Colors.grey[500]),
-            SizedBox(height: 16),
-            Text('비공개 프로필입니다.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                textAlign: TextAlign.center),
-            SizedBox(height: 8),
-            Text('사용자가 프로필 정보를 공개하지 않았습니다.',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWithdrawnUserMessage() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      margin: const EdgeInsets.only(top: 20),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!)),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_off_outlined, size: 40, color: Colors.grey[500]),
-            SizedBox(height: 16),
-            Text('탈퇴한 사용자입니다.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                textAlign: TextAlign.center),
-            SizedBox(height: 8),
-            Text('요청한 프로필을 찾을 수 없습니다.',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                textAlign: TextAlign.center),
-          ],
         ),
       ),
     );
@@ -1243,7 +1164,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                 final rank = (entry['rank'] as num?)?.toInt() ?? 0;
                 final month = entry['month'] as String? ?? '????-??';
                 final exp = (entry['exp'] as num?)?.toInt() ?? 0;
-                return _buildHallOfFameListItem(
+                return buildHallOfFameListItem(
                     rank: rank, title: '$month 월간 랭킹', exp: exp);
               }).toList(),
             ),
@@ -1254,114 +1175,33 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     return Container();
   }
 
-  Widget _buildHallOfFameListItem(
-      {required int rank, required String title, required int exp}) {
-    IconData rankIcon;
-    Color rankColor;
-    double iconSize = 28;
-
-    switch (rank) {
-      case 1:
-        rankIcon = Icons.emoji_events;
-        rankColor = Colors.amber.shade700;
-        break;
-      case 2:
-        rankIcon = Icons.emoji_events;
-        rankColor = Colors.grey.shade500;
-        break;
-      case 3:
-        rankIcon = Icons.emoji_events;
-        rankColor = Colors.brown.shade400;
-        break;
-      default:
-        rankIcon = Icons.military_tech_outlined;
-        rankColor = Colors.grey.shade400;
-        iconSize = 24;
-    }
-
-    return ListTile(
-      dense: false,
-      leading: Container(
-        width: 40,
-        alignment: Alignment.center,
-        child: Icon(rankIcon, color: rankColor, size: iconSize),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-          color: Colors.black87,
-        ),
-      ),
-      subtitle: Text(
-        '$rank 위',
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 13,
-          color: Colors.grey[600],
-        ),
-      ),
-      trailing: Text(
-        '${_expFormatter.format(exp)} EXP',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-          color: Color(0xFFEF6C00),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: Colors.grey[800]),
-          const SizedBox(width: 16),
-          Text('$label:',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.w500)),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Text(value,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
-        ],
-      ),
-    );
-  }
 
   Widget _buildInfoList() {
     List<Widget> infoWidgets = [];
     bool firstItemAdded = false;
 
     if (!hideGender && gender.isNotEmpty) {
-      if (firstItemAdded)
-        infoWidgets.add(const Divider(height: 1, thickness: 0.5));
-      infoWidgets.add(_buildInfoRow(Icons.person_outline_rounded, '성별', gender));
+      infoWidgets.add(buildProfileInfoRow(Icons.person_outline_rounded, '성별', gender));
       firstItemAdded = true;
     }
     if (!hideHeight && height.isNotEmpty) {
       if (firstItemAdded)
         infoWidgets.add(const Divider(height: 1, thickness: 0.5));
-      infoWidgets.add(_buildInfoRow(Icons.height_rounded, '키', '$height cm'));
+      infoWidgets.add(buildProfileInfoRow(Icons.height_rounded, '키', '$height cm'));
       firstItemAdded = true;
     }
     if (!hideWeight && weight.isNotEmpty) {
       if (firstItemAdded)
         infoWidgets.add(const Divider(height: 1, thickness: 0.5));
       infoWidgets
-          .add(_buildInfoRow(Icons.monitor_weight_outlined, '체중', '$weight kg'));
+          .add(buildProfileInfoRow(Icons.monitor_weight_outlined, '체중', '$weight kg'));
       firstItemAdded = true;
     }
     if (!hideBirthdate && birthdate.isNotEmpty) {
       if (firstItemAdded)
         infoWidgets.add(const Divider(height: 1, thickness: 0.5));
       infoWidgets
-          .add(_buildInfoRow(Icons.cake_outlined, '생년월일', birthdate));
+          .add(buildProfileInfoRow(Icons.cake_outlined, '생년월일', birthdate));
       firstItemAdded = true;
     }
 
@@ -1431,25 +1271,4 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     return '${formatter.format(steps)}보';
   }
 
-  Widget _buildPrivateLevelBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-      margin: const EdgeInsets.only(top: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.lock_outline, size: 18, color: Colors.grey[700]),
-          SizedBox(width: 8),
-          Text(
-            "레벨 정보가 비공개입니다.",
-            style: TextStyle(color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
 }
