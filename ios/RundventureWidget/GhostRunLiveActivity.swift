@@ -77,7 +77,6 @@ struct GhostRunLiveActivity: Widget {
             
         } dynamicIsland: { context in
             DynamicIsland {
-                // (다이나믹 아일랜드 부분은 수정할 필요 없습니다)
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading) {
                         Text("거리").font(.caption2).foregroundColor(.white.opacity(0.6))
